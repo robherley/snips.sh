@@ -1,18 +1,18 @@
 package ssh
 
 import (
-	"database/sql"
 	"errors"
 	"io"
 
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
+	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/file"
 	"github.com/rs/zerolog/log"
 )
 
 type SessionHandler struct {
-	db *sql.DB
+	db *db.DB
 }
 
 func (sh *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {

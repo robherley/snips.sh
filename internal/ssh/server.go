@@ -1,14 +1,13 @@
 package ssh
 
 import (
-	"database/sql"
-
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/config"
+	"github.com/robherley/snips.sh/internal/db"
 )
 
-func New(cfg *config.Config, db *sql.DB) (*Server, error) {
+func New(cfg *config.Config, db *db.DB) (*Server, error) {
 	sessionHandler := &SessionHandler{db}
 
 	return wish.NewServer(

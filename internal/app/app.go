@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,7 +15,7 @@ import (
 
 type App struct {
 	SSH *ssh.Server
-	DB  *sql.DB
+	DB  *db.DB
 }
 
 func (app *App) Start() error {
@@ -29,7 +28,7 @@ func (app *App) Start() error {
 	}()
 
 	sig := <-done
-	log.Warn().Str("signal", sig.String()).Msg("received signal, shutting down server")
+	log.Warn().Str("signal", sig.String()).Msg("received signal, shutting down app")
 	if app.DB != nil {
 		if err := app.DB.Close(); err != nil {
 			log.Error().Err(err).Msg("unable to close db")

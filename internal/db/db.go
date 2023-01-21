@@ -7,6 +7,24 @@ import (
 	"github.com/robherley/snips.sh/internal/config"
 )
 
-func New(cfg *config.Config) (*sql.DB, error) {
-	return sql.Open("sqlite3", cfg.DB.FilePath)
+type DB struct {
+	*sql.DB
+}
+
+func (db *DB) Version() (string, error) {
+	var version string
+	if err := db.QueryRow("SELECT SQLITE_VERSION()").Scan(&version); err != nil {
+		return "", err
+	}
+
+	return version, nil
+}
+
+func New(cfg *config.Config) (*DB, error) {
+	db, err := sql.Open("sqlite3", cfg.DB.FilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DB{db}, nil
 }

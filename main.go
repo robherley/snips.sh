@@ -28,6 +28,13 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
 
+	sqlv, err := snips.DB.Version()
+	if err != nil {
+		log.Fatal().Err(err).Msg("unable to get sqlite version")
+	}
+
+	log.Info().Str("file", cfg.DB.FilePath).Str("version", sqlv).Msg("sqlite connected")
+
 	log.Info().Str("ssh_address", cfg.SSHAddress()).Msg("starting snips.sh")
 	if err := snips.Start(); err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
