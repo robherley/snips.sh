@@ -1,20 +1,15 @@
 package main
 
 import (
-	"os"
-
-	"github.com/mattn/go-isatty"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/robherley/snips.sh/internal/app"
 	"github.com/robherley/snips.sh/internal/config"
+	"github.com/robherley/snips.sh/internal/util"
 )
 
 func init() {
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	}
+	util.InitLogger()
 }
 
 func main() {
@@ -32,7 +27,6 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to get sqlite version")
 	}
-
 	log.Info().Str("file", cfg.DB.FilePath).Str("version", sqlv).Msg("sqlite connected")
 
 	log.Info().Str("ssh_address", cfg.SSHAddress()).Msg("starting snips.sh")

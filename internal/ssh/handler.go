@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/file"
-	"github.com/rs/zerolog/log"
 )
 
 type SessionHandler struct {
@@ -17,11 +16,6 @@ type SessionHandler struct {
 
 func (sh *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 	return func(sesh ssh.Session) {
-		// if len(sesh.Command()) != 0 {
-		// 	wish.Errorln(sesh, "unknown command")
-		// 	sesh.Exit(1)
-		// }
-
 		_, _, isPty := sesh.Pty()
 		if isPty {
 			sh.interactive(sesh)
@@ -33,9 +27,13 @@ func (sh *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 
 func (sh *SessionHandler) interactive(sesh ssh.Session) {
 	wish.Println(sesh, "👋 Welcome to snips.sh!")
+	wish.Println(sesh, "🪪 You are user:", sesh.Context().Value(UserIDContextKey))
+	wish.Println(sesh, "🔑 Using key with fingerprint:", sesh.Context().Value(FingerprintContextKey))
 }
 
 func (sh *SessionHandler) upload(sesh ssh.Session) {
+	log := GetSessionLogger(sesh)
+
 	total := int64(0)
 	for {
 		buf := make([]byte, UploadBufferSize)
@@ -43,19 +41,17 @@ func (sh *SessionHandler) upload(sesh ssh.Session) {
 		total += int64(n)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				wish.Printf(sesh, "✅ File uploaded successfully (size: %s)\n", file.ByteSize(total))
 				log.Info().Int64("size", total).Msg("file uploaded")
+				wish.Printf(sesh, "✅ File uploaded successfully (size: %s)\n", file.ByteSize(total))
 				// TODO(robherley): save file blob to database
 			} else {
 				log.Err(err).Msg("unable to read")
-				wish.Println(sesh, "❌ Error reading file")
-				sesh.Exit(1)
+				wish.Fatalf(sesh, "❌ Error reading file")
 			}
 			return
 		}
 		if total > MaxUploadSize {
-			wish.Printf(sesh, "❌ File too large, max size is %s\n", file.ByteSize(MaxUploadSize))
-			sesh.Exit(1)
+			wish.Fatalf(sesh, "❌ File too large, max size is %s\n", file.ByteSize(MaxUploadSize))
 			return
 		}
 	}

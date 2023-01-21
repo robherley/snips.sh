@@ -25,6 +25,7 @@ func New(cfg *config.Config, db *db.DB) (*Server, error) {
 		// note: middleware is evaulated in reverse order
 		wish.WithMiddleware(
 			sessionHandler.HandleFunc,
+			CreateAndAttachUser(db),
 			BlockIfNoPublicKey,
 			WithLogger,
 		),
