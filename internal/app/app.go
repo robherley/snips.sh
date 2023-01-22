@@ -29,11 +29,6 @@ func (app *App) Start() error {
 
 	sig := <-done
 	log.Warn().Str("signal", sig.String()).Msg("received signal, shutting down app")
-	if app.DB != nil {
-		if err := app.DB.Close(); err != nil {
-			log.Error().Err(err).Msg("unable to close db")
-		}
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer func() { cancel() }()
 	if err := app.SSH.Shutdown(ctx); err != nil {

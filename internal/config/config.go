@@ -9,7 +9,8 @@ import (
 const ApplicationName = "snips"
 
 type Config struct {
-	Host string `default:"localhost"`
+	Debug bool   `default:"false"`
+	Host  string `default:"localhost"`
 
 	SSH struct {
 		Port        int    `default:"2222"`

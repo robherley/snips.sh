@@ -1,7 +1,6 @@
 package ssh
 
 import (
-	"database/sql"
 	"errors"
 	"time"
 
@@ -12,38 +11,62 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/segmentio/ksuid"
 	gossh "golang.org/x/crypto/ssh"
+	"gorm.io/gorm"
 )
 
-func CreateAndAttachUser(database *db.DB) func(next ssh.Handler) ssh.Handler {
+func AssignUser(database *db.DB) func(next ssh.Handler) ssh.Handler {
 	return func(next ssh.Handler) ssh.Handler {
 		return func(sesh ssh.Session) {
 			fingerprint := gossh.FingerprintSHA256(sesh.PublicKey())
 			sesh.Context().SetValue(FingerprintContextKey, fingerprint)
 
-			var (
-				userID string
-				err    error
-			)
+			pubkey := db.PublicKey{}
+			user := db.User{}
 
-			userID, err = database.FindUserIDByFingerprint(sesh.Context(), fingerprint)
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					userID, err = database.CreateNewUser(sesh.Context(), fingerprint, sesh.PublicKey().Type())
-					if err != nil {
-						log.Err(err).Msg("unable to create user")
-						wish.Fatalln(sesh, "❌ Unable to authenticate")
-						return
+			// try to find a public key
+			err := database.Where("fingerprint = ?", fingerprint).First(&pubkey).Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				log.Err(err).Msg("unable to find publickey")
+				wish.Fatalln(sesh, "❌ Unable to authenticate")
+				return
+			}
+
+			// upsert and create user if not found
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				err := database.Transaction(func(tx *gorm.DB) error {
+					if err := tx.Create(&user).Error; err != nil {
+						return err
 					}
-				} else {
+
+					pubkey = db.PublicKey{
+						Fingerprint: fingerprint,
+						Type:        sesh.PublicKey().Type(),
+						UserID:      user.ID,
+					}
+					if err := tx.Create(&pubkey).Error; err != nil {
+						return err
+					}
+
+					return nil
+				})
+
+				if err != nil {
+					log.Err(err).Msg("unable to create user")
+					wish.Fatalln(sesh, "❌ Unable to authenticate")
+					return
+				}
+			} else {
+				// find user
+				err := database.Where("id = ?", pubkey.UserID).First(&user).Error
+				if err != nil {
 					log.Err(err).Msg("unable to find user")
 					wish.Fatalln(sesh, "❌ Unable to authenticate")
 					return
 				}
 			}
 
-			sesh.Context().SetValue(UserIDContextKey, userID)
-
-			logger := GetSessionLogger(sesh).With().Str("user_id", userID).Logger()
+			sesh.Context().SetValue(UserIDContextKey, user.ID.String())
+			logger := GetSessionLogger(sesh).With().Str("user_id", user.ID.String()).Logger()
 			SetSessionLogger(sesh, &logger)
 			logger.Info().Msg("user authenticated")
 
