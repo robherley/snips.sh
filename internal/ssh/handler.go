@@ -6,52 +6,71 @@ import (
 
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
+	"github.com/robherley/snips.sh/internal/bites"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/file"
 )
 
 type SessionHandler struct {
-	db *db.DB
+	DB *db.DB
 }
 
-func (sh *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
+func (handler *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 	return func(sesh ssh.Session) {
+		userSesh := &UserSession{sesh}
+
 		_, _, isPty := sesh.Pty()
 		if isPty {
-			sh.interactive(sesh)
+			handler.Interactive(userSesh)
 		} else {
-			sh.upload(sesh)
+			handler.Upload(userSesh)
 		}
 	}
 }
 
-func (sh *SessionHandler) interactive(sesh ssh.Session) {
+func (h *SessionHandler) Interactive(sesh *UserSession) {
 	wish.Println(sesh, "👋 Welcome to snips.sh!")
-	wish.Println(sesh, "🪪 You are user:", sesh.Context().Value(UserIDContextKey))
-	wish.Println(sesh, "🔑 Using key with fingerprint:", sesh.Context().Value(FingerprintContextKey))
+	wish.Println(sesh, "🪪 You are user:", sesh.UserID().String())
+	wish.Println(sesh, "🔑 Using key with fingerprint:", sesh.PublicKeyFingerprint())
 }
 
-func (sh *SessionHandler) upload(sesh ssh.Session) {
+func (h *SessionHandler) Upload(sesh *UserSession) {
 	log := GetSessionLogger(sesh)
 
-	total := int64(0)
+	content := make([]byte, 0)
+	size := int64(0)
 	for {
 		buf := make([]byte, UploadBufferSize)
 		n, err := sesh.Read(buf)
-		total += int64(n)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				log.Info().Int64("size", total).Msg("file uploaded")
-				wish.Printf(sesh, "✅ File uploaded successfully (size: %s)\n", file.ByteSize(total))
-				// TODO(robherley): save file blob to database
-			} else {
-				log.Err(err).Msg("unable to read")
-				wish.Fatalf(sesh, "❌ Error reading file")
-			}
+		isEOF := errors.Is(err, io.EOF)
+		if err != nil && !isEOF {
+			log.Err(err).Msg("unable to read")
+			wish.Fatalf(sesh, "❌ Error reading file")
 			return
 		}
-		if total > MaxUploadSize {
-			wish.Fatalf(sesh, "❌ File too large, max size is %s\n", file.ByteSize(MaxUploadSize))
+
+		size += int64(n)
+		content = append(content, buf[:n]...)
+
+		if size > MaxUploadSize {
+			wish.Fatalf(sesh, "❌ File too large, max size is %s\n", bites.ByteSize(MaxUploadSize))
+			return
+		}
+
+		if isEOF {
+			file := db.File{
+				Content: content,
+				Size:    size,
+				UserID:  sesh.UserID(),
+			}
+
+			if err := h.DB.Create(&file).Error; err != nil {
+				log.Err(err).Msg("unable to create file")
+				wish.Fatalf(sesh, "❌ Error creating file")
+				return
+			}
+
+			log.Info().Int64("size", size).Msg("file uploaded")
+			wish.Printf(sesh, "✅ File uploaded successfully (size: %s)\n", bites.ByteSize(size))
 			return
 		}
 	}

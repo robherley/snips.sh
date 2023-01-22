@@ -33,28 +33,22 @@ func AssignUser(database *db.DB) func(next ssh.Handler) ssh.Handler {
 
 			// upsert and create user if not found
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				err := database.Transaction(func(tx *gorm.DB) error {
-					if err := tx.Create(&user).Error; err != nil {
-						return err
-					}
+				user = db.User{
+					PublicKeys: []db.PublicKey{
+						{
+							Fingerprint: fingerprint,
+							Type:        sesh.PublicKey().Type(),
+						},
+					},
+				}
 
-					pubkey = db.PublicKey{
-						Fingerprint: fingerprint,
-						Type:        sesh.PublicKey().Type(),
-						UserID:      user.ID,
-					}
-					if err := tx.Create(&pubkey).Error; err != nil {
-						return err
-					}
-
-					return nil
-				})
-
-				if err != nil {
+				if err := database.Create(&user).Error; err != nil {
 					log.Err(err).Msg("unable to create user")
 					wish.Fatalln(sesh, "❌ Unable to authenticate")
 					return
 				}
+
+				pubkey = user.PublicKeys[0]
 			} else {
 				// find user
 				err := database.Where("id = ?", pubkey.UserID).First(&user).Error
@@ -65,7 +59,7 @@ func AssignUser(database *db.DB) func(next ssh.Handler) ssh.Handler {
 				}
 			}
 
-			sesh.Context().SetValue(UserIDContextKey, user.ID.String())
+			sesh.Context().SetValue(UserIDContextKey, user.ID)
 			logger := GetSessionLogger(sesh).With().Str("user_id", user.ID.String()).Logger()
 			SetSessionLogger(sesh, &logger)
 			logger.Info().Msg("user authenticated")
