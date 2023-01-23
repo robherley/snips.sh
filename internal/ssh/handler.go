@@ -69,6 +69,11 @@ func (h *SessionHandler) Upload(sesh *UserSession, flags *UploadFlags) {
 		}
 
 		if isEOF {
+			if size == 0 {
+				wish.Fatalln(sesh, "⚠️ Skipping upload, file is empty!")
+				return
+			}
+
 			file := db.File{
 				Private:   flags.Private,
 				Content:   content,
