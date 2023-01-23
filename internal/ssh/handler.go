@@ -1,21 +1,25 @@
 package ssh
 
 import (
-	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"time"
 
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
+	"github.com/mdp/qrterminal"
 	"github.com/robherley/snips.sh/internal/bites"
+	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/http"
 	"github.com/rs/zerolog/log"
 )
 
 type SessionHandler struct {
-	DB *db.DB
+	Config *config.Config
+	DB     *db.DB
 }
 
 func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
@@ -121,19 +125,47 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				return
 			}
 
-			details := map[string]interface{}{
+			log.Info().Fields(map[string]interface{}{
 				"id":         file.ID,
 				"user_id":    file.UserID,
 				"size":       file.Size,
 				"expires_at": file.ExpiresAt,
 				"private":    file.Private,
 				"extension":  file.Extension,
+			}).Msg("file uploaded")
+
+			wish.Println(sesh, "✅ File Uploaded Successfully!")
+			wish.Println(sesh, "💳 ID:", file.ID)
+			wish.Println(sesh, "🏋️  Size:", bites.ByteSize(file.Size))
+			if file.Private {
+				wish.Println(sesh, "🔐 Private")
+			}
+			if file.Extension != nil {
+				wish.Println(sesh, "📁 Extension:", file.Extension)
+			}
+			if file.ExpiresAt != nil {
+				wish.Println(sesh, "⏰ Expires:", file.ExpiresAt.Format(time.UnixDate))
 			}
 
-			log.Info().Fields(details).Msg("file uploaded")
-			// TODO(robherley): print something nicer
-			jsonStr, _ := json.MarshalIndent(details, "", "  ")
-			wish.Printf(sesh, "%s\n", jsonStr)
+			httpAddr := fmt.Sprintf("https://%s:%d%s%s", h.Config.Host.External, h.Config.HTTP.Port, http.FilePath, file.ID)
+			sshCommand := fmt.Sprintf("ssh %s%s@%s", FileRequestPrefix, file.ID, h.Config.Host.External)
+			if h.Config.SSH.Port != 22 {
+				sshCommand += fmt.Sprintf(" -p %d", h.Config.SSH.Port)
+			}
+
+			wish.Println(sesh, "🌐 URL:", httpAddr)
+			wish.Println(sesh, "📠 SSH Command:", sshCommand)
+
+			wish.Println(sesh, "\n📱 Scan this QR code to download the file:\n")
+			config := qrterminal.Config{
+				Level:     qrterminal.L,
+				Writer:    sesh.Stderr(),
+				BlackChar: qrterminal.BLACK,
+				WhiteChar: qrterminal.WHITE,
+				QuietZone: 1,
+			}
+			qrterminal.GenerateWithConfig(httpAddr, config)
+
 			return
 		}
 	}

@@ -12,7 +12,7 @@ type Service struct {
 }
 
 func New(cfg *config.Config, db *db.DB) (*Service, error) {
-	sessionHandler := &SessionHandler{db}
+	sessionHandler := &SessionHandler{cfg, db}
 
 	sshServer, err := wish.NewServer(
 		wish.WithMaxTimeout(MaxTimeout),
