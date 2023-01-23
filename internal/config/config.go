@@ -12,6 +12,10 @@ type Config struct {
 	Debug bool   `default:"false"`
 	Host  string `default:"localhost"`
 
+	HTTP struct {
+		Port int `default:"8080"`
+	}
+
 	SSH struct {
 		Port        int    `default:"2222"`
 		HostKeyPath string `default:"tmp/keys/default"`
@@ -29,6 +33,10 @@ func (cfg *Config) Usage() {
 
 func (cfg *Config) SSHAddress() string {
 	return fmt.Sprintf("%s:%d", cfg.Host, cfg.SSH.Port)
+}
+
+func (cfg *Config) HTTPAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.Host, cfg.HTTP.Port)
 }
 
 func Load() (*Config, error) {

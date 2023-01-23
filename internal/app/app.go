@@ -4,38 +4,73 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/http"
 	"github.com/robherley/snips.sh/internal/ssh"
 	"github.com/rs/zerolog/log"
 )
 
 type App struct {
-	SSH *ssh.Server
-	DB  *db.DB
+	SSH  *ssh.Service
+	HTTP *http.Service
+	DB   *db.DB
+}
+
+type service interface {
+	ListenAndServe() error
+	Shutdown(ctx context.Context) error
 }
 
 func (app *App) Start() error {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		if err := app.SSH.ListenAndServe(); err != nil {
-			log.Warn().Err(err)
-		}
-	}()
 
-	sig := <-done
-	log.Warn().Str("signal", sig.String()).Msg("received signal, shutting down app")
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer func() { cancel() }()
-	if err := app.SSH.Shutdown(ctx); err != nil {
-		log.Error().Err(err).Msg("unable to shutdown ssh server")
+	services := []service{
+		app.SSH,
+		app.HTTP,
 	}
 
+	start(services)
+
+	sig := <-done
+	log.Warn().Str("signal", sig.String()).Msg("received signal, shutting down services")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer func() {
+		cancel()
+	}()
+
+	stop(ctx, services)
+
 	return nil
+}
+
+func start(services []service) {
+	for i := range services {
+		go func(svc service) {
+			if err := svc.ListenAndServe(); err != nil {
+				log.Warn().Err(err)
+			}
+		}(services[i])
+	}
+}
+
+func stop(ctx context.Context, services []service) {
+	wg := sync.WaitGroup{}
+	wg.Add(len(services))
+
+	for i := range services {
+		go func(svc service) {
+			defer wg.Done()
+			if err := svc.Shutdown(ctx); err != nil {
+				log.Warn().Err(err)
+			}
+		}(services[i])
+	}
 }
 
 func New(cfg *config.Config) (*App, error) {
@@ -49,8 +84,14 @@ func New(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
+	http, err := http.New(cfg, db)
+	if err != nil {
+		return nil, err
+	}
+
 	return &App{
-		SSH: ssh,
-		DB:  db,
+		SSH:  ssh,
+		HTTP: http,
+		DB:   db,
 	}, nil
 }

@@ -7,10 +7,14 @@ import (
 	"github.com/robherley/snips.sh/internal/db"
 )
 
-func New(cfg *config.Config, db *db.DB) (*Server, error) {
+type Service struct {
+	*ssh.Server
+}
+
+func New(cfg *config.Config, db *db.DB) (*Service, error) {
 	sessionHandler := &SessionHandler{db}
 
-	return wish.NewServer(
+	sshServer, err := wish.NewServer(
 		wish.WithMaxTimeout(MaxTimeout),
 		wish.WithIdleTimeout(IdleTimeout),
 		wish.WithAddress(cfg.SSHAddress()),
@@ -30,4 +34,9 @@ func New(cfg *config.Config, db *db.DB) (*Server, error) {
 			WithLogger,
 		),
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Service{sshServer}, nil
 }
