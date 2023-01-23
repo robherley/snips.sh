@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	"github.com/segmentio/ksuid"
+	"github.com/robherley/snips.sh/internal/id"
 	"gorm.io/gorm"
 )
 
@@ -14,14 +14,20 @@ var AllModels = []interface{}{
 }
 
 type Model struct {
-	ID ksuid.KSUID `gorm:"primaryKey"`
+	gorm.Model
+
+	ID        string `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 func (m *Model) BeforeCreate(tx *gorm.DB) error {
-	tx.Statement.SetColumn("ID", ksuid.New())
-	return nil
-}
+	id, err := id.Generate()
+	if err != nil {
+		return err
+	}
 
-func (m *Model) CreatedAt() time.Time {
-	return m.ID.Time()
+	tx.Statement.SetColumn("ID", id)
+	return nil
 }

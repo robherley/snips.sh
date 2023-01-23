@@ -41,7 +41,7 @@ func (handler *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 
 func (h *SessionHandler) Interactive(sesh *UserSession) {
 	wish.Println(sesh, "👋 Welcome to snips.sh!")
-	wish.Println(sesh, "🪪 You are user:", sesh.UserID().String())
+	wish.Println(sesh, "🪪 You are user:", sesh.UserID())
 	wish.Println(sesh, "🔑 Using key with fingerprint:", sesh.PublicKeyFingerprint())
 }
 

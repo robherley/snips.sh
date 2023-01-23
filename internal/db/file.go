@@ -2,8 +2,6 @@ package db
 
 import (
 	"time"
-
-	"github.com/segmentio/ksuid"
 )
 
 type File struct {
@@ -15,6 +13,6 @@ type File struct {
 	Extension *string
 	ExpiresAt *time.Time
 
-	UserID ksuid.KSUID
+	UserID string
 	User   User
 }

@@ -8,7 +8,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattn/go-isatty v0.0.17
 	github.com/rs/zerolog v1.28.0
-	github.com/segmentio/ksuid v1.0.4
+	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
 	golang.org/x/crypto v0.3.0
 	gorm.io/driver/sqlite v1.4.4
 	gorm.io/gorm v1.24.3

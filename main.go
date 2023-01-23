@@ -1,12 +1,11 @@
 package main
 
 import (
-	"github.com/rs/zerolog/log"
-
 	"github.com/robherley/snips.sh/internal/app"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {

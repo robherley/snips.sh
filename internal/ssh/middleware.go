@@ -7,9 +7,9 @@ import (
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/id"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/segmentio/ksuid"
 	gossh "golang.org/x/crypto/ssh"
 	"gorm.io/gorm"
 )
@@ -60,7 +60,7 @@ func AssignUser(database *db.DB) func(next ssh.Handler) ssh.Handler {
 			}
 
 			sesh.Context().SetValue(UserIDContextKey, user.ID)
-			logger := GetSessionLogger(sesh).With().Str("user_id", user.ID.String()).Logger()
+			logger := GetSessionLogger(sesh).With().Str("user_id", user.ID).Logger()
 			SetSessionLogger(sesh, &logger)
 			logger.Info().Msg("user authenticated")
 
@@ -85,7 +85,7 @@ func WithLogger(next ssh.Handler) ssh.Handler {
 	return func(sesh ssh.Session) {
 		addr := sesh.RemoteAddr().String()
 		start := time.Now()
-		requestID := ksuid.New().String()
+		requestID := id.MustGenerate()
 		sesh.Context().SetValue(RequestIDContextKey, requestID)
 
 		reqLog := log.With().Str("addr", addr).Str("request_id", requestID).Logger()
