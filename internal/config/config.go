@@ -1,7 +1,8 @@
 package config
 
 import (
-	"fmt"
+	"net"
+	"strconv"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -9,8 +10,11 @@ import (
 const ApplicationName = "snips"
 
 type Config struct {
-	Debug bool   `default:"false"`
-	Host  string `default:"localhost"`
+	Debug bool `default:"false"`
+	Host  struct {
+		Internal string `default:"localhost"`
+		External string `default:"localhost"`
+	}
 
 	HTTP struct {
 		Port int `default:"8080"`
@@ -31,12 +35,12 @@ func (cfg *Config) Usage() {
 	envconfig.Usage(ApplicationName, cfg)
 }
 
-func (cfg *Config) SSHAddress() string {
-	return fmt.Sprintf("%s:%d", cfg.Host, cfg.SSH.Port)
+func (cfg *Config) SSHListenAddr() string {
+	return net.JoinHostPort(cfg.Host.Internal, strconv.Itoa(cfg.SSH.Port))
 }
 
-func (cfg *Config) HTTPAddress() string {
-	return fmt.Sprintf("%s:%d", cfg.Host, cfg.HTTP.Port)
+func (cfg *Config) HTTPListenAddr() string {
+	return net.JoinHostPort(cfg.Host.Internal, strconv.Itoa(cfg.HTTP.Port))
 }
 
 func Load() (*Config, error) {

@@ -19,8 +19,8 @@ func New(cfg *config.Config, db *db.DB) (*Service, error) {
 	// TODO(robherley): cute landing page
 
 	httpServer := &http.Server{
-		Addr:    cfg.HTTPAddress(),
-		Handler: mux,
+		Addr:    cfg.HTTPListenAddr(),
+		Handler: WithMiddleware(mux, WithLogger, WithRequestID),
 	}
 
 	return &Service{httpServer}, nil

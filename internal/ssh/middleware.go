@@ -88,7 +88,7 @@ func WithLogger(next ssh.Handler) ssh.Handler {
 		requestID := id.MustGenerate()
 		sesh.Context().SetValue(RequestIDContextKey, requestID)
 
-		reqLog := log.With().Str("addr", addr).Str("request_id", requestID).Logger()
+		reqLog := log.With().Str("svc", "ssh").Str("addr", addr).Str("request_id", requestID).Logger()
 		SetSessionLogger(sesh, &reqLog)
 
 		reqLog.Info().Msg("connected")

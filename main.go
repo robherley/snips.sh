@@ -26,7 +26,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to auto migrate db")
 	}
 
-	log.Info().Str("ssh_address", cfg.SSHAddress()).Str("http_address", cfg.HTTPAddress()).Msg("starting snips.sh")
+	log.Info().Str("ssh_addr", cfg.SSHListenAddr()).Str("http_addr", cfg.HTTPListenAddr()).Msg("starting snips.sh")
 	if err := snips.Start(); err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
