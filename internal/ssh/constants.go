@@ -17,4 +17,6 @@ const (
 	RequestIDContextKey   = "request_id"
 	FingerprintContextKey = "fingerprint"
 	UserIDContextKey      = "user_id"
+
+	FileRequestPrefix = "f:"
 )

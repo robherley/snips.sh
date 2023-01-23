@@ -18,24 +18,24 @@ type SessionHandler struct {
 	DB *db.DB
 }
 
-func (handler *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
+func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 	return func(sesh ssh.Session) {
 		userSesh := &UserSession{sesh}
 
-		_, _, isPty := sesh.Pty()
-		if isPty {
-			handler.Interactive(userSesh)
-		} else {
-			flags, err := ParseUploadFlags(sesh)
-			if err != nil {
-				if !errors.Is(err, flag.ErrHelp) {
-					log.Warn().Err(err).Msg("invalid user specified flags")
-				}
-				return
-			}
-
-			handler.Upload(userSesh, flags)
+		// user requesting to download a file
+		if userSesh.IsFileRequest() {
+			h.Request(userSesh)
+			return
 		}
+
+		// user entering interactive session w/ tui
+		if userSesh.IsPTY() {
+			h.Interactive(userSesh)
+			return
+		}
+
+		// otherwise, it's a file upload
+		h.Upload(userSesh)
 	}
 }
 
@@ -45,8 +45,36 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 	wish.Println(sesh, "🔑 Using key with fingerprint:", sesh.PublicKeyFingerprint())
 }
 
-func (h *SessionHandler) Upload(sesh *UserSession, flags *UploadFlags) {
+func (h *SessionHandler) Request(sesh *UserSession) {
+	userID := sesh.UserID()
+	fileID := sesh.RequestedFileID()
+
+	file := db.File{}
+	if err := h.DB.First(&file, "id = ?", fileID).Error; err != nil {
+		log.Error().Err(err).Msg("unable to lookup file")
+		wish.Fatalf(sesh, "❌ File not found: %s\n", fileID)
+		return
+	}
+
+	if file.Private && file.UserID != userID {
+		log.Warn().Msg("attempted to access private file")
+		wish.Fatalf(sesh, "❌ File not found: %s\n", fileID)
+		return
+	}
+
+	wish.Print(sesh, string(file.Content))
+}
+
+func (h *SessionHandler) Upload(sesh *UserSession) {
 	log := GetSessionLogger(sesh)
+
+	flags, err := ParseUploadFlags(sesh)
+	if err != nil {
+		if !errors.Is(err, flag.ErrHelp) {
+			log.Warn().Err(err).Msg("invalid user specified flags")
+		}
+		return
+	}
 
 	content := make([]byte, 0)
 	size := int64(0)
