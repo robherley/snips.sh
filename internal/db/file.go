@@ -13,7 +13,7 @@ type File struct {
 	Content   []byte
 	Private   bool `gorm:"index:file_private"`
 	Extension *string
-	TTL       *time.Duration
+	ExpiresAt *time.Time
 
 	UserID ksuid.KSUID
 	User   User

@@ -1,13 +1,17 @@
 package ssh
 
 import (
+	"encoding/json"
 	"errors"
+	"flag"
 	"io"
+	"time"
 
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/bites"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/rs/zerolog/log"
 )
 
 type SessionHandler struct {
@@ -22,7 +26,15 @@ func (handler *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 		if isPty {
 			handler.Interactive(userSesh)
 		} else {
-			handler.Upload(userSesh)
+			flags, err := ParseUploadFlags(sesh)
+			if err != nil {
+				if !errors.Is(err, flag.ErrHelp) {
+					log.Warn().Err(err).Msg("invalid user specified flags")
+				}
+				return
+			}
+
+			handler.Upload(userSesh, flags)
 		}
 	}
 }
@@ -33,7 +45,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 	wish.Println(sesh, "🔑 Using key with fingerprint:", sesh.PublicKeyFingerprint())
 }
 
-func (h *SessionHandler) Upload(sesh *UserSession) {
+func (h *SessionHandler) Upload(sesh *UserSession, flags *UploadFlags) {
 	log := GetSessionLogger(sesh)
 
 	content := make([]byte, 0)
@@ -58,9 +70,16 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 
 		if isEOF {
 			file := db.File{
-				Content: content,
-				Size:    size,
-				UserID:  sesh.UserID(),
+				Private:   flags.Private,
+				Content:   content,
+				Size:      size,
+				UserID:    sesh.UserID(),
+				Extension: flags.Extension,
+			}
+
+			if flags.TTL != nil {
+				expiresAt := time.Now().Add(*flags.TTL)
+				file.ExpiresAt = &expiresAt
 			}
 
 			if err := h.DB.Create(&file).Error; err != nil {
@@ -69,8 +88,19 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				return
 			}
 
-			log.Info().Int64("size", size).Msg("file uploaded")
-			wish.Printf(sesh, "✅ File uploaded successfully (size: %s)\n", bites.ByteSize(size))
+			details := map[string]interface{}{
+				"id":         file.ID,
+				"user_id":    file.UserID,
+				"size":       file.Size,
+				"expires_at": file.ExpiresAt,
+				"private":    file.Private,
+				"extension":  file.Extension,
+			}
+
+			log.Info().Fields(details).Msg("file uploaded")
+			// TODO(robherley): print something nicer
+			jsonStr, _ := json.MarshalIndent(details, "", "  ")
+			wish.Printf(sesh, "%s\n", jsonStr)
 			return
 		}
 	}
