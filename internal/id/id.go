@@ -6,8 +6,6 @@ import (
 	"github.com/teris-io/shortid"
 )
 
-const PossibleChars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 var _sid *shortid.Shortid
 
 func init() {
