@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
@@ -112,11 +111,6 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				Extension: flags.Extension,
 			}
 
-			if flags.TTL != nil {
-				expiresAt := time.Now().Add(*flags.TTL)
-				file.ExpiresAt = &expiresAt
-			}
-
 			if err := h.DB.Create(&file).Error; err != nil {
 				log.Err(err).Msg("unable to create file")
 				wish.Fatalf(sesh, "❌ Error creating file")
@@ -124,12 +118,11 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			}
 
 			log.Info().Fields(map[string]interface{}{
-				"id":         file.ID,
-				"user_id":    file.UserID,
-				"size":       file.Size,
-				"expires_at": file.ExpiresAt,
-				"private":    file.Private,
-				"extension":  file.Extension,
+				"id":        file.ID,
+				"user_id":   file.UserID,
+				"size":      file.Size,
+				"private":   file.Private,
+				"extension": file.Extension,
 			}).Msg("file uploaded")
 
 			wish.Println(sesh, "✅ File Uploaded Successfully!")
@@ -140,9 +133,6 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			}
 			if file.Extension != nil {
 				wish.Println(sesh, "📁 Extension:", file.Extension)
-			}
-			if file.ExpiresAt != nil {
-				wish.Println(sesh, "⏰ Expires:", file.ExpiresAt.Format(time.UnixDate))
 			}
 
 			httpAddr := fmt.Sprintf("%s:%d%s%s", h.Config.Host.External, h.Config.HTTP.Port, "/f/", file.ID)
