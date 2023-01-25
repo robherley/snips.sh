@@ -1,11 +1,18 @@
 package main
 
 import (
+	"embed"
+
 	"github.com/robherley/snips.sh/internal/app"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/rs/zerolog/log"
+)
+
+var (
+	//go:embed web/*
+	webFS embed.FS
 )
 
 func main() {
@@ -16,7 +23,7 @@ func main() {
 
 	logger.Init(cfg)
 
-	snips, err := app.New(cfg)
+	snips, err := app.New(cfg, &webFS)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}

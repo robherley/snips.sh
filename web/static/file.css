@@ -1,0 +1,87 @@
+:root {
+  --black: rgb(23 23 23);
+  --white: rgb(245 245 244);
+  --light-grey: rgb(128 128 128);
+  --grey: rgb(64 64 64);
+  --bg: var(--black);
+  --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-size: 14px;
+  --line-height: 18px;
+  --max-width: 1052px;
+  --border-radius: 8px;
+  --border-color: var(--grey);
+  --border-size: 2px;
+  --selection: rgb(255 255 255 / 0.2);
+}
+
+::selection {
+  background: var(--selection);
+}
+
+* {
+  color-scheme: dark;
+}
+
+html {
+  /* fix rendering on iOS devices where font sizes get wonky */
+  text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+}
+
+body {
+  font-family: var(--font-mono);
+  line-height: var(--line-height);
+  font-size: var(--font-size);
+  background-color: var(--black);
+  color: var(--white);
+}
+
+footer {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+span[role="img"] {
+  font-family: serif;
+}
+
+a {
+  color: var(--white);
+}
+
+.file-container {
+  max-width: var(--max-width);
+  border: var(--border-size) solid var(--border-color);
+  margin: 1rem auto;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.file-container .chroma {
+  margin: 0;
+  padding: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: transparent;
+}
+
+.file-container .chroma code {
+  display: inline-block;
+  min-width: 100%;
+  box-sizing: border-box;
+  font-weight: normal !important;
+}
+
+.file-container .chroma .hl .ln {
+  color: var(--white);
+}
+
+.file-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: var(--border-size) solid var(--border-color);
+  color: var(--light-grey);
+  padding: 0.5rem 1rem;
+}

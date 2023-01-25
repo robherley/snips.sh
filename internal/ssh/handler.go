@@ -9,11 +9,9 @@ import (
 
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
-	"github.com/mdp/qrterminal"
-	"github.com/robherley/snips.sh/internal/bites"
+	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/http"
 	"github.com/rs/zerolog/log"
 )
 
@@ -96,7 +94,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		content = append(content, buf[:n]...)
 
 		if size > MaxUploadSize {
-			wish.Fatalf(sesh, "❌ File too large, max size is %s\n", bites.ByteSize(MaxUploadSize))
+			wish.Fatalf(sesh, "❌ File too large, max size is %s B\n", MaxUploadSize)
 			return
 		}
 
@@ -136,7 +134,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 
 			wish.Println(sesh, "✅ File Uploaded Successfully!")
 			wish.Println(sesh, "💳 ID:", file.ID)
-			wish.Println(sesh, "🏋️  Size:", bites.ByteSize(file.Size))
+			wish.Println(sesh, "🏋️  Size:", humanize.Bytes(uint64(file.Size)))
 			if file.Private {
 				wish.Println(sesh, "🔐 Private")
 			}
@@ -147,7 +145,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				wish.Println(sesh, "⏰ Expires:", file.ExpiresAt.Format(time.UnixDate))
 			}
 
-			httpAddr := fmt.Sprintf("https://%s:%d%s%s", h.Config.Host.External, h.Config.HTTP.Port, http.FilePath, file.ID)
+			httpAddr := fmt.Sprintf("%s:%d%s%s", h.Config.Host.External, h.Config.HTTP.Port, "/f/", file.ID)
 			sshCommand := fmt.Sprintf("ssh %s%s@%s", FileRequestPrefix, file.ID, h.Config.Host.External)
 			if h.Config.SSH.Port != 22 {
 				sshCommand += fmt.Sprintf(" -p %d", h.Config.SSH.Port)
@@ -156,15 +154,15 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			wish.Println(sesh, "🌐 URL:", httpAddr)
 			wish.Println(sesh, "📠 SSH Command:", sshCommand)
 
-			wish.Println(sesh, "\n📱 Scan this QR code to download the file:\n")
-			config := qrterminal.Config{
-				Level:     qrterminal.L,
-				Writer:    sesh.Stderr(),
-				BlackChar: qrterminal.BLACK,
-				WhiteChar: qrterminal.WHITE,
-				QuietZone: 1,
-			}
-			qrterminal.GenerateWithConfig(httpAddr, config)
+			// wish.Println(sesh, "\n📱 Scan this QR code to download the file:\n")
+			// config := qrterminal.Config{
+			// 	Level:     qrterminal.L,
+			// 	Writer:    sesh.Stderr(),
+			// 	BlackChar: qrterminal.BLACK,
+			// 	WhiteChar: qrterminal.WHITE,
+			// 	QuietZone: 1,
+			// }
+			// qrterminal.GenerateWithConfig(httpAddr, config)
 
 			return
 		}

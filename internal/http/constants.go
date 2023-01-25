@@ -7,6 +7,4 @@ const (
 	RequestIDContextKey ContextKey = "request_id"
 
 	RequestIDHeader = "X-Request-ID"
-
-	FilePath = "/f/"
 )

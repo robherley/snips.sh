@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"embed"
 	"os"
 	"os/signal"
 	"sync"
@@ -73,7 +74,7 @@ func stop(ctx context.Context, services []service) {
 	}
 }
 
-func New(cfg *config.Config) (*App, error) {
+func New(cfg *config.Config, webFS *embed.FS) (*App, error) {
 	db, err := db.New(cfg)
 	if err != nil {
 		return nil, err
@@ -84,7 +85,7 @@ func New(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	http, err := http.New(cfg, db)
+	http, err := http.New(cfg, db, webFS)
 	if err != nil {
 		return nil, err
 	}
