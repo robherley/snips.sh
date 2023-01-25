@@ -8,7 +8,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/parse"
+	"github.com/robherley/snips.sh/internal/parser"
 	"github.com/rs/zerolog/log"
 )
 
@@ -46,7 +46,7 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 			return
 		}
 
-		out, err := parse.File(&file)
+		out, err := parser.LexFile(file.Type, file.Content)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to parse file")
 			http.Error(w, "unable to parse file", http.StatusInternalServerError)
@@ -57,7 +57,7 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 			"FileID":    file.ID,
 			"FileSize":  humanize.Bytes(file.Size),
 			"CreatedAt": humanize.Time(file.CreatedAt),
-			"FileType":  out.FileType,
+			"FileType":  strings.ToLower(file.Type),
 			"HTML":      out.HTML,
 			"CSS":       out.CSS,
 		})

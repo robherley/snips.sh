@@ -1,42 +1,32 @@
-package parse
+package parser
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
-	"strings"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
-	"github.com/robherley/snips.sh/internal/db"
 )
 
 const (
 	DefaultStyleName = "base16-snazzy"
-	FallbackName     = "text"
 )
 
-type FileOutput struct {
-	FileType string
-	CSS      template.CSS
-	HTML     template.HTML
+var (
+	FallbackLexer = lexers.Plaintext
+)
+
+type LexedFile struct {
+	CSS  template.CSS
+	HTML template.HTML
 }
 
-func File(file *db.File) (*FileOutput, error) {
-	var lexer chroma.Lexer
-	if file.Extension != nil {
-		lexer = lexers.Match(fmt.Sprintf("f.%s", *file.Extension))
-	} else {
-		lexer = lexers.Analyse(string(file.Content))
-	}
+func LexFile(fileType string, fileContent []byte) (*LexedFile, error) {
+	lexer := GetLexer(fileType)
 
-	if lexer == nil {
-		lexer = lexers.Fallback
-	}
-
-	it, err := lexer.Tokenise(nil, string(file.Content))
+	it, err := lexer.Tokenise(nil, string(fileContent))
 	if err != nil {
 		return nil, err
 	}
@@ -61,14 +51,26 @@ func File(file *db.File) (*FileOutput, error) {
 		return nil, err
 	}
 
-	fileType := strings.ToLower(lexer.Config().Name)
-	if fileType == "fallback" {
-		fileType = "text"
+	return &LexedFile{
+		CSS:  template.CSS(chromaCSS.String()),
+		HTML: template.HTML(chromaHTML.String()),
+	}, nil
+}
+
+func Analyze(content string) chroma.Lexer {
+	lexer := lexers.Analyse(content)
+	if lexer == nil {
+		lexer = FallbackLexer
 	}
 
-	return &FileOutput{
-		FileType: fileType,
-		CSS:      template.CSS(chromaCSS.String()),
-		HTML:     template.HTML(chromaHTML.String()),
-	}, nil
+	return lexer
+}
+
+func GetLexer(name string) chroma.Lexer {
+	lexer := lexers.Get(name)
+	if lexer == nil {
+		lexer = FallbackLexer
+	}
+
+	return lexer
 }

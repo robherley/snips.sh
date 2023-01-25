@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/alecthomas/chroma/v2"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/parser"
 	"github.com/rs/zerolog/log"
 )
 
@@ -103,12 +105,19 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				return
 			}
 
+			var lexer chroma.Lexer
+			if flags.Extension != nil {
+				lexer = parser.GetLexer(*flags.Extension)
+			} else {
+				lexer = parser.Analyze(string(content))
+			}
+
 			file := db.File{
-				Private:   flags.Private,
-				Content:   content,
-				Size:      size,
-				UserID:    sesh.UserID(),
-				Extension: flags.Extension,
+				Private: flags.Private,
+				Content: content,
+				Size:    size,
+				UserID:  sesh.UserID(),
+				Type:    lexer.Config().Name,
 			}
 
 			if err := h.DB.Create(&file).Error; err != nil {
@@ -122,17 +131,15 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				"user_id":   file.UserID,
 				"size":      file.Size,
 				"private":   file.Private,
-				"extension": file.Extension,
+				"file_type": file.Type,
 			}).Msg("file uploaded")
 
 			wish.Println(sesh, "✅ File Uploaded Successfully!")
 			wish.Println(sesh, "💳 ID:", file.ID)
 			wish.Println(sesh, "🏋️  Size:", humanize.Bytes(uint64(file.Size)))
+			wish.Println(sesh, "📁 Type:", file.Type)
 			if file.Private {
 				wish.Println(sesh, "🔐 Private")
-			}
-			if file.Extension != nil {
-				wish.Println(sesh, "📁 Extension:", file.Extension)
 			}
 
 			httpAddr := fmt.Sprintf("%s:%d%s%s", h.Config.Host.External, h.Config.HTTP.Port, "/f/", file.ID)
