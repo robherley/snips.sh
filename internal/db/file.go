@@ -7,7 +7,7 @@ import (
 type File struct {
 	Model
 
-	Size      int64
+	Size      uint64
 	Content   []byte
 	Private   bool `gorm:"index:file_private"`
 	Extension *string

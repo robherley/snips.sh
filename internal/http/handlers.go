@@ -55,7 +55,7 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 
 		tmpl.ExecuteTemplate(w, "file.go.html", map[string]interface{}{
 			"FileID":    file.ID,
-			"FileSize":  humanize.Bytes(uint64(file.Size)),
+			"FileSize":  humanize.Bytes(file.Size),
 			"CreatedAt": humanize.Time(file.CreatedAt),
 			"FileType":  out.FileType,
 			"HTML":      out.HTML,

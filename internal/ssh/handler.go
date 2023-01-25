@@ -79,7 +79,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 	}
 
 	content := make([]byte, 0)
-	size := int64(0)
+	size := uint64(0)
 	for {
 		buf := make([]byte, UploadBufferSize)
 		n, err := sesh.Read(buf)
@@ -90,7 +90,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			return
 		}
 
-		size += int64(n)
+		size += uint64(n)
 		content = append(content, buf[:n]...)
 
 		if size > MaxUploadSize {
