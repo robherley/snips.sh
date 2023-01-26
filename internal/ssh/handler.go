@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/alecthomas/chroma/v2"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/dustin/go-humanize"
@@ -105,19 +104,12 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				return
 			}
 
-			var lexer chroma.Lexer
-			if flags.Extension != nil {
-				lexer = parser.GetLexer(*flags.Extension)
-			} else {
-				lexer = parser.Analyze(string(content))
-			}
-
 			file := db.File{
 				Private: flags.Private,
 				Content: content,
 				Size:    size,
 				UserID:  sesh.UserID(),
-				Type:    lexer.Config().Name,
+				Type:    parser.DetectFileType(content, flags.Extension),
 			}
 
 			if err := h.DB.Create(&file).Error; err != nil {

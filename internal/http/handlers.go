@@ -46,21 +46,28 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 			return
 		}
 
-		out, err := parser.LexFile(file.Type, file.Content)
-		if err != nil {
-			log.Error().Err(err).Msg("unable to parse file")
-			http.Error(w, "unable to parse file", http.StatusInternalServerError)
-			return
-		}
-
-		tmpl.ExecuteTemplate(w, "file.go.html", map[string]interface{}{
+		vars := map[string]interface{}{
 			"FileID":    file.ID,
 			"FileSize":  humanize.Bytes(file.Size),
 			"CreatedAt": humanize.Time(file.CreatedAt),
 			"FileType":  strings.ToLower(file.Type),
-			"HTML":      out.HTML,
-			"CSS":       out.CSS,
-		})
+		}
+
+		if file.IsBinary() {
+			vars["HTML"] = template.HTML(BinaryDataPartial)
+		} else {
+			out, err := parser.LexFile(file.Type, file.Content)
+			if err != nil {
+				log.Error().Err(err).Msg("unable to parse file")
+				http.Error(w, "unable to parse file", http.StatusInternalServerError)
+				return
+			}
+
+			vars["HTML"] = out.HTML
+			vars["CSS"] = out.CSS
+		}
+
+		tmpl.ExecuteTemplate(w, "file.go.html", vars)
 	}
 }
 
