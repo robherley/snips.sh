@@ -95,7 +95,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		content = append(content, buf[:n]...)
 
 		if size > MaxUploadSize {
-			wish.Fatalf(sesh, "❌ File too large, max size is %s B\n", MaxUploadSize)
+			wish.Fatalf(sesh, "❌ File too large, max size is %s\n", humanize.Bytes(MaxUploadSize))
 			return
 		}
 
