@@ -32,6 +32,7 @@ func New(cfg *config.Config, db *db.DB) (*Service, error) {
 			AssignUser(db),
 			BlockIfNoPublicKey,
 			WithLogger,
+			WithRequestID,
 		),
 	)
 	if err != nil {

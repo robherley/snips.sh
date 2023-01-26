@@ -8,8 +8,8 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/parser"
-	"github.com/rs/zerolog/log"
 )
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,6 +25,8 @@ func HealthHandler(w http.ResponseWriter, r *http.Request) {
 
 func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log := logger.From(r.Context())
+
 		fileID := strings.TrimPrefix(r.URL.Path, "/f/")
 
 		file := db.File{}

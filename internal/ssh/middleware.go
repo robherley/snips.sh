@@ -8,12 +8,15 @@ import (
 	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/id"
+	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	gossh "golang.org/x/crypto/ssh"
 	"gorm.io/gorm"
 )
 
+// AssignUser will attempt to match a user with a public key fingerprint.
+// If a user is not found, one will be created with the current fingerprint attached.
 func AssignUser(database *db.DB) func(next ssh.Handler) ssh.Handler {
 	return func(next ssh.Handler) ssh.Handler {
 		return func(sesh ssh.Session) {
@@ -60,15 +63,19 @@ func AssignUser(database *db.DB) func(next ssh.Handler) ssh.Handler {
 			}
 
 			sesh.Context().SetValue(UserIDContextKey, user.ID)
-			logger := GetSessionLogger(sesh).With().Str("user_id", user.ID).Logger()
-			SetSessionLogger(sesh, &logger)
-			logger.Info().Msg("user authenticated")
+
+			logger.From(sesh.Context()).UpdateContext(func(c zerolog.Context) zerolog.Context {
+				return c.Str("user_id", user.ID)
+			})
+			logger.From(sesh.Context()).Info().Msg("user authenticated")
 
 			next(sesh)
 		}
 	}
 }
 
+// BlockIfNoPublicKey will stop any SSH connections that aren't using public key authentication.
+// If blocked, it will print a helpful message to the user.
 func BlockIfNoPublicKey(next ssh.Handler) ssh.Handler {
 	return func(sesh ssh.Session) {
 		if key := sesh.PublicKey(); key == nil {
@@ -81,26 +88,27 @@ func BlockIfNoPublicKey(next ssh.Handler) ssh.Handler {
 	}
 }
 
+// WithRequestID will generate a unique request ID for each SSH session.
+func WithRequestID(next ssh.Handler) ssh.Handler {
+	return func(sesh ssh.Session) {
+		requestID := id.MustGenerate()
+		sesh.Context().SetValue(RequestIDContextKey, requestID)
+		next(sesh)
+	}
+}
+
+// WithLogger will create a logger for each SSH session.
 func WithLogger(next ssh.Handler) ssh.Handler {
 	return func(sesh ssh.Session) {
 		addr := sesh.RemoteAddr().String()
 		start := time.Now()
-		requestID := id.MustGenerate()
-		sesh.Context().SetValue(RequestIDContextKey, requestID)
+		requestID := sesh.Context().Value(RequestIDContextKey).(string)
 
 		reqLog := log.With().Str("svc", "ssh").Str("addr", addr).Str("request_id", requestID).Logger()
-		SetSessionLogger(sesh, &reqLog)
+		sesh.Context().SetValue(logger.ContextKey, &reqLog)
 
 		reqLog.Info().Msg("connected")
 		next(sesh)
 		reqLog.Info().Dur("dur", time.Since(start)).Msg("disconnected")
 	}
-}
-
-func SetSessionLogger(sesh ssh.Session, logger *zerolog.Logger) {
-	sesh.Context().SetValue(LoggerContextKey, logger)
-}
-
-func GetSessionLogger(sesh ssh.Session) *zerolog.Logger {
-	return sesh.Context().Value(LoggerContextKey).(*zerolog.Logger)
 }

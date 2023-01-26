@@ -11,6 +11,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/parser"
 	"github.com/rs/zerolog/log"
 )
@@ -68,7 +69,7 @@ func (h *SessionHandler) Request(sesh *UserSession) {
 }
 
 func (h *SessionHandler) Upload(sesh *UserSession) {
-	log := GetSessionLogger(sesh)
+	log := logger.From(sesh.Context())
 
 	flags, err := ParseUploadFlags(sesh)
 	if err != nil {

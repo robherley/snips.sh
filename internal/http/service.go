@@ -32,7 +32,7 @@ func New(cfg *config.Config, db *db.DB, webFS *embed.FS) (*Service, error) {
 
 	httpServer := &http.Server{
 		Addr:    cfg.HTTPListenAddr(),
-		Handler: WithMiddleware(mux, WithLogger, WithRequestID),
+		Handler: WithMiddleware(mux, WithRecover, WithLogger, WithRequestID),
 	}
 
 	return &Service{httpServer}, nil
