@@ -9,7 +9,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattn/go-isatty v0.0.17
-	github.com/mdp/qrterminal v1.0.1
 	github.com/rs/zerolog v1.28.0
 	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
 	golang.org/x/crypto v0.3.0
@@ -28,5 +27,4 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.16 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
-	rsc.io/qr v0.2.0 // indirect
 )

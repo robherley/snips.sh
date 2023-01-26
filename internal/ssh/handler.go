@@ -151,16 +151,6 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			wish.Println(sesh, "🌐 URL:", httpAddr)
 			wish.Println(sesh, "📠 SSH Command:", sshCommand)
 
-			// wish.Println(sesh, "\n📱 Scan this QR code to download the file:\n")
-			// config := qrterminal.Config{
-			// 	Level:     qrterminal.L,
-			// 	Writer:    sesh.Stderr(),
-			// 	BlackChar: qrterminal.BLACK,
-			// 	WhiteChar: qrterminal.WHITE,
-			// 	QuietZone: 1,
-			// }
-			// qrterminal.GenerateWithConfig(httpAddr, config)
-
 			return
 		}
 	}
