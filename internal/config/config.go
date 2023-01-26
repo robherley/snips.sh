@@ -16,6 +16,8 @@ type Config struct {
 		External string `default:"localhost"`
 	}
 
+	HMACKey string `default:"correct-horse-battery-staple"`
+
 	HTTP struct {
 		Port int `default:"8080"`
 	}
