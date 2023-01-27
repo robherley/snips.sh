@@ -2,6 +2,7 @@ package config
 
 import (
 	"net"
+	"net/url"
 	"strconv"
 
 	"github.com/kelseyhightower/envconfig"
@@ -11,16 +12,12 @@ const ApplicationName = "snips"
 
 type Config struct {
 	Debug bool `default:"false"`
-	Host  struct {
-		Internal string `default:"localhost"`
-		External string `default:"localhost"`
+	URL   struct {
+		Internal url.URL `default:"http://localhost:8080"`
+		External url.URL `default:"http://localhost:8080"`
 	}
 
 	HMACKey string `default:"correct-horse-battery-staple"`
-
-	HTTP struct {
-		Port int `default:"8080"`
-	}
 
 	SSH struct {
 		Port        int    `default:"2222"`
@@ -38,11 +35,11 @@ func (cfg *Config) Usage() {
 }
 
 func (cfg *Config) SSHListenAddr() string {
-	return net.JoinHostPort(cfg.Host.Internal, strconv.Itoa(cfg.SSH.Port))
+	return net.JoinHostPort(cfg.URL.Internal.Hostname(), strconv.Itoa(cfg.SSH.Port))
 }
 
 func (cfg *Config) HTTPListenAddr() string {
-	return net.JoinHostPort(cfg.Host.Internal, strconv.Itoa(cfg.HTTP.Port))
+	return cfg.URL.Internal.Host
 }
 
 func Load() (*Config, error) {

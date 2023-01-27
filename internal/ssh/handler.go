@@ -5,6 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/url"
+	"strconv"
+	"time"
 
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
@@ -13,12 +16,14 @@ import (
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/parser"
+	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/rs/zerolog/log"
 )
 
 type SessionHandler struct {
 	Config *config.Config
 	DB     *db.DB
+	Signer *signer.Signer
 }
 
 func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
@@ -27,7 +32,7 @@ func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 
 		// user requesting to download a file
 		if userSesh.IsFileRequest() {
-			h.Request(userSesh)
+			h.FileRequest(userSesh)
 			return
 		}
 
@@ -43,12 +48,13 @@ func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 }
 
 func (h *SessionHandler) Interactive(sesh *UserSession) {
+	// TODO(robherley): tui
 	wish.Println(sesh, "👋 Welcome to snips.sh!")
 	wish.Println(sesh, "🪪 You are user:", sesh.UserID())
 	wish.Println(sesh, "🔑 Using key with fingerprint:", sesh.PublicKeyFingerprint())
 }
 
-func (h *SessionHandler) Request(sesh *UserSession) {
+func (h *SessionHandler) FileRequest(sesh *UserSession) {
 	userID := sesh.UserID()
 	fileID := sesh.RequestedFileID()
 
@@ -65,16 +71,85 @@ func (h *SessionHandler) Request(sesh *UserSession) {
 		return
 	}
 
+	args := sesh.Command()
+	if len(args) == 0 {
+		h.DownloadFile(sesh, &file)
+		return
+	}
+
+	switch args[0] {
+	case "rm":
+		h.DeleteFile(sesh, &file)
+	case "sign":
+		h.SignFile(sesh, &file)
+	default:
+		wish.Fatalf(sesh, "❌ Unknown command: %s\n", args[0])
+	}
+}
+
+func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
+	// TODO(robherley): add prompt & -f flag
+
+	// this is a soft delete
+	if err := h.DB.Delete(file).Error; err != nil {
+		log.Error().Err(err).Msg("unable to delete file")
+		wish.Fatalf(sesh, "❌ Error deleting file: %s\n", file.ID)
+		return
+	}
+
+	log.Info().Fields(map[string]interface{}{
+		"file_id": file.ID,
+		"user_id": file.UserID,
+	}).Msg("file deleted")
+
+	wish.Printf(sesh, "✅ Deleted file: %s\n", file.ID)
+}
+
+func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
+	if !file.Private {
+		wish.Fatalf(sesh, "❌ Can only sign private files: %s\n", file.ID)
+		return
+	}
+
+	flags := SignFlags{}
+	if err := flags.Parse(sesh); err != nil {
+		if !errors.Is(err, flag.ErrHelp) {
+			log.Warn().Err(err).Msg("invalid user specified flags")
+			flags.PrintDefaults()
+		}
+		return
+	}
+
+	expires := time.Now().Add(flags.TTL)
+
+	// only signing the path + queries of the URL
+	pathToSign := url.URL{
+		Path: fmt.Sprintf("/f/%s", file.ID),
+		RawQuery: url.Values{
+			"exp": []string{strconv.FormatInt(expires.Unix(), 10)},
+		}.Encode(),
+	}
+
+	signedFileURL := h.Signer.SignURL(pathToSign)
+	signedFileURL.Scheme = h.Config.URL.External.Scheme
+	signedFileURL.Host = h.Config.URL.External.Host
+
+	wish.Printf(sesh, "⏰ Signed file expires: %s\n", expires.Format(time.RFC3339))
+	wish.Printf(sesh, "🔗 %s\n", signedFileURL.String())
+}
+
+func (h *SessionHandler) DownloadFile(sesh *UserSession, file *db.File) {
 	wish.Print(sesh, string(file.Content))
 }
 
 func (h *SessionHandler) Upload(sesh *UserSession) {
 	log := logger.From(sesh.Context())
 
-	flags, err := ParseUploadFlags(sesh)
-	if err != nil {
+	flags := UploadFlags{}
+	if err := flags.Parse(sesh); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			log.Warn().Err(err).Msg("invalid user specified flags")
+			flags.PrintDefaults()
 		}
 		return
 	}
@@ -120,7 +195,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			}
 
 			log.Info().Fields(map[string]interface{}{
-				"id":        file.ID,
+				"file_id":   file.ID,
 				"user_id":   file.UserID,
 				"size":      file.Size,
 				"private":   file.Private,
@@ -135,13 +210,15 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				wish.Println(sesh, "🔐 Private")
 			}
 
-			httpAddr := fmt.Sprintf("%s:%d%s%s", h.Config.Host.External, h.Config.HTTP.Port, "/f/", file.ID)
-			sshCommand := fmt.Sprintf("ssh %s%s@%s", FileRequestPrefix, file.ID, h.Config.Host.External)
+			httpAddr := h.Config.URL.External
+			httpAddr.Path = fmt.Sprintf("/f/%s", file.ID)
+
+			sshCommand := fmt.Sprintf("ssh %s%s@%s", FileRequestPrefix, file.ID, h.Config.URL.External.Hostname())
 			if h.Config.SSH.Port != 22 {
 				sshCommand += fmt.Sprintf(" -p %d", h.Config.SSH.Port)
 			}
 
-			wish.Println(sesh, "🌐 URL:", httpAddr)
+			wish.Println(sesh, "🔗 URL:", httpAddr.String())
 			wish.Println(sesh, "📠 SSH Command:", sshCommand)
 
 			return

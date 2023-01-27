@@ -1,27 +1,35 @@
 package ssh
 
 import (
+	"errors"
 	"flag"
+	"fmt"
 	"strings"
+	"time"
+)
+
+var (
+	ErrFlagRequied = errors.New("flag required")
 )
 
 type UploadFlags struct {
+	*flag.FlagSet
+
 	Private   bool
 	Extension *string
 }
 
-func ParseUploadFlags(sesh Session) (*UploadFlags, error) {
-	flagset := flag.NewFlagSet("", flag.ContinueOnError)
-	flagset.SetOutput(sesh.Stderr())
+func (uf *UploadFlags) Parse(sesh Session) error {
+	uf.FlagSet = flag.NewFlagSet("", flag.ContinueOnError)
+	uf.SetOutput(sesh.Stderr())
 
-	flags := &UploadFlags{}
 	ext := ""
 
-	flagset.BoolVar(&flags.Private, "private", false, "file only accessible via the creator's keys (optional)")
-	flagset.StringVar(&ext, "ext", "", "set the file extension (optional)")
+	uf.BoolVar(&uf.Private, "private", false, "only accessible via creator or signed urls (optional)")
+	uf.StringVar(&ext, "ext", "", "set the file extension (optional)")
 
-	if err := flagset.Parse(sesh.Command()); err != nil {
-		return nil, err
+	if err := uf.FlagSet.Parse(sesh.Command()); err != nil {
+		return err
 	}
 
 	if ext != "" {
@@ -30,8 +38,31 @@ func ParseUploadFlags(sesh Session) (*UploadFlags, error) {
 			ext = ext[:255]
 		}
 
-		flags.Extension = &ext
+		uf.Extension = &ext
 	}
 
-	return flags, nil
+	return nil
+}
+
+type SignFlags struct {
+	*flag.FlagSet
+
+	TTL time.Duration
+}
+
+func (sf *SignFlags) Parse(sesh Session) error {
+	sf.FlagSet = flag.NewFlagSet("sign", flag.ContinueOnError)
+	sf.SetOutput(sesh.Stderr())
+
+	sf.DurationVar(&sf.TTL, "ttl", 0, "lifetime of the signed url")
+
+	if err := sf.FlagSet.Parse(sesh.Command()[1:]); err != nil {
+		return err
+	}
+
+	if sf.TTL.Seconds() == 0 {
+		return fmt.Errorf("%w: -ttl", ErrFlagRequied)
+	}
+
+	return nil
 }

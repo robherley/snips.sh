@@ -39,7 +39,13 @@ func WithLogger(next http.Handler) http.Handler {
 		start := time.Now()
 		requestID := r.Header.Get(RequestIDHeader)
 
-		reqLog := log.With().Str("svc", "http").Str("addr", addr).Str("request_id", requestID).Logger()
+		reqLog := log.With().Fields(map[string]interface{}{
+			"svc":        "http",
+			"addr":       addr,
+			"request_id": requestID,
+			"path":       r.URL.Path,
+		}).Logger()
+
 		ctx := context.WithValue(r.Context(), logger.ContextKey, &reqLog)
 		reqLog.Info().Msg("connected")
 

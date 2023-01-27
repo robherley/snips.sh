@@ -19,8 +19,8 @@
 <body>
   <div class="file-container">
     <div class="file-header">
-      <div>file: <a href="/f/{{ .FileID }}">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} &middot; {{ .CreatedAt }}</div>
-      <a class="btn" href="?r=1" aria-label="view raw file">view raw</a>
+      <div>file: <a href=".">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} &middot; {{ .CreatedAt }}</div>
+      <a class="btn" href="{{ .RawHREF }} " aria-label="view raw file">view raw</a>
     </div>
     {{ .HTML }}
   </div>
