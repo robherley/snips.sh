@@ -112,7 +112,7 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
 	}
 
 	flags := SignFlags{}
-	if err := flags.Parse(sesh); err != nil {
+	if err := flags.Parse(sesh.Stderr(), sesh.Command()); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			log.Warn().Err(err).Msg("invalid user specified flags")
 			flags.PrintDefaults()
@@ -146,7 +146,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 	log := logger.From(sesh.Context())
 
 	flags := UploadFlags{}
-	if err := flags.Parse(sesh); err != nil {
+	if err := flags.Parse(sesh.Stderr(), sesh.Command()); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			log.Warn().Err(err).Msg("invalid user specified flags")
 			flags.PrintDefaults()

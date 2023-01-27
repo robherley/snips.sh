@@ -81,7 +81,7 @@ func GetLexer(name string) chroma.Lexer {
 
 // DetectFileType returns the type of the file based on the content and the hint.
 // If the content's mimetype is not detected as text/plain, it returns "binary"
-func DetectFileType(content []byte, hint *string) string {
+func DetectFileType(content []byte, hint string) string {
 	detectedContentType := http.DetectContentType(content)
 
 	if !strings.Contains(detectedContentType, "text/plain") {
@@ -89,8 +89,8 @@ func DetectFileType(content []byte, hint *string) string {
 	}
 
 	var lexer chroma.Lexer
-	if hint != nil {
-		lexer = GetLexer(*hint)
+	if hint != "" {
+		lexer = GetLexer(hint)
 	} else {
 		lexer = Analyze(string(content))
 	}
