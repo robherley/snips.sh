@@ -50,7 +50,7 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 		}
 
 		if ShouldSendRaw(r) {
-			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(http.StatusOK)
 			w.Write(file.Content)
 			return

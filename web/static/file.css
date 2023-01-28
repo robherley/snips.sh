@@ -47,6 +47,13 @@ span[role="img"] {
 
 a {
   color: var(--white);
+  text-underline-offset: 0.1rem;
+  text-decoration-thickness: 0.15rem;
+  text-decoration-color: var(--light-grey);
+}
+
+a:hover {
+  text-decoration-color: var(--white);
 }
 
 .file-container {

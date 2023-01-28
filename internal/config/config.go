@@ -13,8 +13,8 @@ const ApplicationName = "snips"
 type Config struct {
 	Debug bool `default:"false"`
 	URL   struct {
-		Internal url.URL `default:"http://localhost:8080"`
-		External url.URL `default:"http://localhost:8080"`
+		Internal url.URL `default:"http://0.0.0.0:8080"`
+		External url.URL `default:"http://0.0.0.0:8080"`
 	}
 
 	HMACKey string `default:"correct-horse-battery-staple"`
