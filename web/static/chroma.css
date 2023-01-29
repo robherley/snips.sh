@@ -1,0 +1,100 @@
+/*
+  Adapted from: https://github.com/alecthomas/chroma/blob/master/styles/github-dark.xml
+  Replaced with Primer CSS color variables, and other minor tweaks.
+*/
+
+/* Background */ .bg { }
+/* PreWrapper */ .chroma { }
+/* LineNumbers targeted by URL anchor */ .chroma .ln:target { }
+/* LineNumbersTable targeted by URL anchor */ .chroma .lnt:target { }
+/* Other */ .chroma .x {  }
+/* Error */ .chroma .err { color: var(--color-prettylights-syntax-brackethighlighter-unmatched) }
+/* CodeLine */ .chroma .cl { padding-left: 0.75rem }
+/* LineLink */ .chroma .lnlinks { outline: none; text-decoration: none; color: inherit }
+/* LineTableTD */ .chroma .lntd { vertical-align: top; padding: 0; margin: 0; border: 0; }
+/* LineTable */ .chroma .lntable { border-spacing: 0; padding: 0; margin: 0; border: 0; }
+/* LineHighlight */ .chroma .hl { }
+/* LineNumbersTable */ .chroma .lnt { white-space: pre; user-select: none; margin-right: 0.4em; padding: 0 0.4em 0 0.4em; color: var(--color-fg-muted) }
+/* LineNumbers */ .chroma .ln { white-space: pre; user-select: none; margin-right: 0.25em; padding: 0 0.4em 0 0.4em; color: var(--color-fg-muted) }
+/* Line */ .chroma .line { display: flex; }
+/* Keyword */ .chroma .k { color: var(--color-prettylights-syntax-keyword) }
+/* KeywordConstant */ .chroma .kc { color: var(--color-prettylights-syntax-constant) }
+/* KeywordDeclaration */ .chroma .kd { color: var(--color-prettylights-syntax-keyword) }
+/* KeywordNamespace */ .chroma .kn { color: var(--color-prettylights-syntax-keyword) }
+/* KeywordPseudo */ .chroma .kp { color: var(--color-prettylights-syntax-constant) }
+/* KeywordReserved */ .chroma .kr { color: var(--color-prettylights-syntax-keyword) }
+/* KeywordType */ .chroma .kt { color: var(--color-prettylights-syntax-keyword) }
+/* Name */ .chroma .n {  }
+/* NameAttribute */ .chroma .na {  }
+/* NameBuiltin */ .chroma .nb {  }
+/* NameBuiltinPseudo */ .chroma .bp {  }
+/* NameClass */ .chroma .nc { color: var(--color-prettylights-syntax-variable) }
+/* NameConstant */ .chroma .no { color: var(--color-prettylights-syntax-constant) }
+/* NameDecorator */ .chroma .nd { color: var(--color-prettylights-syntax-meta-diff-range) }
+/* NameEntity */ .chroma .ni { color: var(--color-prettylights-syntax-variable) }
+/* NameException */ .chroma .ne { color: var(--color-prettylights-syntax-variable) }
+/* NameFunction */ .chroma .nf { color: var(--color-prettylights-syntax-meta-diff-range) }
+/* NameFunctionMagic */ .chroma .fm {  }
+/* NameLabel */ .chroma .nl { color: var(--color-prettylights-syntax-constant) }
+/* NameNamespace */ .chroma .nn { color: var(--color-prettylights-syntax-keyword) }
+/* NameOther */ .chroma .nx { }
+/* NameProperty */ .chroma .py { color: var(--color-prettylights-syntax-constant) }
+/* NameTag */ .chroma .nt { color: var(--color-prettylights-syntax-string-regexp) }
+/* NameVariable */ .chroma .nv { color: var(--color-prettylights-syntax-constant) }
+/* NameVariableClass */ .chroma .vc {  }
+/* NameVariableGlobal */ .chroma .vg {  }
+/* NameVariableInstance */ .chroma .vi {  }
+/* NameVariableMagic */ .chroma .vm {  }
+/* Literal */ .chroma .l { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralDate */ .chroma .ld { color: var(--color-prettylights-syntax-constant) }
+/* LiteralString */ .chroma .s { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralStringAffix */ .chroma .sa { color: var(--color-prettylights-syntax-constant) }
+/* LiteralStringBacktick */ .chroma .sb { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralStringChar */ .chroma .sc { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralStringDelimiter */ .chroma .dl { color: var(--color-prettylights-syntax-constant) }
+/* LiteralStringDoc */ .chroma .sd { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralStringDouble */ .chroma .s2 { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralStringEscape */ .chroma .se { color: var(--color-prettylights-syntax-constant) }
+/* LiteralStringHeredoc */ .chroma .sh { color: var(--color-prettylights-syntax-constant) }
+/* LiteralStringInterpol */ .chroma .si { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralStringOther */ .chroma .sx { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralStringRegex */ .chroma .sr { color: var(--color-prettylights-syntax-constant) }
+/* LiteralStringSingle */ .chroma .s1 { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralStringSymbol */ .chroma .ss { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralNumber */ .chroma .m { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralNumberBin */ .chroma .mb { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralNumberFloat */ .chroma .mf { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralNumberHex */ .chroma .mh { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralNumberInteger */ .chroma .mi { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralNumberIntegerLong */ .chroma .il { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* LiteralNumberOct */ .chroma .mo { color: var(--color-prettylights-syntax-constant-other-reference-link) }
+/* Operator */ .chroma .o { color: var(--color-prettylights-syntax-keyword) }
+/* OperatorWord */ .chroma .ow { color: var(--color-prettylights-syntax-keyword) }
+/* Punctuation */ .chroma .p {  }
+/* Comment */ .chroma .c { color: var(--color-prettylights-syntax-brackethighlighter-angle) }
+/* CommentHashbang */ .chroma .ch { color: var(--color-prettylights-syntax-brackethighlighter-angle) }
+/* CommentMultiline */ .chroma .cm { color: var(--color-prettylights-syntax-brackethighlighter-angle) }
+/* CommentSingle */ .chroma .c1 { color: var(--color-prettylights-syntax-brackethighlighter-angle) }
+/* CommentSpecial */ .chroma .cs { color: var(--color-prettylights-syntax-brackethighlighter-angle) }
+/* CommentPreproc */ .chroma .cp { color: var(--color-prettylights-syntax-brackethighlighter-angle) }
+/* CommentPreprocFile */ .chroma .cpf { color: var(--color-prettylights-syntax-brackethighlighter-angle) }
+/* Generic */ .chroma .g {  }
+/* GenericDeleted */ .chroma .gd { color: var(--color-prettylights-syntax-markup-deleted-text); background-color: var(--color-prettylights-syntax-markup-deleted-bg) }
+/* GenericEmph */ .chroma .ge { font-style: italic }
+/* GenericError */ .chroma .gr { color: var(--color-prettylights-syntax-invalid-illegal-text) }
+/* GenericHeading */ .chroma .gh { color: var(--color-prettylights-syntax-constant) }
+/* GenericInserted */ .chroma .gi { color: var(--color-prettylights-syntax-markup-inserted-text); background-color: var(--color-prettylights-syntax-markup-inserted-bg) }
+/* GenericOutput */ .chroma .go { color: var(--color-prettylights-syntax-brackethighlighter-angle) }
+/* GenericPrompt */ .chroma .gp { color: var(--color-prettylights-syntax-brackethighlighter-angle) }
+/* GenericStrong */ .chroma .gs { font-weight: bold }
+/* GenericSubheading */ .chroma .gu { color: var(--color-prettylights-syntax-constant) }
+/* GenericTraceback */ .chroma .gt { color: var(--color-prettylights-syntax-keyword) }
+/* GenericUnderline */ .chroma .gl { text-decoration: underline }
+/* TextWhitespace */ .chroma .w { color: var(--color-prettylights-syntax-comment) }
+
+/* For line highlights */
+.chroma .hl .cl {
+  background-color: var(--color-attention-subtle);
+  box-shadow: inset 2px 0 0 var(--color-attention-fg);
+  flex: 1;
+}

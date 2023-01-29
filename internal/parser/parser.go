@@ -12,16 +12,11 @@ import (
 	"github.com/alecthomas/chroma/v2/styles"
 )
 
-const (
-	DefaultStyleName = "base16-snazzy"
-)
-
 var (
 	FallbackLexer = lexers.Plaintext
 )
 
 type LexedFile struct {
-	CSS  template.CSS
 	HTML template.HTML
 }
 
@@ -34,28 +29,26 @@ func LexFile(fileType string, fileContent []byte) (*LexedFile, error) {
 		return nil, err
 	}
 
-	formatter := html.New(html.WithClasses(true), html.WithLineNumbers(true), html.WithLinkableLineNumbers(true, "L"))
+	formatter := html.New(
+		html.WithClasses(true),
+		html.WithAllClasses(true),
+		html.WithLineNumbers(true),
+		html.WithLinkableLineNumbers(true, "L"),
+	)
 
-	// TODO(robherley): make this configurable, and cache styles
-	style := styles.Get(DefaultStyleName)
-	if style == nil {
-		style = styles.Fallback
-	}
-
-	chromaCSS := bytes.NewBuffer(nil)
-	err = formatter.WriteCSS(chromaCSS, style)
-	if err != nil {
-		return nil, err
-	}
+	// github-dark is used as a placeholder for the default style to render the classes
+	// style := styles.Get("github-dark")
+	// if style == nil {
+	// 	style =
+	// }
 
 	chromaHTML := bytes.NewBuffer(nil)
-	formatter.Format(chromaHTML, style, it)
+	formatter.Format(chromaHTML, styles.Fallback, it)
 	if err != nil {
 		return nil, err
 	}
 
 	return &LexedFile{
-		CSS:  template.CSS(chromaCSS.String()),
 		HTML: template.HTML(chromaHTML.String()),
 	}, nil
 }

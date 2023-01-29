@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+dir=$(git rev-parse --show-toplevel)
+curl -s -L -o "$dir/web/static/vendor/primer.css" https://unpkg.com/@primer/css/dist/primer.css

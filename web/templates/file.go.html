@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
 
 <head>
   <meta charset="UTF-8">
@@ -8,26 +8,27 @@
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>">
   <title>snips.sh - {{ .FileID }}</title>
-  <style>
-    {{ .CSS }}
-  </style>
-
+  <link rel="stylesheet" href="/static/vendor/primer.css">
+  <link rel="stylesheet" href="/static/chroma.css">
   <link rel="stylesheet" href="/static/file.css">
   <script async defer src="/static/file.js"></script>
 </head>
 
 <body>
-  <div class="file-container">
-    <div class="file-header">
+  <div class="container">
+    <div class="m-4 border rounded-3 overflow-hidden">
+      <div class="d-flex flex-justify-between flex-items-center color-bg-overlay border-bottom p-2 text-mono color-fg-muted">
       <div>file: <a href=".">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} &middot; {{ .CreatedAt }}</div>
-      <a class="btn" href="{{ .RawHREF }} " aria-label="view raw file">view raw</a>
+      <a class="btn btn-sm btn-invisible" href="{{ .RawHREF }} " aria-label="view raw file">view raw</a>
+      </div>
+      <div class="p-2 overflow-auto">
+        {{ .HTML }}
+      </div>
     </div>
-    {{ .HTML }}
   </div>
-  <footer>
+  <footer class="text-center text-mono mb-4">
     <span role="img" aria-label="scissors">✂️</span>
     <a href="/">snips.sh</a>
   </footer>
 </body>
-
 </html>

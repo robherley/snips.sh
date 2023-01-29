@@ -58,8 +58,6 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 
 		rawHref := "?r=1"
 		if isSignedAndNotExpired {
-			// gotta re-sign the url for the raw link
-
 			q := r.URL.Query()
 			q.Del("sig")
 			q.Add("r", "1")
@@ -92,7 +90,6 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 			}
 
 			vars["HTML"] = out.HTML
-			vars["CSS"] = out.CSS
 		}
 
 		tmpl.ExecuteTemplate(w, "file.go.html", vars)
