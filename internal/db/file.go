@@ -11,7 +11,3 @@ type File struct {
 	UserID string
 	User   User
 }
-
-func (f *File) IsBinary() bool {
-	return f.Type == "binary"
-}

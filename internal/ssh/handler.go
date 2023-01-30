@@ -15,7 +15,7 @@ import (
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
-	"github.com/robherley/snips.sh/internal/parser"
+	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/rs/zerolog/log"
 )
@@ -185,7 +185,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				Content: content,
 				Size:    size,
 				UserID:  sesh.UserID(),
-				Type:    parser.DetectFileType(content, flags.Extension),
+				Type:    renderer.DetectFileType(content, flags.Extension),
 			}
 
 			if err := h.DB.Create(&file).Error; err != nil {

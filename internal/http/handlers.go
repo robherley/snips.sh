@@ -12,7 +12,7 @@ import (
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
-	"github.com/robherley/snips.sh/internal/parser"
+	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/signer"
 )
 
@@ -71,25 +71,31 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 			rawHref = signedRawURL.String()
 		}
 
-		vars := map[string]interface{}{
-			"FileID":    file.ID,
-			"FileSize":  humanize.Bytes(file.Size),
-			"CreatedAt": humanize.Time(file.CreatedAt),
-			"FileType":  strings.ToLower(file.Type),
-			"RawHREF":   rawHref,
-		}
+		var html template.HTML
 
-		if file.IsBinary() {
-			vars["HTML"] = template.HTML(BinaryDataPartial)
-		} else {
-			out, err := parser.LexFile(file.Type, file.Content)
+		switch file.Type {
+		case "binary":
+			html = renderer.BinaryHTMLPlaceholder
+		case "markdown":
+			html = template.HTML("todo!")
+		default:
+			code, err := renderer.ToSyntaxHighlightedCode(file.Type, file.Content)
 			if err != nil {
 				log.Error().Err(err).Msg("unable to parse file")
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)
 				return
 			}
 
-			vars["HTML"] = out.HTML
+			html = code
+		}
+
+		vars := map[string]interface{}{
+			"FileID":    file.ID,
+			"FileSize":  humanize.Bytes(file.Size),
+			"CreatedAt": humanize.Time(file.CreatedAt),
+			"FileType":  strings.ToLower(file.Type),
+			"RawHREF":   rawHref,
+			"HTML":      html,
 		}
 
 		tmpl.ExecuteTemplate(w, "file.go.html", vars)
