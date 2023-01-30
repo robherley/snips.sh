@@ -9,9 +9,12 @@ import (
 	"strconv"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/dustin/go-humanize"
+	"github.com/muesli/termenv"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
@@ -48,10 +51,58 @@ func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 }
 
 func (h *SessionHandler) Interactive(sesh *UserSession) {
-	// TODO(robherley): tui
-	wish.Println(sesh, "👋 Welcome to snips.sh!")
-	wish.Println(sesh, "🪪 You are user:", sesh.UserID())
-	wish.Println(sesh, "🔑 Using key with fingerprint:", sesh.PublicKeyFingerprint())
+	lipgloss.SetColorProfile(termenv.ANSI256)
+	pty, winChan, _ := sesh.Pty()
+
+	m := model{
+		term:        pty.Term,
+		width:       pty.Window.Width,
+		height:      pty.Window.Height,
+		userID:      sesh.UserID(),
+		fingerprint: sesh.PublicKeyFingerprint(),
+		time:        time.Now(),
+	}
+
+	// todo: what is alt screen?
+	prog := tea.NewProgram(&m, tea.WithInput(sesh), tea.WithOutput(sesh), tea.WithAltScreen())
+	if prog == nil {
+		log.Error().Msg("failed to create program")
+		wish.Fatalf(sesh, "❌ failed to create program")
+		return
+	}
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	go func() {
+		for {
+			select {
+			case <-sesh.Context().Done():
+				if prog != nil {
+					prog.Quit()
+					return
+				}
+			case w := <-winChan:
+				if prog != nil {
+					prog.Send(tea.WindowSizeMsg{Width: w.Width, Height: w.Height})
+				}
+			case <-ticker.C:
+				if prog != nil {
+					prog.Send(timeMsg(time.Now()))
+				}
+			}
+		}
+	}()
+
+	defer func() {
+		if prog != nil {
+			prog.Kill()
+		}
+	}()
+
+	if _, err := prog.Run(); err != nil {
+		log.Error().Err(err).Msg("app exited with error")
+	}
 }
 
 func (h *SessionHandler) FileRequest(sesh *UserSession) {
