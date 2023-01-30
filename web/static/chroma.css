@@ -9,7 +9,7 @@
 /* LineNumbersTable targeted by URL anchor */ .chroma .lnt:target { }
 /* Other */ .chroma .x {  }
 /* Error */ .chroma .err { color: var(--color-prettylights-syntax-brackethighlighter-unmatched) }
-/* CodeLine */ .chroma .cl { padding-left: 0.75rem }
+/* CodeLine */ .chroma .cl { }
 /* LineLink */ .chroma .lnlinks { outline: none; text-decoration: none; color: inherit }
 /* LineTableTD */ .chroma .lntd { vertical-align: top; padding: 0; margin: 0; border: 0; }
 /* LineTable */ .chroma .lntable { border-spacing: 0; padding: 0; margin: 0; border: 0; }
@@ -97,4 +97,8 @@
   background-color: var(--color-attention-subtle);
   box-shadow: inset 2px 0 0 var(--color-attention-fg);
   flex: 1;
+}
+
+.chroma .ln + .cl {
+  padding-left: 0.75rem
 }

@@ -77,7 +77,14 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 		case "binary":
 			html = renderer.BinaryHTMLPlaceholder
 		case "markdown":
-			html = template.HTML("todo!")
+			md, err := renderer.ToMarkdown(file.Content)
+			if err != nil {
+				log.Error().Err(err).Msg("unable to parse file")
+				http.Error(w, "unable to parse file", http.StatusInternalServerError)
+				return
+			}
+
+			html = md
 		default:
 			code, err := renderer.ToSyntaxHighlightedCode(file.Type, file.Content)
 			if err != nil {

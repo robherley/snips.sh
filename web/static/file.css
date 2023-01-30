@@ -1,5 +1,6 @@
 :root {
   --max-width: 1337px;
+  --color-accent-fg: var(--color-ansi-cyan) !important;
 }
 
 html {
