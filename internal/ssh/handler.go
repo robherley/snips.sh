@@ -54,6 +54,13 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 	lipgloss.SetColorProfile(termenv.ANSI256)
 	pty, winChan, _ := sesh.Pty()
 
+	files := []db.File{}
+	if err := h.DB.Where("user_id = ?", sesh.UserID()).Find(&files).Error; err != nil {
+		log.Error().Err(err).Msg("failed to get files")
+		wish.Fatalf(sesh, "❌ failed to get files")
+		return
+	}
+
 	m := model{
 		term:        pty.Term,
 		width:       pty.Window.Width,
@@ -61,6 +68,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 		userID:      sesh.UserID(),
 		fingerprint: sesh.PublicKeyFingerprint(),
 		time:        time.Now(),
+		files:       files,
 	}
 
 	// todo: what is alt screen?
@@ -163,7 +171,8 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
 	}
 
 	flags := SignFlags{}
-	if err := flags.Parse(sesh.Stderr(), sesh.Command()); err != nil {
+	args := sesh.Command()[1:]
+	if err := flags.Parse(sesh.Stderr(), args); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			log.Warn().Err(err).Msg("invalid user specified flags")
 			flags.PrintDefaults()

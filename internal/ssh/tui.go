@@ -5,6 +5,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/robherley/snips.sh/internal/db"
 )
 
 type model struct {
@@ -14,6 +15,7 @@ type model struct {
 	time        time.Time
 	userID      string
 	fingerprint string
+	files       []db.File
 }
 
 type timeMsg time.Time
@@ -42,8 +44,9 @@ func (m *model) View() string {
 	s := "👋 Welcome to snips.sh!\n"
 	s += "🪪  You are user: %s\n"
 	s += "🔑 Using key with fingerprint: %s\n"
+	s += "📁 You have %d files\n"
 	s += "🖥️  Your term is %s (x: %d, y: %d)\n"
 	s += "⌚ Time: " + m.time.Format(time.RFC1123) + "\n\n"
 	s += "Press 'q' to quit\n"
-	return fmt.Sprintf(s, m.userID, m.fingerprint, m.term, m.width, m.height)
+	return fmt.Sprintf(s, m.userID, m.fingerprint, len(m.files), m.term, m.width, m.height)
 }

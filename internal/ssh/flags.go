@@ -43,7 +43,7 @@ type SignFlags struct {
 }
 
 func (sf *SignFlags) Parse(out io.Writer, args []string) error {
-	sf.FlagSet = flag.NewFlagSet("sign", flag.ContinueOnError)
+	sf.FlagSet = flag.NewFlagSet("", flag.ContinueOnError)
 	sf.SetOutput(out)
 
 	sf.DurationVar(&sf.TTL, "ttl", 0, "lifetime of the signed url")
