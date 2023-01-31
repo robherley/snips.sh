@@ -19,7 +19,9 @@
     <div class="m-4 border rounded-3 overflow-hidden">
       <div class="d-flex flex-justify-between flex-items-center color-bg-overlay border-bottom p-2 text-mono color-fg-muted">
       <div>file: <a href=".">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} &middot; {{ .CreatedAt }}</div>
+      {{ if .RawHREF }}
       <a class="btn btn-sm btn-invisible" href="{{ .RawHREF }} " aria-label="view raw file">view raw</a>
+      {{ end }}
       </div>
       <div class="p-2 overflow-auto">
         {{ .HTML }}

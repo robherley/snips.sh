@@ -14,7 +14,7 @@ type Service struct {
 	*http.Server
 }
 
-func New(cfg *config.Config, db *db.DB, webFS *embed.FS) (*Service, error) {
+func New(cfg *config.Config, db *db.DB, webFS *embed.FS, readme string) (*Service, error) {
 	mux := http.NewServeMux()
 
 	templates := template.Must(template.ParseFS(webFS, "web/templates/*"))
@@ -25,7 +25,7 @@ func New(cfg *config.Config, db *db.DB, webFS *embed.FS) (*Service, error) {
 		return nil, err
 	}
 
-	mux.HandleFunc("/", IndexHandler)
+	mux.HandleFunc("/", IndexHandler(readme, templates))
 	mux.HandleFunc("/health", HealthHandler)
 	mux.HandleFunc("/f/", FileHandler(cfg, db, templates))
 	mux.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.FS(static))))

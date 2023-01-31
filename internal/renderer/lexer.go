@@ -36,7 +36,7 @@ func GetLexer(name string) chroma.Lexer {
 func DetectFileType(content []byte, hint string) string {
 	detectedContentType := http.DetectContentType(content)
 
-	if !strings.Contains(detectedContentType, "text/plain") {
+	if !strings.Contains(detectedContentType, "text/") {
 		return "binary"
 	}
 

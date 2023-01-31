@@ -16,10 +16,29 @@ import (
 	"github.com/robherley/snips.sh/internal/signer"
 )
 
-func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO(robherley): cute landing page
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("✂️\n"))
+func IndexHandler(readme string, tmpl *template.Template) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log := logger.From(r.Context())
+
+		bs := []byte(readme)
+
+		md, err := renderer.ToMarkdown(bs)
+		if err != nil {
+			log.Error().Err(err).Msg("unable to parse file")
+			http.Error(w, "unable to parse file", http.StatusInternalServerError)
+			return
+		}
+
+		vars := map[string]interface{}{
+			"FileID":    "README.md",
+			"FileSize":  humanize.Bytes(uint64(len(bs))),
+			"CreatedAt": humanize.Time(time.Now()),
+			"FileType":  "markdown",
+			"HTML":      md,
+		}
+
+		tmpl.ExecuteTemplate(w, "file.go.html", vars)
+	}
 }
 
 func HealthHandler(w http.ResponseWriter, r *http.Request) {

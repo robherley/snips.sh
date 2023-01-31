@@ -13,6 +13,8 @@ import (
 var (
 	//go:embed web/*
 	webFS embed.FS
+	//go:embed README.md
+	readme string
 )
 
 func main() {
@@ -23,7 +25,7 @@ func main() {
 
 	logger.Init(cfg)
 
-	snips, err := app.New(cfg, &webFS)
+	snips, err := app.New(cfg, &webFS, readme)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
