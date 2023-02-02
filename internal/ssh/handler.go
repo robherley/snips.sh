@@ -191,8 +191,8 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
 	}
 
 	signedFileURL := h.Signer.SignURL(pathToSign)
-	signedFileURL.Scheme = h.Config.URL.External.Scheme
-	signedFileURL.Host = h.Config.URL.External.Host
+	signedFileURL.Scheme = h.Config.HTTP.External.Scheme
+	signedFileURL.Host = h.Config.HTTP.External.Host
 
 	wish.Printf(sesh, "⏰ Signed file expires: %s\n", expires.Format(time.RFC3339))
 	wish.Printf(sesh, "🔗 %s\n", signedFileURL.String())
@@ -270,12 +270,12 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				wish.Println(sesh, "🔐 Private")
 			}
 
-			httpAddr := h.Config.URL.External
+			httpAddr := h.Config.HTTP.External
 			httpAddr.Path = fmt.Sprintf("/f/%s", file.ID)
 
-			sshCommand := fmt.Sprintf("ssh %s%s@%s", FileRequestPrefix, file.ID, h.Config.URL.External.Hostname())
-			if h.Config.SSH.Port != 22 {
-				sshCommand += fmt.Sprintf(" -p %d", h.Config.SSH.Port)
+			sshCommand := fmt.Sprintf("ssh %s%s@%s", FileRequestPrefix, file.ID, h.Config.SSH.External.Hostname())
+			if sshPort := h.Config.SSH.External.Port(); sshPort != "22" {
+				sshCommand += fmt.Sprintf(" -p %s", sshPort)
 			}
 
 			wish.Println(sesh, "🔗 URL:", httpAddr.String())

@@ -31,7 +31,7 @@ func New(cfg *config.Config, db *db.DB, webFS *embed.FS, readme string) (*Servic
 	mux.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.FS(static))))
 
 	httpServer := &http.Server{
-		Addr:    cfg.HTTPListenAddr(),
+		Addr:    cfg.HTTP.Internal.Host,
 		Handler: WithMiddleware(mux, WithRecover, WithLogger, WithRequestID),
 	}
 

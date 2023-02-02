@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"flag"
 
 	"github.com/robherley/snips.sh/internal/app"
 	"github.com/robherley/snips.sh/internal/config"
@@ -25,6 +26,13 @@ func main() {
 
 	logger.Init(cfg)
 
+	usage := flag.Bool("usage", false, "print environment variable usage")
+	flag.Parse()
+	if usage != nil && *usage {
+		_ = cfg.PrintUsage()
+		return
+	}
+
 	snips, err := app.New(cfg, &webFS, readme)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
@@ -35,7 +43,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to auto migrate db")
 	}
 
-	log.Info().Str("ssh_addr", cfg.SSHListenAddr()).Str("http_addr", cfg.HTTPListenAddr()).Msg("starting snips.sh")
+	log.Info().Str("ssh_addr", cfg.SSH.Internal.String()).Str("http_addr", cfg.HTTP.Internal.String()).Msg("starting snips.sh")
 	if err := snips.Start(); err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}

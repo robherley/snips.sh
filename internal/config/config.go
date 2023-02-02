@@ -1,45 +1,47 @@
 package config
 
 import (
-	"net"
 	"net/url"
-	"strconv"
+	"os"
+	"text/tabwriter"
 
 	"github.com/kelseyhightower/envconfig"
 )
 
-const ApplicationName = "snips"
+const (
+	ApplicationName = "snips"
+	UsageFormat     = `
+KEY	TYPE	DEFAULT	DESCRIPTION
+{{range .}}{{usage_key .}}	{{usage_type .}}	{{usage_default .}}	{{usage_description .}}
+{{end}}`
+)
 
 type Config struct {
-	Debug bool `default:"false"`
-	URL   struct {
-		Internal url.URL `default:"http://0.0.0.0:8080"`
-		External url.URL `default:"http://0.0.0.0:8080"`
-	}
+	Debug bool `default:"false" desc:"enable debug logging"`
 
-	HMACKey string `default:"correct-horse-battery-staple"`
-
-	SSH struct {
-		Port        int    `default:"2222"`
-		HostKeyPath string `default:"tmp/keys/default"`
-	}
+	HMACKey string `default:"correct-horse-battery-staple" desc:"symmetric key used to sign URLs"`
 
 	DB struct {
-		FilePath string `default:"tmp/default.db"`
-		Migrate  bool   `default:"false"`
+		FilePath string `default:"data/snips.db" desc:"path to database file"`
+	}
+
+	HTTP struct {
+		Internal url.URL `default:"http://localhost:8080" desc:"internal address to listen for http requests"`
+		External url.URL `default:"http://localhost:8080" desc:"external http address displayed in commands"`
+	}
+
+	SSH struct {
+		Internal    url.URL `default:"ssh://localhost:2222" desc:"internal address to listen for ssh requests"`
+		External    url.URL `default:"ssh://localhost:2222" desc:"external ssh address displayed in commands"`
+		HostKeyPath string  `default:"data/keys/snips" desc:"path to host keys (without extension)"`
 	}
 }
 
-func (cfg *Config) Usage() {
-	envconfig.Usage(ApplicationName, cfg)
-}
+func (cfg *Config) PrintUsage() error {
+	tabs := tabwriter.NewWriter(os.Stdout, 1, 0, 4, ' ', 0)
+	defer tabs.Flush()
 
-func (cfg *Config) SSHListenAddr() string {
-	return net.JoinHostPort(cfg.URL.Internal.Hostname(), strconv.Itoa(cfg.SSH.Port))
-}
-
-func (cfg *Config) HTTPListenAddr() string {
-	return cfg.URL.Internal.Host
+	return envconfig.Usagef(ApplicationName, cfg, tabs, UsageFormat)
 }
 
 func Load() (*Config, error) {
