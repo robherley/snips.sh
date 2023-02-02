@@ -10,16 +10,15 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/dustin/go-humanize"
-	"github.com/muesli/termenv"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/signer"
+	"github.com/robherley/snips.sh/internal/tui"
 	"github.com/rs/zerolog/log"
 )
 
@@ -51,31 +50,28 @@ func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 }
 
 func (h *SessionHandler) Interactive(sesh *UserSession) {
-	lipgloss.SetColorProfile(termenv.ANSI256)
 	pty, winChan, _ := sesh.Pty()
 
 	files := []db.File{}
 	if err := h.DB.Where("user_id = ?", sesh.UserID()).Find(&files).Error; err != nil {
-		log.Error().Err(err).Msg("failed to get files")
-		wish.Fatalf(sesh, "❌ failed to get files")
+		sesh.Error(err, "Failed to get files", "There was an error getting your files. Please try again.")
 		return
 	}
 
-	m := model{
-		term:        pty.Term,
-		width:       pty.Window.Width,
-		height:      pty.Window.Height,
-		userID:      sesh.UserID(),
-		fingerprint: sesh.PublicKeyFingerprint(),
-		time:        time.Now(),
-		files:       files,
+	m := tui.Model{
+		Term:        pty.Term,
+		Width:       pty.Window.Width,
+		Height:      pty.Window.Height,
+		UserID:      sesh.UserID(),
+		Fingerprint: sesh.PublicKeyFingerprint(),
+		Time:        time.Now(),
+		Files:       files,
 	}
 
 	// todo: what is alt screen?
 	prog := tea.NewProgram(&m, tea.WithInput(sesh), tea.WithOutput(sesh), tea.WithAltScreen())
 	if prog == nil {
-		log.Error().Msg("failed to create program")
-		wish.Fatalf(sesh, "❌ failed to create program")
+		sesh.Error(ErrNilProgram, "Failed to create program", "There was an error connecting to snips. Please try again.")
 		return
 	}
 
@@ -96,7 +92,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 				}
 			case <-ticker.C:
 				if prog != nil {
-					prog.Send(timeMsg(time.Now()))
+					prog.Send(tui.TimeMsg(time.Now()))
 				}
 			}
 		}
@@ -119,14 +115,12 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 
 	file := db.File{}
 	if err := h.DB.First(&file, "id = ?", fileID).Error; err != nil {
-		log.Error().Err(err).Msg("unable to lookup file")
-		wish.Fatalf(sesh, "❌ File not found: %s\n", fileID)
+		sesh.Error(err, "Unable to get file", "File not found: %s\n", fileID)
 		return
 	}
 
 	if file.Private && file.UserID != userID {
-		log.Warn().Msg("attempted to access private file")
-		wish.Fatalf(sesh, "❌ File not found: %s\n", fileID)
+		sesh.Error(ErrPrivateFileAccess, "Unable to get file", "File not found: %s\n", fileID)
 		return
 	}
 
@@ -142,7 +136,7 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 	case "sign":
 		h.SignFile(sesh, &file)
 	default:
-		wish.Fatalf(sesh, "❌ Unknown command: %s\n", args[0])
+		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %s\n", args[0])
 	}
 }
 
@@ -151,8 +145,7 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
 
 	// this is a soft delete
 	if err := h.DB.Delete(file).Error; err != nil {
-		log.Error().Err(err).Msg("unable to delete file")
-		wish.Fatalf(sesh, "❌ Error deleting file: %s\n", file.ID)
+		sesh.Error(err, "Unable to delete file", "There was an error deleting file: %s\n", file.ID)
 		return
 	}
 
@@ -161,12 +154,13 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
 		"user_id": file.UserID,
 	}).Msg("file deleted")
 
-	wish.Printf(sesh, "✅ Deleted file: %s\n", file.ID)
+	tui.PrintHeader(sesh, tui.HeaderSuccess, "File Deleted")
+	wish.Printf(sesh, "Deleted file: %s\n", file.ID)
 }
 
 func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
 	if !file.Private {
-		wish.Fatalf(sesh, "❌ Can only sign private files: %s\n", file.ID)
+		sesh.Error(ErrSignPublicFile, "Unable to sign file", "Can only sign private files, %s is not private\n", file.ID)
 		return
 	}
 
@@ -194,6 +188,7 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
 	signedFileURL.Scheme = h.Config.HTTP.External.Scheme
 	signedFileURL.Host = h.Config.HTTP.External.Host
 
+	tui.PrintHeader(sesh, tui.HeaderSuccess, "Private File Signed")
 	wish.Printf(sesh, "⏰ Signed file expires: %s\n", expires.Format(time.RFC3339))
 	wish.Printf(sesh, "🔗 %s\n", signedFileURL.String())
 }
@@ -221,8 +216,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		n, err := sesh.Read(buf)
 		isEOF := errors.Is(err, io.EOF)
 		if err != nil && !isEOF {
-			log.Err(err).Msg("unable to read")
-			wish.Fatalf(sesh, "❌ Error reading file")
+			sesh.Error(err, "Unable to read file", "There was an error reading the file: %s\n", err.Error())
 			return
 		}
 
@@ -230,7 +224,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		content = append(content, buf[:n]...)
 
 		if size > MaxUploadSize {
-			wish.Fatalf(sesh, "❌ File too large, max size is %s\n", humanize.Bytes(MaxUploadSize))
+			sesh.Error(ErrFileTooLarge, "Unable to upload file", "File too large, max size is %s\n", humanize.Bytes(MaxUploadSize))
 			return
 		}
 
@@ -249,8 +243,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			}
 
 			if err := h.DB.Create(&file).Error; err != nil {
-				log.Err(err).Msg("unable to create file")
-				wish.Fatalf(sesh, "❌ Error creating file")
+				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s\n", err.Error())
 				return
 			}
 
@@ -262,7 +255,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				"file_type": file.Type,
 			}).Msg("file uploaded")
 
-			wish.Println(sesh, "✅ File Uploaded Successfully!")
+			tui.PrintHeader(sesh, tui.HeaderSuccess, "File Uploaded")
 			wish.Println(sesh, "💳 ID:", file.ID)
 			wish.Println(sesh, "🏋️  Size:", humanize.Bytes(uint64(file.Size)))
 			wish.Println(sesh, "📁 Type:", file.Type)

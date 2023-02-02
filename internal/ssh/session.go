@@ -3,7 +3,11 @@ package ssh
 import (
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
+	"github.com/charmbracelet/wish"
+	"github.com/robherley/snips.sh/internal/logger"
+	"github.com/robherley/snips.sh/internal/tui"
 )
 
 type UserSession struct {
@@ -28,6 +32,19 @@ func (sesh *UserSession) IsFileRequest() bool {
 
 func (sesh *UserSession) RequestedFileID() string {
 	return strings.TrimPrefix(sesh.User(), FileRequestPrefix)
+}
+
+func (sesh *UserSession) Error(err error, title string, f string, v ...interface{}) {
+	log := logger.From(sesh.Context())
+	log.Error().Err(err).Msg(title)
+	tui.PrintHeader(sesh, tui.HeaderError, title)
+	wish.Errorf(sesh, f, v...)
+	wish.Errorln(sesh)
+	if sesh.RequestID() != "" {
+		style := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("239"))
+		wish.Errorln(sesh, style.Render("Request ID: "+sesh.RequestID()))
+	}
 }
 
 func (sesh *UserSession) IsPTY() bool {
