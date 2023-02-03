@@ -130,6 +130,11 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 		return
 	}
 
+	if file.UserID != userID {
+		sesh.Error(ErrOpOnNonOwnedFile, "Unable to perform operation on file", "You do not own %q, therefore you cannot perform an operation on it.\n", fileID)
+		return
+	}
+
 	switch args[0] {
 	case "rm":
 		h.DeleteFile(sesh, &file)
@@ -141,7 +146,29 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 }
 
 func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
-	// TODO(robherley): add prompt & -f flag
+	flags := DeleteFlags{}
+	args := sesh.Command()[1:]
+	if err := flags.Parse(sesh.Stderr(), args); err != nil {
+		if !errors.Is(err, flag.ErrHelp) {
+			log.Warn().Err(err).Msg("invalid user specified flags")
+			flags.PrintDefaults()
+		}
+		return
+	}
+
+	if !flags.Force {
+		confirmed, err := tui.Confirm(sesh, "Are you sure you want to delete %q?", file.ID)
+		if err != nil {
+			sesh.Error(err, "Unable to delete file", "There was an error deleting file: %s\n", file.ID)
+			return
+		}
+
+		if !confirmed {
+			tui.Header(sesh, tui.HeaderInfo, "File will not be deleted")
+			wish.Printf(sesh, "User chose not to delete file: %s\n", file.ID)
+			return
+		}
+	}
 
 	// this is a soft delete
 	if err := h.DB.Delete(file).Error; err != nil {
@@ -154,7 +181,7 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
 		"user_id": file.UserID,
 	}).Msg("file deleted")
 
-	tui.PrintHeader(sesh, tui.HeaderSuccess, "File Deleted")
+	tui.Header(sesh, tui.HeaderSuccess, "File Deleted")
 	wish.Printf(sesh, "Deleted file: %s\n", file.ID)
 }
 
@@ -188,7 +215,7 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
 	signedFileURL.Scheme = h.Config.HTTP.External.Scheme
 	signedFileURL.Host = h.Config.HTTP.External.Host
 
-	tui.PrintHeader(sesh, tui.HeaderSuccess, "Private File Signed")
+	tui.Header(sesh, tui.HeaderSuccess, "Private File Signed")
 	wish.Printf(sesh, "⏰ Signed file expires: %s\n", expires.Format(time.RFC3339))
 	wish.Printf(sesh, "🔗 %s\n", signedFileURL.String())
 }
@@ -255,7 +282,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				"file_type": file.Type,
 			}).Msg("file uploaded")
 
-			tui.PrintHeader(sesh, tui.HeaderSuccess, "File Uploaded")
+			tui.Header(sesh, tui.HeaderSuccess, "File Uploaded")
 			wish.Println(sesh, "💳 ID:", file.ID)
 			wish.Println(sesh, "🏋️  Size:", humanize.Bytes(uint64(file.Size)))
 			wish.Println(sesh, "📁 Type:", file.Type)

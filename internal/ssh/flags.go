@@ -58,3 +58,22 @@ func (sf *SignFlags) Parse(out io.Writer, args []string) error {
 
 	return nil
 }
+
+type DeleteFlags struct {
+	*flag.FlagSet
+
+	Force bool
+}
+
+func (df *DeleteFlags) Parse(out io.Writer, args []string) error {
+	df.FlagSet = flag.NewFlagSet("", flag.ContinueOnError)
+	df.SetOutput(out)
+
+	df.BoolVar(&df.Force, "f", false, "force delete without confirmation")
+
+	if err := df.FlagSet.Parse(args); err != nil {
+		return err
+	}
+
+	return nil
+}

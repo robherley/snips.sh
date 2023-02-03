@@ -11,15 +11,18 @@ type HeaderKind string
 const (
 	HeaderSuccess HeaderKind = "SUCCESS"
 	HeaderError   HeaderKind = "ERROR"
+	HeaderInfo    HeaderKind = "INFO"
 )
 
-func PrintHeader(sesh ssh.Session, kind HeaderKind, title string) {
+func Header(sesh ssh.Session, kind HeaderKind, title string) {
 	var color lipgloss.Color
 	switch kind {
 	case HeaderSuccess:
 		color = lipgloss.Color("10")
 	case HeaderError:
 		color = lipgloss.Color("9")
+	case HeaderInfo:
+		color = lipgloss.Color("14")
 	}
 
 	statusRender := lipgloss.NewStyle().

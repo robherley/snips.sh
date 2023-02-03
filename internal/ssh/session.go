@@ -37,7 +37,7 @@ func (sesh *UserSession) RequestedFileID() string {
 func (sesh *UserSession) Error(err error, title string, f string, v ...interface{}) {
 	log := logger.From(sesh.Context())
 	log.Error().Err(err).Msg(title)
-	tui.PrintHeader(sesh, tui.HeaderError, title)
+	tui.Header(sesh, tui.HeaderError, title)
 	wish.Errorf(sesh, f, v...)
 	wish.Errorln(sesh)
 	if sesh.RequestID() != "" {
