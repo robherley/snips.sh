@@ -5,7 +5,6 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
-	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/tui"
 )
@@ -37,14 +36,23 @@ func (sesh *UserSession) RequestedFileID() string {
 func (sesh *UserSession) Error(err error, title string, f string, v ...interface{}) {
 	log := logger.From(sesh.Context())
 	log.Error().Err(err).Msg(title)
-	tui.Header(sesh, tui.HeaderError, title)
-	wish.Errorf(sesh, f, v...)
-	wish.Errorln(sesh)
-	if sesh.RequestID() != "" {
-		style := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("239"))
-		wish.Errorln(sesh, style.Render("Request ID: "+sesh.RequestID()))
+
+	noti := tui.Notification{
+		Color: tui.Colors.Red,
+		WithStyle: func(s *lipgloss.Style) {
+			s.MarginTop(1)
+		},
 	}
+
+	noti.Titlef("%s ⛔", title)
+	noti.Messagef(f, v...)
+
+	if sesh.RequestID() != "" {
+		noti.Message += "\nRequest ID: " + sesh.RequestID()
+	}
+
+	noti.Render(sesh)
+	sesh.Exit(1)
 }
 
 func (sesh *UserSession) IsPTY() bool {

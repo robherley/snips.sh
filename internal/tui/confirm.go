@@ -8,9 +8,17 @@ import (
 	"github.com/charmbracelet/wish"
 )
 
-func Confirm(sesh ssh.Session, f string, v ...interface{}) (bool, error) {
-	style := lipgloss.NewStyle().Foreground(lipgloss.Color("11"))
-	prompt := style.Render(fmt.Sprintf(f, v...) + " [y/N] ")
+type Confirm struct {
+	Question string
+}
+
+func (c *Confirm) Questionf(format string, v ...interface{}) {
+	c.Question = fmt.Sprintf(format, v...)
+}
+
+func (c *Confirm) Prompt(sesh ssh.Session) (bool, error) {
+	style := lipgloss.NewStyle().Foreground(Colors.Yellow)
+	prompt := style.Render(c.Question + " [y/N] ")
 	wish.Print(sesh, prompt)
 
 	option := make([]byte, 1)

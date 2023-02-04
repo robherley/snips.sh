@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/dustin/go-humanize"
@@ -115,12 +118,12 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 
 	file := db.File{}
 	if err := h.DB.First(&file, "id = ?", fileID).Error; err != nil {
-		sesh.Error(err, "Unable to get file", "File not found: %s\n", fileID)
+		sesh.Error(err, "Unable to get file", "File not found: %q", fileID)
 		return
 	}
 
 	if file.Private && file.UserID != userID {
-		sesh.Error(ErrPrivateFileAccess, "Unable to get file", "File not found: %s\n", fileID)
+		sesh.Error(ErrPrivateFileAccess, "Unable to get file", "File not found: %q", fileID)
 		return
 	}
 
@@ -131,7 +134,7 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 	}
 
 	if file.UserID != userID {
-		sesh.Error(ErrOpOnNonOwnedFile, "Unable to perform operation on file", "You do not own %q, therefore you cannot perform an operation on it.\n", fileID)
+		sesh.Error(ErrOpOnNonOwnedFile, "Unable to perform operation on file", "You do not own %q, therefore you cannot perform an operation on it.", fileID)
 		return
 	}
 
@@ -141,7 +144,7 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 	case "sign":
 		h.SignFile(sesh, &file)
 	default:
-		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %s\n", args[0])
+		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %q", args[0])
 	}
 }
 
@@ -157,22 +160,33 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
 	}
 
 	if !flags.Force {
-		confirmed, err := tui.Confirm(sesh, "Are you sure you want to delete %q?", file.ID)
+		confirm := tui.Confirm{}
+		confirm.Questionf("Are you sure you want to delete %q?", file.ID)
+
+		confirmed, err := confirm.Prompt(sesh)
 		if err != nil {
-			sesh.Error(err, "Unable to delete file", "There was an error deleting file: %s\n", file.ID)
+			sesh.Error(err, "Unable to delete file", "There was an error deleting file: %q", file.ID)
 			return
 		}
 
 		if !confirmed {
-			tui.Header(sesh, tui.HeaderInfo, "File will not be deleted")
-			wish.Printf(sesh, "User chose not to delete file: %s\n", file.ID)
+			noti := tui.Notification{
+				Title: "File Not Deleted ℹ️",
+				Color: tui.Colors.Yellow,
+				WithStyle: func(s *lipgloss.Style) {
+					s.MarginTop(1)
+				},
+			}
+
+			noti.Messagef("User chose not to delete file: %q", file.ID)
+			noti.Render(sesh)
 			return
 		}
 	}
 
 	// this is a soft delete
 	if err := h.DB.Delete(file).Error; err != nil {
-		sesh.Error(err, "Unable to delete file", "There was an error deleting file: %s\n", file.ID)
+		sesh.Error(err, "Unable to delete file", "There was an error deleting file: %q", file.ID)
 		return
 	}
 
@@ -181,13 +195,21 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
 		"user_id": file.UserID,
 	}).Msg("file deleted")
 
-	tui.Header(sesh, tui.HeaderSuccess, "File Deleted")
-	wish.Printf(sesh, "Deleted file: %s\n", file.ID)
+	noti := tui.Notification{
+		Color: tui.Colors.Green,
+		Title: "File Deleted 🗑️",
+		WithStyle: func(s *lipgloss.Style) {
+			s.MarginTop(1)
+		},
+	}
+
+	noti.Messagef("Deleted file: %q", file.ID)
+	noti.Render(sesh)
 }
 
 func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
 	if !file.Private {
-		sesh.Error(ErrSignPublicFile, "Unable to sign file", "Can only sign private files, %s is not private\n", file.ID)
+		sesh.Error(ErrSignPublicFile, "Unable to sign file", "Can only sign private files, %q is not private.", file.ID)
 		return
 	}
 
@@ -215,9 +237,29 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
 	signedFileURL.Scheme = h.Config.HTTP.External.Scheme
 	signedFileURL.Host = h.Config.HTTP.External.Host
 
-	tui.Header(sesh, tui.HeaderSuccess, "Private File Signed")
-	wish.Printf(sesh, "⏰ Signed file expires: %s\n", expires.Format(time.RFC3339))
-	wish.Printf(sesh, "🔗 %s\n", signedFileURL.String())
+	noti := tui.Notification{
+		Color: tui.Colors.Cyan,
+		Title: "Signed URL Generated 📝",
+		WithStyle: func(s *lipgloss.Style) {
+			s.MarginTop(1)
+		},
+	}
+	noti.Messagef("Expires in: %s", tui.C(tui.Colors.Yellow, expires.Format(time.RFC3339)))
+	noti.Render(sesh)
+
+	url := lipgloss.NewStyle().
+		Foreground(tui.Colors.Blue).
+		Underline(true).
+		Render(signedFileURL.String())
+
+	noti = tui.Notification{
+		Title:   "URL 🔐",
+		Message: url,
+		WithStyle: func(s *lipgloss.Style) {
+			s.MarginTop(1)
+		},
+	}
+	noti.Render(sesh)
 }
 
 func (h *SessionHandler) DownloadFile(sesh *UserSession, file *db.File) {
@@ -243,7 +285,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		n, err := sesh.Read(buf)
 		isEOF := errors.Is(err, io.EOF)
 		if err != nil && !isEOF {
-			sesh.Error(err, "Unable to read file", "There was an error reading the file: %s\n", err.Error())
+			sesh.Error(err, "Unable to read file", "There was an error reading the file: %q", err.Error())
 			return
 		}
 
@@ -251,13 +293,21 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		content = append(content, buf[:n]...)
 
 		if size > MaxUploadSize {
-			sesh.Error(ErrFileTooLarge, "Unable to upload file", "File too large, max size is %s\n", humanize.Bytes(MaxUploadSize))
+			sesh.Error(ErrFileTooLarge, "Unable to upload file", "File too large, max size is %s", humanize.Bytes(MaxUploadSize))
 			return
 		}
 
 		if isEOF {
 			if size == 0 {
-				wish.Fatalln(sesh, "⚠️ Skipping upload, file is empty!")
+				noti := tui.Notification{
+					Color:   tui.Colors.Yellow,
+					Title:   "Skipping upload ℹ️",
+					Message: "File is empty!",
+					WithStyle: func(s *lipgloss.Style) {
+						s.MarginTop(1)
+					},
+				}
+				noti.Render(sesh)
 				return
 			}
 
@@ -270,7 +320,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			}
 
 			if err := h.DB.Create(&file).Error; err != nil {
-				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s\n", err.Error())
+				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
 				return
 			}
 
@@ -282,13 +332,32 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				"file_type": file.Type,
 			}).Msg("file uploaded")
 
-			tui.Header(sesh, tui.HeaderSuccess, "File Uploaded")
-			wish.Println(sesh, "💳 ID:", file.ID)
-			wish.Println(sesh, "🏋️  Size:", humanize.Bytes(uint64(file.Size)))
-			wish.Println(sesh, "📁 Type:", file.Type)
+			visibility := tui.C(tui.Colors.Cyan, "public")
 			if file.Private {
-				wish.Println(sesh, "🔐 Private")
+				visibility = tui.C(tui.Colors.Red, "private")
 			}
+
+			attrs := make([]string, 0)
+			kvp := map[string]string{
+				"type":       tui.C(tui.Colors.Cyan, file.Type),
+				"size":       tui.C(tui.Colors.Cyan, humanize.Bytes(uint64(file.Size))),
+				"visibility": visibility,
+			}
+			for k, v := range kvp {
+				key := tui.C(tui.Colors.Muted, k+": ")
+				attrs = append(attrs, key+v)
+			}
+			sort.Strings(attrs)
+
+			noti := tui.Notification{
+				Color: tui.Colors.Green,
+				Title: "File Uploaded 📤",
+				WithStyle: func(s *lipgloss.Style) {
+					s.MarginTop(1)
+				},
+			}
+			noti.Messagef("id: %s\n%s", tui.C(tui.Colors.Purple, file.ID), strings.Join(attrs, tui.C(tui.Colors.Muted, " • ")))
+			noti.Render(sesh)
 
 			httpAddr := h.Config.HTTP.External
 			httpAddr.Path = fmt.Sprintf("/f/%s", file.ID)
@@ -298,8 +367,33 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				sshCommand += fmt.Sprintf(" -p %s", sshPort)
 			}
 
-			wish.Println(sesh, "🔗 URL:", httpAddr.String())
-			wish.Println(sesh, "📠 SSH Command:", sshCommand)
+			noti = tui.Notification{
+				Title:   "SSH 📠",
+				Message: tui.C(tui.Colors.Yellow, sshCommand),
+				WithStyle: func(s *lipgloss.Style) {
+					s.MarginTop(1)
+				},
+			}
+			noti.Render(sesh)
+
+			url := lipgloss.NewStyle().
+				Foreground(tui.Colors.Blue).
+				Underline(true).
+				Render(httpAddr.String())
+
+			noti = tui.Notification{
+				Title:   "URL 🔗",
+				Message: url,
+				WithStyle: func(s *lipgloss.Style) {
+					s.MarginTop(1)
+				},
+			}
+
+			if file.Private {
+				noti.Message = "<none> (requires a signed URL)"
+			}
+
+			noti.Render(sesh)
 
 			return
 		}
