@@ -8,7 +8,7 @@ log() {
   fi
 }
 
-db=${1:-tmp/default.db}
+db=${1:-data/snips.db}
 
 if [ ! -f "$db" ]; then
   echo "file '$db' does not exist"
