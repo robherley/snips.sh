@@ -5,8 +5,7 @@ import (
 )
 
 const (
-	MaxTimeout  = 5 * time.Minute
-	IdleTimeout = 30 * time.Second
+	MaxSessionDuration = 15 * time.Minute
 
 	MaxUploadSize    = 1 * 1024 * 1024 // 1MB
 	UploadBufferSize = 1 * 1024        // 1KB

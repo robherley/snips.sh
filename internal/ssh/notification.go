@@ -1,4 +1,4 @@
-package tui
+package ssh
 
 import (
 	"fmt"
@@ -6,10 +6,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
+	"github.com/robherley/snips.sh/internal/tui"
 )
 
 type Notification struct {
-	Color     lipgloss.Color
+	Color     lipgloss.TerminalColor
 	Title     string
 	Message   string
 	WithStyle func(s *lipgloss.Style)
@@ -40,7 +41,7 @@ func (n *Notification) Render(sesh ssh.Session) {
 		Render(n.Title)
 
 	messageRender := lipgloss.NewStyle().
-		Foreground(Colors.Muted).
+		Foreground(tui.Colors.Muted).
 		Render(n.Message)
 
 	notiRender := noti.Render(lipgloss.JoinVertical(lipgloss.Top, titleRender, messageRender))

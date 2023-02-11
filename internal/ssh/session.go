@@ -37,7 +37,7 @@ func (sesh *UserSession) Error(err error, title string, f string, v ...interface
 	log := logger.From(sesh.Context())
 	log.Error().Err(err).Msg(title)
 
-	noti := tui.Notification{
+	noti := Notification{
 		Color: tui.Colors.Red,
 		WithStyle: func(s *lipgloss.Style) {
 			s.MarginTop(1)

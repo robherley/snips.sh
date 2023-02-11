@@ -20,8 +20,6 @@ func New(cfg *config.Config, db *db.DB) (*Service, error) {
 	}
 
 	sshServer, err := wish.NewServer(
-		wish.WithMaxTimeout(MaxTimeout),
-		wish.WithIdleTimeout(IdleTimeout),
 		wish.WithAddress(cfg.SSH.Internal.Host),
 		wish.WithHostKeyPath(cfg.SSH.HostKeyPath),
 		wish.WithPublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {

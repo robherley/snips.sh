@@ -16,8 +16,8 @@ var AllModels = []interface{}{
 type Model struct {
 	gorm.Model
 
-	ID        string `gorm:"primaryKey"`
-	CreatedAt time.Time
+	ID        string    `gorm:"primaryKey"`
+	CreatedAt time.Time `gorm:"index"`
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

@@ -2,28 +2,41 @@ package tui
 
 import "github.com/charmbracelet/lipgloss"
 
-var Colors = struct {
-	Green  lipgloss.Color
-	Red    lipgloss.Color
-	Cyan   lipgloss.Color
-	Yellow lipgloss.Color
-	Blue   lipgloss.Color
-	Pink   lipgloss.Color
-	Purple lipgloss.Color
-	White  lipgloss.Color
-	Muted  lipgloss.Color
-}{
-	Green:  lipgloss.Color("10"),
-	Red:    lipgloss.Color("9"),
-	Cyan:   lipgloss.Color("14"),
-	Yellow: lipgloss.Color("11"),
-	Blue:   lipgloss.Color("12"),
-	Pink:   lipgloss.Color("169"),
-	Purple: lipgloss.Color("13"),
-	White:  lipgloss.Color("15"),
-	Muted:  lipgloss.Color("247"),
+var (
+	Colors = struct {
+		Green  lipgloss.TerminalColor
+		Red    lipgloss.TerminalColor
+		Cyan   lipgloss.TerminalColor
+		Yellow lipgloss.TerminalColor
+		Blue   lipgloss.TerminalColor
+		Pink   lipgloss.TerminalColor
+		Purple lipgloss.TerminalColor
+		White  lipgloss.TerminalColor
+		Muted  lipgloss.TerminalColor
+	}{
+		Green:  lipgloss.Color("36"),
+		Red:    lipgloss.Color("9"),
+		Cyan:   lipgloss.Color("6"),
+		Yellow: lipgloss.Color("11"),
+		Blue:   lipgloss.Color("4"),
+		Pink:   lipgloss.Color("169"),
+		Purple: lipgloss.Color("56"),
+		White:  lipgloss.AdaptiveColor{Light: "#111111", Dark: "#ffffff"},
+		Muted:  lipgloss.Color("247"),
+	}
+
+	ColorPrimary   = Colors.Green
+	ColorSecondary = Colors.Blue
+)
+
+func C(c lipgloss.TerminalColor, s string) string {
+	return lipgloss.NewStyle().Foreground(c).Render(s)
 }
 
-func C(c lipgloss.Color, s string) string {
-	return lipgloss.NewStyle().Foreground(c).Render(s)
+func B(s string) string {
+	return lipgloss.NewStyle().Bold(true).Render(s)
+}
+
+func BC(c lipgloss.TerminalColor, s string) string {
+	return lipgloss.NewStyle().Foreground(c).Bold(true).Render(s)
 }
