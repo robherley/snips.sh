@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 	"github.com/robherley/snips.sh/internal/logger"
-	"github.com/robherley/snips.sh/internal/tui"
+	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 
 type UserSession struct {
@@ -38,7 +38,7 @@ func (sesh *UserSession) Error(err error, title string, f string, v ...interface
 	log.Error().Err(err).Msg(title)
 
 	noti := Notification{
-		Color: tui.Colors.Red,
+		Color: styles.Colors.Red,
 		WithStyle: func(s *lipgloss.Style) {
 			s.MarginTop(1)
 		},

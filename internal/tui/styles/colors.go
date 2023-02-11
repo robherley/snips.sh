@@ -1,4 +1,4 @@
-package tui
+package styles
 
 import "github.com/charmbracelet/lipgloss"
 

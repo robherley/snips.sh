@@ -5,26 +5,28 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/tui/components/filelist"
+	"github.com/robherley/snips.sh/internal/tui/components/titlebar"
+	"github.com/robherley/snips.sh/internal/tui/messages"
 	"github.com/rs/zerolog/log"
 )
 
-type fileView struct {
+type TUI struct {
 	Window      ssh.Window
 	UserID      string
 	Fingerprint string
 	DB          *db.DB
 
 	models map[string]tea.Model
-	files  []db.File
 }
 
-func NewFileView(window ssh.Window, userID string, fingerPrint string, database *db.DB) *fileView {
+func New(window ssh.Window, userID string, fingerPrint string, database *db.DB, files []filelist.ListItem) *TUI {
 	models := map[string]tea.Model{
-		"titleBar": NewTitleBar(window.Width),
-		"fileList": NewFileList(window.Width, window.Height-2),
+		titlebar.Name: titlebar.New(window.Width),
+		filelist.Name: filelist.New(window.Width, window.Height-2, files),
 	}
 
-	fv := &fileView{
+	fv := &TUI{
 		Window:      window,
 		UserID:      userID,
 		Fingerprint: fingerPrint,
@@ -35,29 +37,32 @@ func NewFileView(window ssh.Window, userID string, fingerPrint string, database 
 	return fv
 }
 
-func (fv *fileView) Init() tea.Cmd {
+func (fv *TUI) Init() tea.Cmd {
+	cmds := make([]tea.Cmd, 0)
+
 	for k := range fv.models {
-		fv.models[k].Init()
+		cmd := fv.models[k].Init()
+		if cmd != nil {
+			cmds = append(cmds, cmd)
+		}
 	}
 
-	return fv.getFilesCmd
+	return tea.Batch(cmds...)
 }
 
-func (fv *fileView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (fv *TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds := make([]tea.Cmd, 0)
 
 	switch msg := msg.(type) {
-	case FilesMsg:
-		fv.files = msg.Files
-	case ErrorMsg:
+	case messages.Error:
 		log.Error().Err(msg).Msg("encountered error")
 		return fv, tea.Quit
 	case tea.WindowSizeMsg:
 		fv.Window.Height = msg.Height
 		fv.Window.Width = msg.Width
 
-		fv.models["titleBar"].Update(tea.WindowSizeMsg{Width: msg.Width})
-		fv.models["fileList"].Update(tea.WindowSizeMsg{Width: msg.Width, Height: msg.Height - 2})
+		fv.models[titlebar.Name].Update(tea.WindowSizeMsg{Width: msg.Width})
+		fv.models[filelist.Name].Update(tea.WindowSizeMsg{Width: msg.Width, Height: msg.Height - 2})
 		return fv, nil
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -77,19 +82,10 @@ func (fv *fileView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return fv, tea.Batch(cmds...)
 }
 
-func (fv *fileView) View() string {
+func (fv *TUI) View() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
-		fv.models["titleBar"].View(),
-		fv.models["fileList"].View(),
+		fv.models[titlebar.Name].View(),
+		fv.models[filelist.Name].View(),
 	)
-}
-
-func (fv *fileView) getFilesCmd() tea.Msg {
-	files := []db.File{}
-	if err := fv.DB.Where("user_id = ?", fv.UserID).Order("created_at DESC").Find(&files).Error; err != nil {
-		return ErrorMsg{err}
-	}
-
-	return FilesMsg{files}
 }

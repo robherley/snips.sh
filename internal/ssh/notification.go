@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
-	"github.com/robherley/snips.sh/internal/tui"
+	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 
 type Notification struct {
@@ -41,7 +41,7 @@ func (n *Notification) Render(sesh ssh.Session) {
 		Render(n.Title)
 
 	messageRender := lipgloss.NewStyle().
-		Foreground(tui.Colors.Muted).
+		Foreground(styles.Colors.Muted).
 		Render(n.Message)
 
 	notiRender := noti.Render(lipgloss.JoinVertical(lipgloss.Top, titleRender, messageRender))

@@ -22,6 +22,8 @@ import (
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/robherley/snips.sh/internal/tui"
+	"github.com/robherley/snips.sh/internal/tui/components/filelist"
+	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/rs/zerolog/log"
 )
 
@@ -55,15 +57,23 @@ func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 func (h *SessionHandler) Interactive(sesh *UserSession) {
 	pty, winChan, _ := sesh.Pty()
 
-	fileview := tui.NewFileView(
+	files := []filelist.ListItem{}
+	if err := h.DB.Model(&db.File{}).Where("user_id = ?", sesh.UserID()).Order("created_at DESC").Find(&files).Error; err != nil {
+		sesh.Error(err, "Unable to get files", "There was an error requesting files. Please try again.")
+		return
+	}
+
+	newTUI := tui.New(
 		pty.Window,
 		sesh.UserID(),
 		sesh.PublicKeyFingerprint(),
 		h.DB,
+		files,
 	)
-	prog := tea.NewProgram(fileview, tea.WithInput(sesh), tea.WithOutput(sesh), tea.WithAltScreen())
+
+	prog := tea.NewProgram(newTUI, tea.WithInput(sesh), tea.WithOutput(sesh), tea.WithAltScreen())
 	if prog == nil {
-		sesh.Error(ErrNilProgram, "Failed to create program", "There was an error connecting to snips. Please try again.")
+		sesh.Error(ErrNilProgram, "Failed to create program", "There was an error establishing a connection. Please try again.")
 		return
 	}
 
@@ -158,7 +168,7 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
 		if !confirmed {
 			noti := Notification{
 				Title: "File Not Deleted ℹ️",
-				Color: tui.Colors.Yellow,
+				Color: styles.Colors.Yellow,
 				WithStyle: func(s *lipgloss.Style) {
 					s.MarginTop(1)
 				},
@@ -182,7 +192,7 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
 	}).Msg("file deleted")
 
 	noti := Notification{
-		Color: tui.Colors.Green,
+		Color: styles.Colors.Green,
 		Title: "File Deleted 🗑️",
 		WithStyle: func(s *lipgloss.Style) {
 			s.MarginTop(1)
@@ -224,17 +234,17 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
 	signedFileURL.Host = h.Config.HTTP.External.Host
 
 	noti := Notification{
-		Color: tui.Colors.Cyan,
+		Color: styles.Colors.Cyan,
 		Title: "Signed URL Generated 📝",
 		WithStyle: func(s *lipgloss.Style) {
 			s.MarginTop(1)
 		},
 	}
-	noti.Messagef("Expires in: %s", tui.C(tui.Colors.Yellow, expires.Format(time.RFC3339)))
+	noti.Messagef("Expires in: %s", styles.C(styles.Colors.Yellow, expires.Format(time.RFC3339)))
 	noti.Render(sesh)
 
 	url := lipgloss.NewStyle().
-		Foreground(tui.Colors.Blue).
+		Foreground(styles.Colors.Blue).
 		Underline(true).
 		Render(signedFileURL.String())
 
@@ -286,7 +296,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		if isEOF {
 			if size == 0 {
 				noti := Notification{
-					Color:   tui.Colors.Yellow,
+					Color:   styles.Colors.Yellow,
 					Title:   "Skipping upload ℹ️",
 					Message: "File is empty!",
 					WithStyle: func(s *lipgloss.Style) {
@@ -318,31 +328,31 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				"file_type": file.Type,
 			}).Msg("file uploaded")
 
-			visibility := tui.C(tui.Colors.White, "public")
+			visibility := styles.C(styles.Colors.White, "public")
 			if file.Private {
-				visibility = tui.C(tui.Colors.Red, "private")
+				visibility = styles.C(styles.Colors.Red, "private")
 			}
 
 			attrs := make([]string, 0)
 			kvp := map[string]string{
-				"type":       tui.C(tui.Colors.White, file.Type),
-				"size":       tui.C(tui.Colors.White, humanize.Bytes(file.Size)),
+				"type":       styles.C(styles.Colors.White, file.Type),
+				"size":       styles.C(styles.Colors.White, humanize.Bytes(file.Size)),
 				"visibility": visibility,
 			}
 			for k, v := range kvp {
-				key := tui.C(tui.Colors.Muted, k+": ")
+				key := styles.C(styles.Colors.Muted, k+": ")
 				attrs = append(attrs, key+v)
 			}
 			sort.Strings(attrs)
 
 			noti := Notification{
-				Color: tui.Colors.Green,
+				Color: styles.Colors.Green,
 				Title: "File Uploaded 📤",
 				WithStyle: func(s *lipgloss.Style) {
 					s.MarginTop(1)
 				},
 			}
-			noti.Messagef("id: %s\n%s", tui.C(tui.Colors.White, file.ID), strings.Join(attrs, tui.C(tui.Colors.Muted, " • ")))
+			noti.Messagef("id: %s\n%s", styles.C(styles.Colors.White, file.ID), strings.Join(attrs, styles.C(styles.Colors.Muted, " • ")))
 			noti.Render(sesh)
 
 			httpAddr := h.Config.HTTP.External
@@ -355,7 +365,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 
 			noti = Notification{
 				Title:   "SSH 📠",
-				Message: tui.C(tui.Colors.Yellow, sshCommand),
+				Message: styles.C(styles.Colors.Yellow, sshCommand),
 				WithStyle: func(s *lipgloss.Style) {
 					s.MarginTop(1)
 				},
@@ -363,7 +373,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			noti.Render(sesh)
 
 			url := lipgloss.NewStyle().
-				Foreground(tui.Colors.Blue).
+				Foreground(styles.Colors.Blue).
 				Underline(true).
 				Render(httpAddr.String())
 

@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
-	"github.com/robherley/snips.sh/internal/tui"
+	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 
 type Confirm struct {
@@ -18,7 +18,7 @@ func (c *Confirm) Questionf(format string, v ...interface{}) {
 }
 
 func (c *Confirm) Prompt(sesh ssh.Session) (bool, error) {
-	style := lipgloss.NewStyle().Foreground(tui.Colors.Yellow)
+	style := lipgloss.NewStyle().Foreground(styles.Colors.Yellow)
 	prompt := style.Render(c.Question + " [y/N] ")
 	wish.Print(sesh, prompt)
 
