@@ -105,7 +105,7 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 
 			html = md
 		default:
-			code, err := renderer.ToSyntaxHighlightedCode(file.Type, file.Content)
+			code, err := renderer.ToSyntaxHighlightedHTML(file.Type, file.Content)
 			if err != nil {
 				log.Error().Err(err).Msg("unable to parse file")
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)

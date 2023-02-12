@@ -8,8 +8,8 @@ import (
 	"github.com/alecthomas/chroma/v2/styles"
 )
 
-// ToSyntaxHighlightedCode returns HTML of the syntax highlighted code via Chroma
-func ToSyntaxHighlightedCode(fileType string, fileContent []byte) (template.HTML, error) {
+// ToSyntaxHighlightedHTML returns HTML of the syntax highlighted code via Chroma
+func ToSyntaxHighlightedHTML(fileType string, fileContent []byte) (template.HTML, error) {
 	lexer := GetLexer(fileType)
 
 	it, err := lexer.Tokenise(nil, string(fileContent))
