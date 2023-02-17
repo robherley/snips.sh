@@ -85,14 +85,14 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 			select {
 			case <-sesh.Context().Done():
 				prog.Quit()
+				return
 			case <-timer.C:
 				prog.Quit()
+				return
 			case w := <-winChan:
 				if prog != nil {
 					prog.Send(tea.WindowSizeMsg{Width: w.Width, Height: w.Height})
 				}
-			default:
-				time.Sleep(10 * time.Millisecond)
 			}
 		}
 	}()

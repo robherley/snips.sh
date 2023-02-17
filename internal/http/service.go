@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"net/http/pprof"
 
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
@@ -29,6 +30,10 @@ func New(cfg *config.Config, db *db.DB, webFS *embed.FS, readme string) (*Servic
 	mux.HandleFunc("/health", HealthHandler)
 	mux.HandleFunc("/f/", FileHandler(cfg, db, templates))
 	mux.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.FS(static))))
+
+	if cfg.Debug {
+		mux.HandleFunc("/_debug/profile", pprof.Profile)
+	}
 
 	httpServer := &http.Server{
 		Addr:    cfg.HTTP.Internal.Host,
