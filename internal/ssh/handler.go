@@ -16,6 +16,7 @@ import (
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/dustin/go-humanize"
+	"github.com/muesli/termenv"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
@@ -34,6 +35,8 @@ type SessionHandler struct {
 }
 
 func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
+	lipgloss.SetColorProfile(termenv.ANSI256)
+
 	return func(sesh ssh.Session) {
 		userSesh := &UserSession{sesh}
 
