@@ -1,109 +1,127 @@
 package tui
 
 import (
+	"fmt"
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/ssh"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/tui/commands"
+	"github.com/robherley/snips.sh/internal/tui/components/code"
 	"github.com/robherley/snips.sh/internal/tui/components/filelist"
-	"github.com/robherley/snips.sh/internal/tui/components/titlebar"
-	"github.com/robherley/snips.sh/internal/tui/components/viewer"
 	"github.com/robherley/snips.sh/internal/tui/messages"
+	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/rs/zerolog/log"
 )
 
+type View int
+
+const (
+	ViewFileList View = iota
+	ViewCode
+)
+
 type TUI struct {
-	Window      ssh.Window
 	UserID      string
 	Fingerprint string
 	DB          *db.DB
 
-	models       map[string]tea.Model
+	width  int
+	height int
+
 	selectedFile *db.File
+
+	currentView View
+	views       map[View]tea.Model
 }
 
-func New(window ssh.Window, userID string, fingerPrint string, database *db.DB, files []filelist.ListItem) *TUI {
-	models := map[string]tea.Model{
-		titlebar.Name: titlebar.New(window.Width),
-		filelist.Name: filelist.New(window.Width, window.Height-2, files),
-		viewer.Name:   viewer.New(window.Width, window.Height),
+func New(width, height int, userID string, fingerPrint string, database *db.DB, files []filelist.ListItem) TUI {
+	views := map[View]tea.Model{
+		ViewFileList: filelist.New(width, height-1, files),
+		ViewCode:     code.New(width, height-1),
 	}
 
-	fv := &TUI{
-		Window:      window,
+	return TUI{
 		UserID:      userID,
 		Fingerprint: fingerPrint,
 		DB:          database,
-		models:      models,
-	}
 
-	return fv
+		width:        width,
+		height:       height,
+		selectedFile: nil,
+		currentView:  ViewFileList,
+		views:        views,
+	}
 }
 
-func (t *TUI) Init() tea.Cmd {
-	cmds := make([]tea.Cmd, 0)
-
-	for k := range t.models {
-		cmd := t.models[k].Init()
-		if cmd != nil {
-			cmds = append(cmds, cmd)
-		}
-	}
-
-	return tea.Batch(cmds...)
+func (t TUI) Init() tea.Cmd {
+	return nil
 }
 
-func (t *TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	cmds := make([]tea.Cmd, 0)
+func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
 
 	switch msg := msg.(type) {
 	case messages.Error:
 		log.Error().Err(msg).Msg("encountered error")
 		return t, tea.Quit
-	case tea.WindowSizeMsg:
-		t.Window.Height = msg.Height
-		t.Window.Width = msg.Width
-
-		t.models[titlebar.Name].Update(tea.WindowSizeMsg{Width: msg.Width})
-		t.models[filelist.Name].Update(tea.WindowSizeMsg{Width: msg.Width, Height: msg.Height - 2})
-		t.models[viewer.Name].Update(tea.WindowSizeMsg{Width: msg.Width, Height: msg.Height})
-		return t, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return t, tea.Quit
+		case "esc":
+			t.currentView = ViewFileList
+			t.selectedFile = nil
+			return t, nil
 		}
-	case messages.SelectedFile:
-		file := db.File{}
-		if err := t.DB.Find(&file, "id = ? AND user_id = ?", msg.ID, t.UserID).Error; err != nil {
-			return t, func() tea.Msg { return messages.Error{Err: err} }
-		}
+	case tea.WindowSizeMsg:
+		t.width = msg.Width
+		t.height = msg.Height
 
-		t.models[viewer.Name].(*viewer.Model).SetFile(&file)
-		t.selectedFile = &file
-
-		return t, nil
-	}
-
-	for k, v := range t.models {
-		model, cmd := v.Update(msg)
-		if cmd != nil {
+		for key, view := range t.views {
+			t.views[key], cmd = view.Update(tea.WindowSizeMsg{
+				Width:  t.width,
+				Height: t.height - 1,
+			})
 			cmds = append(cmds, cmd)
 		}
-		t.models[k] = model
+
+		return t, tea.Batch(cmds...)
+	case messages.FileSelected:
+		return t, commands.GetFile(t.DB, msg.ID, t.UserID)
+	case messages.FileLoaded:
+		t.selectedFile = msg.File
+		t.currentView = ViewCode
+	}
+
+	for key, view := range t.views {
+		t.views[key], cmd = view.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	return t, tea.Batch(cmds...)
 }
 
-func (t *TUI) View() string {
+func (t TUI) View() string {
+	return lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), t.views[t.currentView].View())
+}
+
+func (t TUI) titleBar() string {
+	titleText := "snips.sh"
 	if t.selectedFile != nil {
-		return t.models[viewer.Name].View()
+		titleText = fmt.Sprintf("%s > %s", titleText, t.selectedFile.ID)
 	}
 
-	return lipgloss.JoinVertical(
-		lipgloss.Top,
-		t.models[titlebar.Name].View(),
-		t.models[filelist.Name].View(),
-	)
+	title := lipgloss.NewStyle().
+		Padding(0, 1, 0, 1).
+		Background(styles.ColorPrimary).
+		Foreground(styles.Colors.White).
+		Bold(true).
+		Render(titleText)
+
+	return title + strings.Repeat(styles.C(styles.ColorPrimary, "┃"), t.width-lipgloss.Width((title)))
 }

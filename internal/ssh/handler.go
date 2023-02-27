@@ -66,19 +66,24 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 		return
 	}
 
-	newTUI := tui.New(
-		pty.Window,
-		sesh.UserID(),
-		sesh.PublicKeyFingerprint(),
-		h.DB,
-		files,
+	program := tea.NewProgram(
+		tui.New(
+			pty.Window.Width,
+			pty.Window.Height,
+			sesh.UserID(),
+			sesh.PublicKeyFingerprint(),
+			h.DB,
+			files,
+		),
+		tea.WithInput(sesh),
+		tea.WithOutput(sesh),
+		tea.WithAltScreen(),
 	)
-
-	prog := tea.NewProgram(newTUI, tea.WithInput(sesh), tea.WithOutput(sesh), tea.WithAltScreen())
-	if prog == nil {
+	if program == nil {
 		sesh.Error(ErrNilProgram, "Failed to create program", "There was an error establishing a connection. Please try again.")
 		return
 	}
+	defer program.Kill()
 
 	timer := time.NewTimer(MaxSessionDuration)
 	defer timer.Stop()
@@ -87,26 +92,21 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 		for {
 			select {
 			case <-sesh.Context().Done():
-				prog.Quit()
+				program.Quit()
 				return
 			case <-timer.C:
-				prog.Quit()
+				log.Warn().Msg("max session duration reached")
+				program.Quit()
 				return
 			case w := <-winChan:
-				if prog != nil {
-					prog.Send(tea.WindowSizeMsg{Width: w.Width, Height: w.Height})
+				if program != nil {
+					program.Send(tea.WindowSizeMsg{Width: w.Width, Height: w.Height})
 				}
 			}
 		}
 	}()
 
-	defer func() {
-		if prog != nil {
-			prog.Kill()
-		}
-	}()
-
-	if _, err := prog.Run(); err != nil {
+	if _, err := program.Run(); err != nil {
 		log.Error().Err(err).Msg("app exited with error")
 	}
 }

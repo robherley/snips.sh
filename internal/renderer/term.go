@@ -9,7 +9,7 @@ import (
 
 const (
 	TermFormatter = "terminal256"
-	TermStyle     = "dracula"
+	TermStyle     = "onedark"
 )
 
 // ToSyntaxHighlightedTerm returns ANSI of the syntax highlighted code via Chroma
