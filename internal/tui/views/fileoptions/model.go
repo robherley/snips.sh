@@ -55,9 +55,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			switch m.visibleOptions()[m.currIdx] {
 			case View:
-				return m, cmds.ChangeView(views.Code)
+				return m, cmds.PushView(views.Code)
+			case Visiblity, Extension, Sign, Delete:
+				return m, cmds.PushView(views.Prompt)
 			}
 		}
+	case msgs.PushView, msgs.PopView:
+		// reset
+		m.currIdx = 0
 	case msgs.FileLoaded:
 		m.file = msg.File
 	case msgs.FileDeselected:

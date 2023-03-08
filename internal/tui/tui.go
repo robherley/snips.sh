@@ -15,6 +15,7 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/views/code"
 	"github.com/robherley/snips.sh/internal/tui/views/filelist"
 	"github.com/robherley/snips.sh/internal/tui/views/fileoptions"
+	"github.com/robherley/snips.sh/internal/tui/views/prompt"
 	"github.com/rs/zerolog/log"
 )
 
@@ -47,6 +48,7 @@ func New(cfg *config.Config, width, height int, userID string, fingerPrint strin
 			views.FileList:    filelist.New(width, height-1, files),
 			views.Code:        code.New(width, height-1),
 			views.FileOptions: fileoptions.New(cfg),
+			views.Prompt:      prompt.New(),
 		},
 	}
 }
@@ -72,7 +74,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(t.viewStack) == 1 {
 				return t, tea.Quit
 			} else {
-				t.popView()
+				batchedCmds = append(batchedCmds, cmds.PopView())
 				if t.currentView() == views.FileList {
 					batchedCmds = append(batchedCmds, cmds.DeselectFile())
 				}
@@ -84,9 +86,10 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		t.views[t.currentView()], cmd = t.views[t.currentView()].Update(msg)
 		return t, cmd
-	case msgs.ChangeView:
+	case msgs.PushView:
 		t.pushView(msg.View)
-		return t, nil
+	case msgs.PopView:
+		t.popView()
 	case tea.WindowSizeMsg:
 		t.width = msg.Width
 		t.height = msg.Height

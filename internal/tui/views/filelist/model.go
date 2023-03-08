@@ -68,7 +68,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, tea.Batch(
 				cmds.SelectFile(m.list.SelectedItem().(ListItem).ID),
-				cmds.ChangeView(views.FileOptions),
+				cmds.PushView(views.FileOptions),
 			)
 		}
 	}

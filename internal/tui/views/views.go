@@ -6,4 +6,5 @@ const (
 	FileList View = iota
 	FileOptions
 	Code
+	Prompt
 )
