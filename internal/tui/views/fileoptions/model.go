@@ -93,7 +93,7 @@ func (m Model) renderDetails() string {
 			values: [][2]string{
 				{"id", m.file.ID},
 				{"visibility", visibility},
-				{"type", m.file.Type},
+				{"extension", m.file.Type},
 				{"size", humanize.Bytes(m.file.Size)},
 				{"created", fmt.Sprintf("%s (%s)", m.file.CreatedAt.Format(time.RFC3339), humanize.Time(m.file.CreatedAt))},
 			},
@@ -144,8 +144,8 @@ func (m Model) renderOptions() string {
 		switch opt {
 		case View:
 			option = "view"
-		case Type:
-			option = "set type"
+		case Extension:
+			option = "set extension"
 		case Sign:
 			option = "generate signed url"
 		case Visiblity:
@@ -178,9 +178,9 @@ func (m Model) visibleOptions() []Option {
 		View,
 	}
 
-	// only allow changing type of non-binary files
+	// only allow changing extension of non-binary files
 	if !m.file.IsBinary() {
-		opts = append(opts, Type)
+		opts = append(opts, Extension)
 	}
 
 	// only allow signing of private files
