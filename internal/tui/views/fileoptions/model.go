@@ -14,6 +14,7 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/robherley/snips.sh/internal/tui/views"
+	"github.com/robherley/snips.sh/internal/tui/views/prompt"
 )
 
 const (
@@ -53,12 +54,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.currIdx = 0
 			}
 		case "enter":
-			switch m.visibleOptions()[m.currIdx] {
-			case View:
+			opt := m.visibleOptions()[m.currIdx]
+			if opt == View {
 				return m, cmds.PushView(views.Code)
-			case Visiblity, Extension, Sign, Delete:
-				return m, cmds.PushView(views.Prompt)
 			}
+
+			var pk prompt.Kind
+			switch opt {
+			case Visiblity:
+				pk = prompt.ChangeVisibility
+			case Extension:
+				pk = prompt.ChangeExtension
+			case Sign:
+				pk = prompt.GenerateSignedURL
+			case Delete:
+				pk = prompt.DeleteFile
+			}
+
+			return m, tea.Batch(
+				cmds.PushView(views.Prompt),
+				prompt.SetPromptKindCmd(pk),
+			)
 		}
 	case msgs.PushView, msgs.PopView:
 		// reset
