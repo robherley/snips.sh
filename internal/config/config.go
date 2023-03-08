@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"text/tabwriter"
@@ -42,6 +43,22 @@ func (cfg *Config) PrintUsage() error {
 	defer tabs.Flush()
 
 	return envconfig.Usagef(ApplicationName, cfg, tabs, UsageFormat)
+}
+
+func (cfg *Config) HTTPAddressForFile(fileID string) string {
+	httpAddr := cfg.HTTP.External
+	httpAddr.Path = fmt.Sprintf("/f/%s", fileID)
+
+	return httpAddr.String()
+}
+
+func (cfg *Config) SSHCommandForFile(fileID string) string {
+	sshCommand := fmt.Sprintf("ssh f:%s@%s", fileID, cfg.SSH.External.Hostname())
+	if sshPort := cfg.SSH.External.Port(); sshPort != "22" {
+		sshCommand += fmt.Sprintf(" -p %s", sshPort)
+	}
+
+	return sshCommand
 }
 
 func Load() (*Config, error) {

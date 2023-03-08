@@ -4,8 +4,9 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/robherley/snips.sh/internal/tui/messages"
+	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/styles"
+	"github.com/robherley/snips.sh/internal/tui/views"
 )
 
 type Model struct {
@@ -19,8 +20,8 @@ func New(width, height int, files []ListItem) Model {
 		PaddingLeft(1).
 		Border(lipgloss.ThickBorder(), false).
 		BorderLeft(true).
-		BorderForeground(styles.ColorSecondary).
-		Foreground(styles.ColorSecondary)
+		BorderForeground(styles.Colors.Blue).
+		Foreground(styles.Colors.Blue)
 	del.Styles.SelectedTitle = selectedStyle.Copy().Bold(true).Foreground(styles.Colors.White)
 	del.Styles.SelectedDesc = selectedStyle.Copy()
 
@@ -39,7 +40,8 @@ func New(width, height int, files []ListItem) Model {
 	ls.SetStatusBarItemName("file", "files")
 	ls.SetShowTitle(false)
 
-	ls.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(styles.ColorSecondary).Render("•")
+	ls.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(styles.Colors.Blue).Render("•")
+	ls.Paginator.InactiveDot = lipgloss.NewStyle().Foreground(styles.Colors.Muted).Render("◦")
 	ls.Styles.NoItems = lipgloss.NewStyle().Foreground(styles.Colors.Muted).MarginLeft(1)
 
 	return Model{
@@ -64,11 +66,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			return m, func() tea.Msg {
-				return messages.FileSelected{
-					ID: m.list.SelectedItem().(ListItem).ID,
-				}
-			}
+			return m, tea.Batch(
+				cmds.SelectFile(m.list.SelectedItem().(ListItem).ID),
+				cmds.ChangeView(views.FileOptions),
+			)
 		}
 	}
 	m.list, cmd = m.list.Update(msg)

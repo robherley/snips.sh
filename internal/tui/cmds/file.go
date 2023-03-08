@@ -1,19 +1,33 @@
-package commands
+package cmds
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/tui/messages"
+	"github.com/robherley/snips.sh/internal/tui/msgs"
 )
+
+func SelectFile(id string) tea.Cmd {
+	return func() tea.Msg {
+		return msgs.FileSelected{
+			ID: id,
+		}
+	}
+}
+
+func DeselectFile() tea.Cmd {
+	return func() tea.Msg {
+		return msgs.FileDeselected{}
+	}
+}
 
 func GetFile(database *db.DB, id, userID string) tea.Cmd {
 	return func() tea.Msg {
 		file := db.File{}
 		if err := database.Find(&file, "id = ? AND user_id = ?", id, userID).Error; err != nil {
-			return messages.Error{Err: err}
+			return msgs.Error{Err: err}
 		}
 
-		return messages.FileLoaded{
+		return msgs.FileLoaded{
 			File: &file,
 		}
 	}

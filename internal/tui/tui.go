@@ -6,20 +6,16 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/tui/commands"
-	"github.com/robherley/snips.sh/internal/tui/components/code"
-	"github.com/robherley/snips.sh/internal/tui/components/filelist"
-	"github.com/robherley/snips.sh/internal/tui/messages"
+	"github.com/robherley/snips.sh/internal/tui/cmds"
+	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
+	"github.com/robherley/snips.sh/internal/tui/views"
+	"github.com/robherley/snips.sh/internal/tui/views/code"
+	"github.com/robherley/snips.sh/internal/tui/views/filelist"
+	"github.com/robherley/snips.sh/internal/tui/views/fileoptions"
 	"github.com/rs/zerolog/log"
-)
-
-type View int
-
-const (
-	ViewFileList View = iota
-	ViewCode
 )
 
 type TUI struct {
@@ -27,31 +23,31 @@ type TUI struct {
 	Fingerprint string
 	DB          *db.DB
 
+	cfg    *config.Config
 	width  int
 	height int
 
-	selectedFile *db.File
-
-	currentView View
-	views       map[View]tea.Model
+	file      *db.File
+	viewStack []views.View
+	views     map[views.View]tea.Model
 }
 
-func New(width, height int, userID string, fingerPrint string, database *db.DB, files []filelist.ListItem) TUI {
-	views := map[View]tea.Model{
-		ViewFileList: filelist.New(width, height-1, files),
-		ViewCode:     code.New(width, height-1),
-	}
-
+func New(cfg *config.Config, width, height int, userID string, fingerPrint string, database *db.DB, files []filelist.ListItem) TUI {
 	return TUI{
 		UserID:      userID,
 		Fingerprint: fingerPrint,
 		DB:          database,
 
-		width:        width,
-		height:       height,
-		selectedFile: nil,
-		currentView:  ViewFileList,
-		views:        views,
+		cfg:       cfg,
+		width:     width,
+		height:    height,
+		file:      nil,
+		viewStack: []views.View{views.FileList},
+		views: map[views.View]tea.Model{
+			views.FileList:    filelist.New(width, height-1, files),
+			views.Code:        code.New(width, height-1),
+			views.FileOptions: fileoptions.New(cfg),
+		},
 	}
 }
 
@@ -61,12 +57,11 @@ func (t TUI) Init() tea.Cmd {
 
 func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
+		batchedCmds []tea.Cmd
 	)
 
 	switch msg := msg.(type) {
-	case messages.Error:
+	case msgs.Error:
 		log.Error().Err(msg).Msg("encountered error")
 		return t, tea.Quit
 	case tea.KeyMsg:
@@ -74,54 +69,82 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return t, tea.Quit
 		case "esc":
-			t.currentView = ViewFileList
-			t.selectedFile = nil
-			return t, nil
+			if len(t.viewStack) == 1 {
+				return t, tea.Quit
+			} else {
+				t.popView()
+				if t.currentView() == views.FileList {
+					batchedCmds = append(batchedCmds, cmds.DeselectFile())
+				}
+				return t, tea.Batch(batchedCmds...)
+			}
 		}
+
+		// only send key msgs to the current view
+		var cmd tea.Cmd
+		t.views[t.currentView()], cmd = t.views[t.currentView()].Update(msg)
+		return t, cmd
+	case msgs.ChangeView:
+		t.pushView(msg.View)
+		return t, nil
 	case tea.WindowSizeMsg:
 		t.width = msg.Width
 		t.height = msg.Height
 
 		for key, view := range t.views {
+			var cmd tea.Cmd
 			t.views[key], cmd = view.Update(tea.WindowSizeMsg{
 				Width:  t.width,
 				Height: t.height - 1,
 			})
-			cmds = append(cmds, cmd)
+			batchedCmds = append(batchedCmds, cmd)
 		}
 
-		return t, tea.Batch(cmds...)
-	case messages.FileSelected:
-		return t, commands.GetFile(t.DB, msg.ID, t.UserID)
-	case messages.FileLoaded:
-		t.selectedFile = msg.File
-		t.currentView = ViewCode
+		return t, tea.Batch(batchedCmds...)
+	case msgs.FileSelected:
+		return t, cmds.GetFile(t.DB, msg.ID, t.UserID)
+	case msgs.FileDeselected:
+		t.file = nil
+	case msgs.FileLoaded:
+		t.file = msg.File
 	}
 
 	for key, view := range t.views {
+		var cmd tea.Cmd
 		t.views[key], cmd = view.Update(msg)
-		cmds = append(cmds, cmd)
+		batchedCmds = append(batchedCmds, cmd)
 	}
 
-	return t, tea.Batch(cmds...)
+	return t, tea.Batch(batchedCmds...)
 }
 
 func (t TUI) View() string {
-	return lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), t.views[t.currentView].View())
+	return lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), t.views[t.currentView()].View())
 }
 
 func (t TUI) titleBar() string {
-	titleText := "snips.sh"
-	if t.selectedFile != nil {
-		titleText = fmt.Sprintf("%s > %s", titleText, t.selectedFile.ID)
+	titleText := "┃ snips.sh"
+	if t.file != nil {
+		titleText += fmt.Sprintf(" / %s", t.file.ID)
 	}
+	titleText += " "
 
 	title := lipgloss.NewStyle().
-		Padding(0, 1, 0, 1).
-		Background(styles.ColorPrimary).
-		Foreground(styles.Colors.White).
-		Bold(true).
+		Foreground(styles.Colors.Green).
+		Bold(false).
 		Render(titleText)
 
-	return title + strings.Repeat(styles.C(styles.ColorPrimary, "┃"), t.width-lipgloss.Width((title)))
+	return title + strings.Repeat(styles.C(styles.Colors.Green, "┃"), t.width-lipgloss.Width((title)))
+}
+
+func (t TUI) currentView() views.View {
+	return t.viewStack[len(t.viewStack)-1]
+}
+
+func (t *TUI) pushView(view views.View) {
+	t.viewStack = append(t.viewStack, view)
+}
+
+func (t *TUI) popView() {
+	t.viewStack = t.viewStack[:len(t.viewStack)-1]
 }

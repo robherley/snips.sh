@@ -23,8 +23,8 @@ import (
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/robherley/snips.sh/internal/tui"
-	"github.com/robherley/snips.sh/internal/tui/components/filelist"
 	"github.com/robherley/snips.sh/internal/tui/styles"
+	"github.com/robherley/snips.sh/internal/tui/views/filelist"
 	"github.com/rs/zerolog/log"
 )
 
@@ -60,6 +60,7 @@ func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 func (h *SessionHandler) Interactive(sesh *UserSession) {
 	pty, winChan, _ := sesh.Pty()
 
+	// TODO(robherley): clean this up
 	files := []filelist.ListItem{}
 	if err := h.DB.Model(&db.File{}).Where("user_id = ?", sesh.UserID()).Order("created_at DESC").Find(&files).Error; err != nil {
 		sesh.Error(err, "Unable to get files", "There was an error requesting files. Please try again.")
@@ -68,6 +69,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 
 	program := tea.NewProgram(
 		tui.New(
+			h.Config,
 			pty.Window.Width,
 			pty.Window.Height,
 			sesh.UserID(),
@@ -358,17 +360,9 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			noti.Messagef("id: %s\n%s", styles.C(styles.Colors.White, file.ID), strings.Join(attrs, styles.C(styles.Colors.Muted, " • ")))
 			noti.Render(sesh)
 
-			httpAddr := h.Config.HTTP.External
-			httpAddr.Path = fmt.Sprintf("/f/%s", file.ID)
-
-			sshCommand := fmt.Sprintf("ssh %s%s@%s", FileRequestPrefix, file.ID, h.Config.SSH.External.Hostname())
-			if sshPort := h.Config.SSH.External.Port(); sshPort != "22" {
-				sshCommand += fmt.Sprintf(" -p %s", sshPort)
-			}
-
 			noti = Notification{
 				Title:   "SSH 📠",
-				Message: styles.C(styles.Colors.Yellow, sshCommand),
+				Message: styles.C(styles.Colors.Yellow, h.Config.SSHCommandForFile(file.ID)),
 				WithStyle: func(s *lipgloss.Style) {
 					s.MarginTop(1)
 				},
@@ -378,7 +372,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			url := lipgloss.NewStyle().
 				Foreground(styles.Colors.Blue).
 				Underline(true).
-				Render(httpAddr.String())
+				Render(h.Config.HTTPAddressForFile(file.ID))
 
 			noti = Notification{
 				Title:   "URL 🔗",

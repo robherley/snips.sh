@@ -9,7 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/renderer"
-	"github.com/robherley/snips.sh/internal/tui/messages"
+	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/rs/zerolog/log"
 )
 
@@ -39,10 +39,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
 		m.viewport.Height = msg.Height
-	case messages.FileLoaded:
+	case msgs.FileLoaded:
 		m.file = msg.File
 		m.content = renderContent(msg.File)
 		m.Init()
+	case msgs.FileDeselected:
+		m.file = nil
 	}
 
 	vp, cmd := m.viewport.Update(msg)
@@ -69,9 +71,15 @@ func renderContent(file *db.File) string {
 
 	length := len(content)
 	maxDigits := math.Floor(math.Log10(float64(length)))
+	lines := strings.Split(content, "\n")
+
+	// ditch the last newline
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
 
 	builder := strings.Builder{}
-	for i, line := range strings.Split(content, "\n") {
+	for i, line := range lines {
 		builder.WriteString(fmt.Sprintf("%*d ", int(maxDigits-1), i+1))
 		builder.WriteString(strings.ReplaceAll(line, "\t", "    "))
 		builder.WriteRune('\n')

@@ -21,12 +21,9 @@ var (
 		Blue:   lipgloss.Color("4"),
 		Pink:   lipgloss.Color("169"),
 		Purple: lipgloss.Color("56"),
-		White:  lipgloss.AdaptiveColor{Light: "#111111", Dark: "#ffffff"},
+		White:  lipgloss.Color("7"),
 		Muted:  lipgloss.Color("247"),
 	}
-
-	ColorPrimary   = Colors.Green
-	ColorSecondary = Colors.Blue
 )
 
 func C(c lipgloss.TerminalColor, s string) string {

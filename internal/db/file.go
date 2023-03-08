@@ -7,7 +7,11 @@ import (
 	"gorm.io/gorm"
 )
 
-const MaxFiles = 100
+const (
+	MaxFiles     = 100
+	BinaryType   = "binary"
+	MarkdownType = "markdown"
+)
 
 var (
 	ErrUploadLimit = errors.New("upload limit reached")
@@ -40,4 +44,12 @@ func (f *File) BeforeCreate(tx *gorm.DB) error {
 	}
 
 	return nil
+}
+
+func (f *File) IsBinary() bool {
+	return f.Type == BinaryType
+}
+
+func (f *File) IsMarkdown() bool {
+	return f.Type == MarkdownType
 }
