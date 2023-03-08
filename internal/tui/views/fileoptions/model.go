@@ -145,7 +145,7 @@ func (m Model) renderOptions() string {
 		case View:
 			option = "view"
 		case Extension:
-			option = "set extension"
+			option = "change extension"
 		case Sign:
 			option = "generate signed url"
 		case Visiblity:
