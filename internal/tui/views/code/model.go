@@ -2,14 +2,15 @@ package code
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
+	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/rs/zerolog/log"
 )
 
@@ -41,7 +42,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.Height = msg.Height
 	case msgs.FileLoaded:
 		m.file = msg.File
-		m.content = renderContent(msg.File)
+		m.content = m.renderContent(msg.File)
 		m.Init()
 	case msgs.FileDeselected:
 		m.file = nil
@@ -58,7 +59,7 @@ func (m *Model) View() string {
 	return m.viewport.View()
 }
 
-func renderContent(file *db.File) string {
+func (m *Model) renderContent(file *db.File) string {
 	if file == nil {
 		return ""
 	}
@@ -69,21 +70,42 @@ func renderContent(file *db.File) string {
 		content = string(file.Content)
 	}
 
-	length := len(content)
-	maxDigits := math.Floor(math.Log10(float64(length)))
 	lines := strings.Split(content, "\n")
+	maxDigits := len(fmt.Sprintf("%d", len(lines)))
+	fmt.Println(len(lines), maxDigits)
 
 	// ditch the last newline
 	if lines[len(lines)-1] == "" {
 		lines = lines[:len(lines)-1]
 	}
 
+	borderStyle := lipgloss.NewStyle().
+		Foreground(styles.Colors.Muted).
+		Border(lipgloss.NormalBorder(), false).
+		BorderForeground(styles.Colors.Muted)
+
 	builder := strings.Builder{}
+
+	builder.WriteString(strings.Repeat(" ", int(maxDigits)))
+	builder.WriteString(styles.C(styles.Colors.Muted, lipgloss.NormalBorder().TopLeft))
+	builder.WriteString(styles.C(styles.Colors.Muted, strings.Repeat(lipgloss.NormalBorder().Bottom, m.viewport.Width-int(maxDigits))))
+	builder.WriteRune('\n')
+
 	for i, line := range lines {
-		builder.WriteString(fmt.Sprintf("%*d ", int(maxDigits-1), i+1))
+		lineNumber := borderStyle.
+			Copy().
+			BorderRight(true).
+			MarginRight(1).
+			Render(fmt.Sprintf("%*d", int(maxDigits), i+1))
+		builder.WriteString(lineNumber)
 		builder.WriteString(strings.ReplaceAll(line, "\t", "    "))
 		builder.WriteRune('\n')
 	}
+
+	builder.WriteString(strings.Repeat(" ", int(maxDigits)))
+	builder.WriteString(styles.C(styles.Colors.Muted, lipgloss.NormalBorder().BottomLeft))
+	builder.WriteString(styles.C(styles.Colors.Muted, strings.Repeat(lipgloss.NormalBorder().Top, m.viewport.Width-int(maxDigits))))
+	builder.WriteRune('\n')
 
 	return builder.String()
 }
