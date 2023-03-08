@@ -72,7 +72,6 @@ func (m *Model) renderContent(file *db.File) string {
 
 	lines := strings.Split(content, "\n")
 	maxDigits := len(fmt.Sprintf("%d", len(lines)))
-	fmt.Println(len(lines), maxDigits)
 
 	// ditch the last newline
 	if lines[len(lines)-1] == "" {
