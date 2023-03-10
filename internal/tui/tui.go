@@ -48,7 +48,7 @@ func New(cfg *config.Config, width, height int, userID string, fingerPrint strin
 			views.FileList:    filelist.New(width, height-1, files),
 			views.Code:        code.New(width, height-1),
 			views.FileOptions: fileoptions.New(cfg),
-			views.Prompt:      prompt.New(),
+			views.Prompt:      prompt.New(database),
 		},
 	}
 }
@@ -68,7 +68,11 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return t, tea.Quit
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q", "ctrl+c":
+		case "q":
+			if !t.inPrompt() {
+				return t, tea.Quit
+			}
+		case "ctrl+c":
 			return t, tea.Quit
 		case "esc":
 			if len(t.viewStack) == 1 {
@@ -150,4 +154,8 @@ func (t *TUI) pushView(view views.View) {
 
 func (t *TUI) popView() {
 	t.viewStack = t.viewStack[:len(t.viewStack)-1]
+}
+
+func (t *TUI) inPrompt() bool {
+	return t.currentView() == views.Prompt
 }

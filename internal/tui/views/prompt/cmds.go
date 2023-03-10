@@ -9,3 +9,11 @@ func SetPromptKindCmd(pk Kind) tea.Cmd {
 		}
 	}
 }
+
+func SetPromptErrorCmd(err error) tea.Cmd {
+	return func() tea.Msg {
+		return PromptError{
+			Err: err,
+		}
+	}
+}

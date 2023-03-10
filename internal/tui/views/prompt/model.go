@@ -1,7 +1,9 @@
 package prompt
 
 import (
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,17 +13,20 @@ import (
 
 type Model struct {
 	file *db.File
+	db   *db.DB
 
 	pk        Kind
 	textInput textinput.Model
+	err       error
 }
 
-func New() Model {
+func New(db *db.DB) Model {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 255
 	ti.Width = 20
 	return Model{
+		db:        db,
 		textInput: ti,
 	}
 }
@@ -37,8 +42,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
-			println(m.textInput.Value())
+			return m, m.handleSubmit()
 		}
+	case PromptError:
+		m.err = msg.Err
 	case PromptKindSetMsg:
 		m.pk = msg.Kind
 	case msgs.FileLoaded:
@@ -72,10 +79,62 @@ func (m Model) View() string {
 		prompt = fmt.Sprintf("are you sure you want to delete %q?\ntype the file id to confirm", m.file.ID)
 	}
 
-	return fmt.Sprintf(
+	str := fmt.Sprintf(
 		"\n%s\n\n%s\n\n%s",
 		prompt,
 		m.textInput.View(),
 		"(esc to go back)",
 	) + "\n"
+
+	if m.err != nil {
+		str += fmt.Sprintf("\n%s\n", m.err.Error())
+	}
+
+	return str
+}
+
+func (m Model) handleSubmit() tea.Cmd {
+	var cmds []tea.Cmd
+	if m.err != nil {
+		// reset the error
+		cmds = append(cmds, SetPromptErrorCmd(nil))
+	}
+
+	switch m.pk {
+	case ChangeVisibility:
+		if cmd := m.validateInputIsFileID(); cmd != nil {
+			return cmd
+		}
+
+		println("changing visibility of", m.file.ID, "to", !m.file.Private)
+	case ChangeExtension:
+		println("changing extension of", m.file.ID, "to", m.textInput.Value())
+	case GenerateSignedURL:
+		dur, err := time.ParseDuration(m.textInput.Value())
+		if err != nil {
+			return SetPromptErrorCmd(err)
+		}
+
+		if dur <= 0 {
+			return SetPromptErrorCmd(errors.New("duration must be greater than 0"))
+		}
+
+		println("generating signed url for", m.file.ID, "for", dur.String())
+	case DeleteFile:
+		if cmd := m.validateInputIsFileID(); cmd != nil {
+			return cmd
+		}
+
+		println("delete file", m.file.ID)
+	}
+
+	return tea.Batch(cmds...)
+}
+
+func (m Model) validateInputIsFileID() tea.Cmd {
+	if m.textInput.Value() != m.file.ID {
+		return SetPromptErrorCmd(errors.New("please specify the file id to confirm"))
+	}
+
+	return nil
 }
