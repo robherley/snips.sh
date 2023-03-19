@@ -1,7 +1,6 @@
 package ssh
 
 import (
-	"errors"
 	"time"
 
 	"github.com/charmbracelet/ssh"
@@ -13,50 +12,48 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	gossh "golang.org/x/crypto/ssh"
-	"gorm.io/gorm"
 )
 
 // AssignUser will attempt to match a user with a public key fingerprint.
 // If a user is not found, one will be created with the current fingerprint attached.
-func AssignUser(database *db.DB) func(next ssh.Handler) ssh.Handler {
+func AssignUser(database db.DB) func(next ssh.Handler) ssh.Handler {
 	return func(next ssh.Handler) ssh.Handler {
 		return func(sesh ssh.Session) {
 			fingerprint := gossh.FingerprintSHA256(sesh.PublicKey())
 			sesh.Context().SetValue(FingerprintContextKey, fingerprint)
 
-			pubkey := models.PublicKey{}
-			user := models.User{}
+			var (
+				user   *models.User
+				pubkey *models.PublicKey
+				err    error
+			)
 
 			// try to find a public key
-			err := database.Where("fingerprint = ?", fingerprint).First(&pubkey).Error
-			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			pubkey, err = database.PublicKeyForFingerprint(fingerprint)
+			if err != nil {
 				log.Err(err).Msg("unable to find publickey")
 				wish.Fatalln(sesh, "❌ Unable to authenticate")
 				return
 			}
 
 			// upsert and create user if not found
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				user = models.User{
-					PublicKeys: []models.PublicKey{
-						{
-							Fingerprint: fingerprint,
-							Type:        sesh.PublicKey().Type(),
-						},
-					},
-				}
+			if pubkey == nil {
+				user, err = database.NewUser(&models.PublicKey{
+					Fingerprint: fingerprint,
+					Type:        sesh.PublicKey().Type(),
+				})
 
-				if err := database.Create(&user).Error; err != nil {
+				if err != nil {
 					log.Err(err).Msg("unable to create user")
 					wish.Fatalln(sesh, "❌ Unable to authenticate")
 					return
 				}
 
-				pubkey = user.PublicKeys[0]
+				pubkey = &user.PublicKeys[0]
 			} else {
 				// find user
-				err := database.Where("id = ?", pubkey.UserID).First(&user).Error
-				if err != nil {
+				user, err = database.User(pubkey.UserID)
+				if err != nil || user == nil {
 					log.Err(err).Msg("unable to find user")
 					wish.Fatalln(sesh, "❌ Unable to authenticate")
 					return

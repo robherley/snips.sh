@@ -6,7 +6,6 @@ import (
 
 	"github.com/robherley/snips.sh/internal/app"
 	"github.com/robherley/snips.sh/internal/config"
-	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/rs/zerolog/log"
 )
@@ -38,7 +37,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
 
-	err = snips.DB.AutoMigrate(models.All...)
+	err = snips.DB.Migrate()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to auto migrate db")
 	}

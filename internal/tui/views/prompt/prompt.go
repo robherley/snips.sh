@@ -14,14 +14,14 @@ import (
 
 type Prompt struct {
 	file *models.File
-	db   *db.DB
+	db   db.DB
 
 	pk        Kind
 	textInput textinput.Model
 	err       error
 }
 
-func New(db *db.DB) Prompt {
+func New(db db.DB) Prompt {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 255

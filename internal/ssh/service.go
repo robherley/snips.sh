@@ -12,11 +12,11 @@ type Service struct {
 	*ssh.Server
 }
 
-func New(cfg *config.Config, db *db.DB) (*Service, error) {
+func New(cfg *config.Config, db db.DB) (*Service, error) {
 	sessionHandler := &SessionHandler{
 		Config: cfg,
 		DB:     db,
-		Signer: signer.New(cfg.HMACKey),
+		Signer: signer.New(cfg.HMAC.Key),
 	}
 
 	sshServer, err := wish.NewServer(

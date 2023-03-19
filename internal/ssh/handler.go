@@ -25,13 +25,12 @@ import (
 	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/robherley/snips.sh/internal/tui"
 	"github.com/robherley/snips.sh/internal/tui/styles"
-	"github.com/robherley/snips.sh/internal/tui/views/filelist"
 	"github.com/rs/zerolog/log"
 )
 
 type SessionHandler struct {
 	Config *config.Config
-	DB     *db.DB
+	DB     db.DB
 	Signer *signer.Signer
 }
 
@@ -61,10 +60,9 @@ func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 func (h *SessionHandler) Interactive(sesh *UserSession) {
 	pty, winChan, _ := sesh.Pty()
 
-	// TODO(robherley): clean this up
-	files := []filelist.ListItem{}
-	if err := h.DB.Model(&models.File{}).Where("user_id = ?", sesh.UserID()).Order("created_at DESC").Find(&files).Error; err != nil {
-		sesh.Error(err, "Unable to get files", "There was an error requesting files. Please try again.")
+	files, err := h.DB.FilesForUser(sesh.UserID(), false)
+	if err != nil {
+		sesh.Error(err, "Failed to retrieve files", "There was an error retrieving your files. Please try again.")
 		return
 	}
 
@@ -118,8 +116,8 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 	userID := sesh.UserID()
 	fileID := sesh.RequestedFileID()
 
-	file := models.File{}
-	if err := h.DB.First(&file, "id = ?", fileID).Error; err != nil {
+	file, err := h.DB.File(fileID)
+	if err != nil {
 		sesh.Error(err, "Unable to get file", "File not found: %q", fileID)
 		return
 	}
@@ -131,7 +129,7 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 
 	args := sesh.Command()
 	if len(args) == 0 {
-		h.DownloadFile(sesh, &file)
+		h.DownloadFile(sesh, file)
 		return
 	}
 
@@ -142,9 +140,9 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 
 	switch args[0] {
 	case "rm":
-		h.DeleteFile(sesh, &file)
+		h.DeleteFile(sesh, file)
 	case "sign":
-		h.SignFile(sesh, &file)
+		h.SignFile(sesh, file)
 	default:
 		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %q", args[0])
 	}
@@ -186,8 +184,7 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *models.File) {
 		}
 	}
 
-	// this is a soft delete
-	if err := h.DB.Delete(file).Error; err != nil {
+	if err := h.DB.DeleteFile(file.ID); err != nil {
 		sesh.Error(err, "Unable to delete file", "There was an error deleting file: %q", file.ID)
 		return
 	}
@@ -321,7 +318,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				Type:    renderer.DetectFileType(content, flags.Extension),
 			}
 
-			if err := h.DB.Create(&file).Error; err != nil {
+			if err := h.DB.NewFile(&file); err != nil {
 				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
 				return
 			}

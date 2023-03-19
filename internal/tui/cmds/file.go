@@ -1,9 +1,10 @@
 package cmds
 
 import (
+	"errors"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 )
 
@@ -21,15 +22,19 @@ func DeselectFile() tea.Cmd {
 	}
 }
 
-func GetFile(database *db.DB, id, userID string) tea.Cmd {
+func LoadFile(database db.DB, id, userID string) tea.Cmd {
 	return func() tea.Msg {
-		file := models.File{}
-		if err := database.Find(&file, "id = ? AND user_id = ?", id, userID).Error; err != nil {
+		file, err := database.FileForUser(id, userID)
+		if err != nil {
 			return msgs.Error{Err: err}
 		}
 
+		if file == nil {
+			return msgs.Error{Err: errors.New("file not found")}
+		}
+
 		return msgs.FileLoaded{
-			File: &file,
+			File: file,
 		}
 	}
 }

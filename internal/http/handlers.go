@@ -47,15 +47,15 @@ func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Healthy\n"))
 }
 
-func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) http.HandlerFunc {
-	signer := signer.New(cfg.HMACKey)
+func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) http.HandlerFunc {
+	signer := signer.New(cfg.HMAC.Key)
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
 		fileID := strings.TrimPrefix(r.URL.Path, "/f/")
 
-		file := models.File{}
-		if err := database.First(&file, "id = ?", fileID).Error; err != nil {
+		file, err := database.File(fileID)
+		if err != nil {
 			log.Error().Err(err).Msg("unable to lookup file")
 			http.NotFound(w, r)
 			return

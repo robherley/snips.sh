@@ -19,7 +19,7 @@ import (
 type App struct {
 	SSH  *ssh.Service
 	HTTP *http.Service
-	DB   *db.DB
+	DB   db.DB
 }
 
 type service interface {
@@ -75,17 +75,17 @@ func stop(ctx context.Context, services []service) {
 }
 
 func New(cfg *config.Config, webFS *embed.FS, readme string) (*App, error) {
-	db, err := db.New(cfg)
+	database, err := db.NewSqlite(cfg.DB)
 	if err != nil {
 		return nil, err
 	}
 
-	ssh, err := ssh.New(cfg, db)
+	ssh, err := ssh.New(cfg, database)
 	if err != nil {
 		return nil, err
 	}
 
-	http, err := http.New(cfg, db, webFS, readme)
+	http, err := http.New(cfg, database, webFS, readme)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +93,6 @@ func New(cfg *config.Config, webFS *embed.FS, readme string) (*App, error) {
 	return &App{
 		SSH:  ssh,
 		HTTP: http,
-		DB:   db,
+		DB:   database,
 	}, nil
 }

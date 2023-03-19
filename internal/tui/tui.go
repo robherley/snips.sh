@@ -23,7 +23,7 @@ import (
 type TUI struct {
 	UserID      string
 	Fingerprint string
-	DB          *db.DB
+	DB          db.DB
 
 	cfg    *config.Config
 	width  int
@@ -34,10 +34,10 @@ type TUI struct {
 	views     map[views.View]tea.Model
 }
 
-func New(cfg *config.Config, width, height int, userID string, fingerPrint string, database *db.DB, files []filelist.ListItem) TUI {
+func New(cfg *config.Config, width, height int, userID string, fingerprint string, database db.DB, files []models.File) TUI {
 	return TUI{
 		UserID:      userID,
-		Fingerprint: fingerPrint,
+		Fingerprint: fingerprint,
 		DB:          database,
 
 		cfg:       cfg,
@@ -110,7 +110,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return t, tea.Batch(batchedCmds...)
 	case msgs.FileSelected:
-		return t, cmds.GetFile(t.DB, msg.ID, t.UserID)
+		return t, cmds.LoadFile(t.DB, msg.ID, t.UserID)
 	case msgs.FileDeselected:
 		t.file = nil
 	case msgs.FileLoaded:
