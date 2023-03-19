@@ -7,33 +7,33 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/rs/zerolog/log"
 )
 
-type Model struct {
+type Code struct {
 	viewport *viewport.Model
-	file     *db.File
+	file     *models.File
 	content  string
 }
 
-func New(width, height int) *Model {
+func New(width, height int) *Code {
 	vp := viewport.New(width, height)
-	return &Model{
+	return &Code{
 		viewport: &vp,
 	}
 }
 
-func (m *Model) Init() tea.Cmd {
+func (m *Code) Init() tea.Cmd {
 	m.viewport.GotoTop()
 	m.viewport.SetContent(m.content)
 	return nil
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Code) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -55,11 +55,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) View() string {
+func (m *Code) View() string {
 	return m.viewport.View()
 }
 
-func (m *Model) renderContent(file *db.File) string {
+func (m *Code) renderContent(file *models.File) string {
 	if file == nil {
 		return ""
 	}

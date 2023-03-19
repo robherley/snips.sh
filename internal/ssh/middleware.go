@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/rs/zerolog"
@@ -23,8 +24,8 @@ func AssignUser(database *db.DB) func(next ssh.Handler) ssh.Handler {
 			fingerprint := gossh.FingerprintSHA256(sesh.PublicKey())
 			sesh.Context().SetValue(FingerprintContextKey, fingerprint)
 
-			pubkey := db.PublicKey{}
-			user := db.User{}
+			pubkey := models.PublicKey{}
+			user := models.User{}
 
 			// try to find a public key
 			err := database.Where("fingerprint = ?", fingerprint).First(&pubkey).Error
@@ -36,8 +37,8 @@ func AssignUser(database *db.DB) func(next ssh.Handler) ssh.Handler {
 
 			// upsert and create user if not found
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				user = db.User{
-					PublicKeys: []db.PublicKey{
+				user = models.User{
+					PublicKeys: []models.PublicKey{
 						{
 							Fingerprint: fingerprint,
 							Type:        sesh.PublicKey().Type(),
@@ -91,7 +92,7 @@ func BlockIfNoPublicKey(next ssh.Handler) ssh.Handler {
 // WithRequestID will generate a unique request ID for each SSH session.
 func WithRequestID(next ssh.Handler) ssh.Handler {
 	return func(sesh ssh.Session) {
-		requestID := id.MustGenerate()
+		requestID := id.New()
 		sesh.Context().SetValue(RequestIDContextKey, requestID)
 		next(sesh)
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/signer"
@@ -53,7 +54,7 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 
 		fileID := strings.TrimPrefix(r.URL.Path, "/f/")
 
-		file := db.File{}
+		file := models.File{}
 		if err := database.First(&file, "id = ?", fileID).Error; err != nil {
 			log.Error().Err(err).Msg("unable to lookup file")
 			http.NotFound(w, r)
@@ -93,9 +94,9 @@ func FileHandler(cfg *config.Config, database *db.DB, tmpl *template.Template) h
 		var html template.HTML
 
 		switch file.Type {
-		case "binary":
+		case models.BinaryFile:
 			html = renderer.BinaryHTMLPlaceholder
-		case "markdown":
+		case models.MarkdownFile:
 			md, err := renderer.ToMarkdown(file.Content)
 			if err != nil {
 				log.Error().Err(err).Msg("unable to parse file")

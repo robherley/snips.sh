@@ -9,11 +9,11 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/views"
 )
 
-type Model struct {
+type FileList struct {
 	list list.Model
 }
 
-func New(width, height int, files []ListItem) Model {
+func New(width, height int, files []ListItem) FileList {
 	del := list.NewDefaultDelegate()
 
 	selectedStyle := lipgloss.NewStyle().
@@ -44,16 +44,16 @@ func New(width, height int, files []ListItem) Model {
 	ls.Paginator.InactiveDot = lipgloss.NewStyle().Foreground(styles.Colors.Muted).Render("◦")
 	ls.Styles.NoItems = lipgloss.NewStyle().Foreground(styles.Colors.Muted).MarginLeft(1)
 
-	return Model{
+	return FileList{
 		list: ls,
 	}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m FileList) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m FileList) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -76,7 +76,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) View() string {
+func (m FileList) View() string {
 	m.list.SetShowStatusBar(len(m.list.Items()) != 0)
 
 	return m.list.View()

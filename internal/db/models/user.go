@@ -1,7 +1,7 @@
-package db
+package models
 
 type User struct {
-	Model
+	Base
 
 	PublicKeys []PublicKey
 }

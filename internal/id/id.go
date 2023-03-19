@@ -1,26 +1,23 @@
 package id
 
-import (
-	"time"
+import "github.com/jaevor/go-nanoid"
 
-	"github.com/teris-io/shortid"
+const (
+	// IDLength is the length of the generated ID.
+	// About ~17 years of IDs in order to have a 1% chance of collision
+	IDLength = 10
 )
 
-var _sid *shortid.Shortid
+var idgen func() string
 
 func init() {
-	sid, err := shortid.New(0, shortid.DefaultABC, uint64(time.Now().Unix()))
+	var err error
+	idgen, err = nanoid.Standard(IDLength)
 	if err != nil {
 		panic(err)
 	}
-
-	_sid = sid
 }
 
-func Generate() (string, error) {
-	return _sid.Generate()
-}
-
-func MustGenerate() string {
-	return _sid.MustGenerate()
+func New() string {
+	return idgen()
 }

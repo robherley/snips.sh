@@ -1,4 +1,4 @@
-package db
+package models
 
 import (
 	"errors"
@@ -9,16 +9,16 @@ import (
 
 const (
 	MaxFiles     = 100
-	BinaryType   = "binary"
-	MarkdownType = "markdown"
+	BinaryFile   = "binary"
+	MarkdownFile = "markdown"
 )
 
 var (
-	ErrUploadLimit = errors.New("upload limit reached")
+	ErrFileLimit = errors.New("file limit reached")
 )
 
 type File struct {
-	Model
+	Base
 
 	Size    uint64
 	Content []byte
@@ -30,7 +30,7 @@ type File struct {
 }
 
 func (f *File) BeforeCreate(tx *gorm.DB) error {
-	if err := f.Model.BeforeCreate(tx); err != nil {
+	if err := f.Base.BeforeCreate(tx); err != nil {
 		return err
 	}
 
@@ -40,16 +40,16 @@ func (f *File) BeforeCreate(tx *gorm.DB) error {
 	}
 
 	if count >= MaxFiles {
-		return fmt.Errorf("%w: %d files allowed per user", ErrUploadLimit, MaxFiles)
+		return fmt.Errorf("%w: %d files allowed per user", ErrFileLimit, MaxFiles)
 	}
 
 	return nil
 }
 
 func (f *File) IsBinary() bool {
-	return f.Type == BinaryType
+	return f.Type == BinaryFile
 }
 
 func (f *File) IsMarkdown() bool {
-	return f.Type == MarkdownType
+	return f.Type == MarkdownFile
 }

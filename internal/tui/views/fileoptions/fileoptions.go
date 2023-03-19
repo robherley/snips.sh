@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/config"
-	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
@@ -21,23 +21,23 @@ const (
 	selector = "→"
 )
 
-type Model struct {
+type FileOptions struct {
 	cfg     *config.Config
-	file    *db.File
+	file    *models.File
 	currIdx int
 }
 
-func New(cfg *config.Config) Model {
-	return Model{
+func New(cfg *config.Config) FileOptions {
+	return FileOptions{
 		cfg: cfg,
 	}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m FileOptions) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m FileOptions) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -87,7 +87,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) View() string {
+func (m FileOptions) View() string {
 	if m.file == nil {
 		return ""
 	}
@@ -95,7 +95,7 @@ func (m Model) View() string {
 	return lipgloss.JoinVertical(lipgloss.Top, "", m.renderDetails(), m.renderOptions())
 }
 
-func (m Model) renderDetails() string {
+func (m FileOptions) renderDetails() string {
 	str := strings.Builder{}
 
 	httpAddr := m.cfg.HTTPAddressForFile(m.file.ID)
@@ -143,7 +143,7 @@ func (m Model) renderDetails() string {
 	return str.String()
 }
 
-func (m Model) renderOptions() string {
+func (m FileOptions) renderOptions() string {
 	str := strings.Builder{}
 	str.WriteString("options:\n")
 
@@ -190,7 +190,7 @@ func (m Model) renderOptions() string {
 	return str.String()
 }
 
-func (m Model) visibleOptions() []Option {
+func (m FileOptions) visibleOptions() []Option {
 	if m.file == nil {
 		return []Option{}
 	}

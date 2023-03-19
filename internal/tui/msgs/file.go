@@ -1,6 +1,6 @@
 package msgs
 
-import "github.com/robherley/snips.sh/internal/db"
+import "github.com/robherley/snips.sh/internal/db/models"
 
 type FileSelected struct {
 	ID string
@@ -9,5 +9,5 @@ type FileSelected struct {
 type FileDeselected struct{}
 
 type FileLoaded struct {
-	File *db.File
+	File *models.File
 }

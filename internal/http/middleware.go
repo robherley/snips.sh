@@ -24,7 +24,7 @@ func WithMiddleware(handler http.Handler, middlewares ...Middleware) http.Handle
 // WithRequestID adds a unique request ID to the request context.
 func WithRequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestID := id.MustGenerate()
+		requestID := id.New()
 		r.Header.Set(RequestIDHeader, requestID)
 
 		ctx := context.WithValue(r.Context(), RequestIDContextKey, requestID)

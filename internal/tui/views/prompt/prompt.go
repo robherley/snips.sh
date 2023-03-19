@@ -8,11 +8,12 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 )
 
-type Model struct {
-	file *db.File
+type Prompt struct {
+	file *models.File
 	db   *db.DB
 
 	pk        Kind
@@ -20,22 +21,22 @@ type Model struct {
 	err       error
 }
 
-func New(db *db.DB) Model {
+func New(db *db.DB) Prompt {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 255
 	ti.Width = 20
-	return Model{
+	return Prompt{
 		db:        db,
 		textInput: ti,
 	}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m Prompt) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -56,7 +57,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) View() string {
+func (m Prompt) View() string {
 	if m.file == nil || m.pk == None {
 		return ""
 	}
@@ -93,7 +94,7 @@ func (m Model) View() string {
 	return str
 }
 
-func (m Model) handleSubmit() tea.Cmd {
+func (m Prompt) handleSubmit() tea.Cmd {
 	var cmds []tea.Cmd
 	if m.err != nil {
 		// reset the error
@@ -131,7 +132,7 @@ func (m Model) handleSubmit() tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m Model) validateInputIsFileID() tea.Cmd {
+func (m Prompt) validateInputIsFileID() tea.Cmd {
 	if m.textInput.Value() != m.file.ID {
 		return SetPromptErrorCmd(errors.New("please specify the file id to confirm"))
 	}

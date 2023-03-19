@@ -1,7 +1,7 @@
-package db
+package models
 
 type PublicKey struct {
-	Model
+	Base
 
 	Fingerprint string `gorm:"index:pubkey_fingerprint,unique"`
 	Type        string

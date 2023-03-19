@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
@@ -28,7 +29,7 @@ type TUI struct {
 	width  int
 	height int
 
-	file      *db.File
+	file      *models.File
 	viewStack []views.View
 	views     map[views.View]tea.Model
 }

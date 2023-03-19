@@ -19,6 +19,7 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/signer"
@@ -62,7 +63,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 
 	// TODO(robherley): clean this up
 	files := []filelist.ListItem{}
-	if err := h.DB.Model(&db.File{}).Where("user_id = ?", sesh.UserID()).Order("created_at DESC").Find(&files).Error; err != nil {
+	if err := h.DB.Model(&models.File{}).Where("user_id = ?", sesh.UserID()).Order("created_at DESC").Find(&files).Error; err != nil {
 		sesh.Error(err, "Unable to get files", "There was an error requesting files. Please try again.")
 		return
 	}
@@ -117,7 +118,7 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 	userID := sesh.UserID()
 	fileID := sesh.RequestedFileID()
 
-	file := db.File{}
+	file := models.File{}
 	if err := h.DB.First(&file, "id = ?", fileID).Error; err != nil {
 		sesh.Error(err, "Unable to get file", "File not found: %q", fileID)
 		return
@@ -149,7 +150,7 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 	}
 }
 
-func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
+func (h *SessionHandler) DeleteFile(sesh *UserSession, file *models.File) {
 	flags := DeleteFlags{}
 	args := sesh.Command()[1:]
 	if err := flags.Parse(sesh.Stderr(), args); err != nil {
@@ -208,7 +209,7 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *db.File) {
 	noti.Render(sesh)
 }
 
-func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
+func (h *SessionHandler) SignFile(sesh *UserSession, file *models.File) {
 	if !file.Private {
 		sesh.Error(ErrSignPublicFile, "Unable to sign file", "Can only sign private files, %q is not private.", file.ID)
 		return
@@ -263,7 +264,7 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *db.File) {
 	noti.Render(sesh)
 }
 
-func (h *SessionHandler) DownloadFile(sesh *UserSession, file *db.File) {
+func (h *SessionHandler) DownloadFile(sesh *UserSession, file *models.File) {
 	wish.Print(sesh, string(file.Content))
 }
 
@@ -312,7 +313,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				return
 			}
 
-			file := db.File{
+			file := models.File{
 				Private: flags.Private,
 				Content: content,
 				Size:    size,
