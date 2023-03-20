@@ -17,7 +17,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/muesli/termenv v0.13.0
 	github.com/rs/zerolog v1.28.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/yuin/goldmark v1.5.3
 	github.com/yuin/goldmark-emoji v1.0.1
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20220924101305-151362477c87
@@ -51,6 +51,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sahilm/fuzzy v0.1.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/term v0.2.0 // indirect
