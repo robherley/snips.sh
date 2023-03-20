@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"context"
 	"errors"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -22,9 +23,9 @@ func DeselectFile() tea.Cmd {
 	}
 }
 
-func LoadFile(database db.DB, id, userID string) tea.Cmd {
+func LoadFile(database db.DB, id string) tea.Cmd {
 	return func() tea.Msg {
-		file, err := database.FileForUser(id, userID)
+		file, err := database.FindFile(context.Background(), id)
 		if err != nil {
 			return msgs.Error{Err: err}
 		}

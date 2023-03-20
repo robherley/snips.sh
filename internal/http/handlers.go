@@ -11,10 +11,10 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/signer"
+	"github.com/robherley/snips.sh/internal/snips"
 )
 
 func IndexHandler(readme string, tmpl *template.Template) http.HandlerFunc {
@@ -48,13 +48,13 @@ func HealthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) http.HandlerFunc {
-	signer := signer.New(cfg.HMAC.Key)
+	signer := signer.New(cfg.HMACKey)
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
 		fileID := strings.TrimPrefix(r.URL.Path, "/f/")
 
-		file, err := database.File(fileID)
+		file, err := database.FindFile(r.Context(), fileID)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to lookup file")
 			http.NotFound(w, r)
@@ -94,9 +94,9 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 		var html template.HTML
 
 		switch file.Type {
-		case models.BinaryFile:
+		case snips.FileTypeBinary:
 			html = renderer.BinaryHTMLPlaceholder
-		case models.MarkdownFile:
+		case snips.FileTypeMarkdown:
 			md, err := renderer.ToMarkdown(file.Content)
 			if err != nil {
 				log.Error().Err(err).Msg("unable to parse file")

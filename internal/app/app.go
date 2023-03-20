@@ -75,7 +75,7 @@ func stop(ctx context.Context, services []service) {
 }
 
 func New(cfg *config.Config, webFS *embed.FS, readme string) (*App, error) {
-	database, err := db.NewSqlite(cfg.DB)
+	database, err := db.NewSqlite(cfg.DB.FilePath)
 	if err != nil {
 		return nil, err
 	}

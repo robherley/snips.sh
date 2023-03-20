@@ -20,29 +20,22 @@ KEY	TYPE	DEFAULT	DESCRIPTION
 type Config struct {
 	Debug bool `default:"false" desc:"enable debug logging"`
 
-	HMAC
-	DB
-	HTTP
-	SSH
-}
+	HMACKey string `default:"correct-horse-battery-staple" desc:"symmetric key used to sign URLs"`
 
-type HMAC struct {
-	Key string `default:"correct-horse-battery-staple" desc:"symmetric key used to sign URLs"`
-}
+	DB struct {
+		FilePath string `default:"data/snips.db" desc:"path to database file"`
+	}
 
-type DB struct {
-	FilePath string `default:"data/snips.db" desc:"path to database file"`
-}
+	HTTP struct {
+		Internal url.URL `default:"http://localhost:8080" desc:"internal address to listen for http requests"`
+		External url.URL `default:"http://localhost:8080" desc:"external http address displayed in commands"`
+	}
 
-type HTTP struct {
-	Internal url.URL `default:"http://localhost:8080" desc:"internal address to listen for http requests"`
-	External url.URL `default:"http://localhost:8080" desc:"external http address displayed in commands"`
-}
-
-type SSH struct {
-	Internal    url.URL `default:"ssh://localhost:2222" desc:"internal address to listen for ssh requests"`
-	External    url.URL `default:"ssh://localhost:2222" desc:"external ssh address displayed in commands"`
-	HostKeyPath string  `default:"data/keys/snips" desc:"path to host keys (without extension)"`
+	SSH struct {
+		Internal    url.URL `default:"ssh://localhost:2222" desc:"internal address to listen for ssh requests"`
+		External    url.URL `default:"ssh://localhost:2222" desc:"external ssh address displayed in commands"`
+		HostKeyPath string  `default:"data/keys/snips" desc:"path to host keys (without extension)"`
+	}
 }
 
 func (cfg *Config) PrintUsage() error {

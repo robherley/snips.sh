@@ -1,27 +1,28 @@
 package db
 
-import "github.com/robherley/snips.sh/internal/db/models"
+import (
+	"context"
+
+	"github.com/robherley/snips.sh/internal/snips"
+)
 
 type DB interface {
-	// Migrate runs the database migrations.
-	Migrate() error
-	// File returns a file by its ID.
-	File(id string) (*models.File, error)
-	// NewFile creates a new file.
-	NewFile(file *models.File) error
+	// Migrate migrates the database.
+	Migrate(ctx context.Context) error
+	// FindFile returns a file by its ID. Includes file content.
+	FindFile(ctx context.Context, id string) (*snips.File, error)
+	// CreateFile creates a new file.
+	CreateFile(ctx context.Context, file *snips.File) error
 	// UpdateFile updates a file.
-	UpdateFile(file *models.File) error
+	UpdateFile(ctx context.Context, file *snips.File) error
 	// DeleteFile deletes a file by its ID.
-	DeleteFile(id string) error
-	// FileForUser returns a file by its ID and user ID.
-	FileForUser(id, userID string) (*models.File, error)
-	// FilesForUser returns all files for a user.
-	// If withContent is false, the content field will be omitted.
-	FilesForUser(userID string, withContent bool) ([]models.File, error)
-	// PublicKeyForFingerprint returns a public key by its fingerprint.
-	PublicKeyForFingerprint(fingerprint string) (*models.PublicKey, error)
-	// NewUser creates a new user with a public key.
-	NewUser(publickey *models.PublicKey) (*models.User, error)
-	// User returns a user by its ID.
-	User(id string) (*models.User, error)
+	DeleteFile(ctx context.Context, id string) error
+	// FindFilesByUser returns all files for a user. Does not include file content.
+	FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error)
+	// FindPublicKeyByFingerprint returns a public key by its fingerprint.
+	FindPublicKeyByFingerprint(ctx context.Context, fingerprint string) (*snips.PublicKey, error)
+	// CreateUserWithPublicKey creates a new user with a public key.
+	CreateUserWithPublicKey(ctx context.Context, publickey *snips.PublicKey) (*snips.User, error)
+	// FindUser returns a user by its ID.
+	FindUser(ctx context.Context, id string) (*snips.User, error)
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/renderer"
+	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/rs/zerolog/log"
@@ -16,7 +16,7 @@ import (
 
 type Code struct {
 	viewport *viewport.Model
-	file     *models.File
+	file     *snips.File
 	content  string
 }
 
@@ -59,7 +59,7 @@ func (m *Code) View() string {
 	return m.viewport.View()
 }
 
-func (m *Code) renderContent(file *models.File) string {
+func (m *Code) renderContent(file *snips.File) string {
 	if file == nil {
 		return ""
 	}

@@ -4,7 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/robherley/snips.sh/internal/db/models"
+	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/robherley/snips.sh/internal/tui/views"
@@ -14,7 +14,7 @@ type FileList struct {
 	list list.Model
 }
 
-func New(width, height int, files []models.File) FileList {
+func New(width, height int, files []*snips.File) FileList {
 	del := list.NewDefaultDelegate()
 
 	selectedStyle := lipgloss.NewStyle().

@@ -4,12 +4,11 @@ import (
 	"os"
 
 	"github.com/mattn/go-isatty"
-	"github.com/robherley/snips.sh/internal/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-func Init(cfg *config.Config) {
+func Init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	if isatty.IsTerminal(os.Stdout.Fd()) {
@@ -17,7 +16,4 @@ func Init(cfg *config.Config) {
 	}
 
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	if cfg.Debug {
-		zerolog.SetGlobalLevel(zerolog.TraceLevel)
-	}
 }

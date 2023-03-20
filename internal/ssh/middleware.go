@@ -6,9 +6,9 @@ import (
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/db/models"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
+	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	gossh "golang.org/x/crypto/ssh"
@@ -23,13 +23,13 @@ func AssignUser(database db.DB) func(next ssh.Handler) ssh.Handler {
 			sesh.Context().SetValue(FingerprintContextKey, fingerprint)
 
 			var (
-				user   *models.User
-				pubkey *models.PublicKey
+				user   *snips.User
+				pubkey *snips.PublicKey
 				err    error
 			)
 
 			// try to find a public key
-			pubkey, err = database.PublicKeyForFingerprint(fingerprint)
+			pubkey, err = database.FindPublicKeyByFingerprint(sesh.Context(), fingerprint)
 			if err != nil {
 				log.Err(err).Msg("unable to find publickey")
 				wish.Fatalln(sesh, "❌ Unable to authenticate")
@@ -38,21 +38,21 @@ func AssignUser(database db.DB) func(next ssh.Handler) ssh.Handler {
 
 			// upsert and create user if not found
 			if pubkey == nil {
-				user, err = database.NewUser(&models.PublicKey{
+				pubkey = &snips.PublicKey{
 					Fingerprint: fingerprint,
 					Type:        sesh.PublicKey().Type(),
-				})
+				}
+
+				user, err = database.CreateUserWithPublicKey(sesh.Context(), pubkey)
 
 				if err != nil {
 					log.Err(err).Msg("unable to create user")
 					wish.Fatalln(sesh, "❌ Unable to authenticate")
 					return
 				}
-
-				pubkey = &user.PublicKeys[0]
 			} else {
 				// find user
-				user, err = database.User(pubkey.UserID)
+				user, err = database.FindUser(sesh.Context(), pubkey.UserID)
 				if err != nil || user == nil {
 					log.Err(err).Msg("unable to find user")
 					wish.Fatalln(sesh, "❌ Unable to authenticate")

@@ -16,7 +16,7 @@ func New(cfg *config.Config, db db.DB) (*Service, error) {
 	sessionHandler := &SessionHandler{
 		Config: cfg,
 		DB:     db,
-		Signer: signer.New(cfg.HMAC.Key),
+		Signer: signer.New(cfg.HMACKey),
 	}
 
 	sshServer, err := wish.NewServer(

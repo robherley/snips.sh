@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/db/models"
+	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
@@ -29,12 +29,12 @@ type TUI struct {
 	width  int
 	height int
 
-	file      *models.File
+	file      *snips.File
 	viewStack []views.View
 	views     map[views.View]tea.Model
 }
 
-func New(cfg *config.Config, width, height int, userID string, fingerprint string, database db.DB, files []models.File) TUI {
+func New(cfg *config.Config, width, height int, userID string, fingerprint string, database db.DB, files []*snips.File) TUI {
 	return TUI{
 		UserID:      userID,
 		Fingerprint: fingerprint,
@@ -110,7 +110,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return t, tea.Batch(batchedCmds...)
 	case msgs.FileSelected:
-		return t, cmds.LoadFile(t.DB, msg.ID, t.UserID)
+		return t, cmds.LoadFile(t.DB, msg.ID)
 	case msgs.FileDeselected:
 		t.file = nil
 	case msgs.FileLoaded:

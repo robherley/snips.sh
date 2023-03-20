@@ -32,7 +32,11 @@ func New(cfg *config.Config, database db.DB, webFS *embed.FS, readme string) (*S
 	mux.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.FS(static))))
 
 	if cfg.Debug {
-		mux.HandleFunc("/_debug/profile", pprof.Profile)
+		mux.HandleFunc("/_debug/pprof/", pprof.Index)
+		mux.HandleFunc("/_debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("/_debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("/_debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("/_debug/pprof/trace", pprof.Trace)
 	}
 
 	httpServer := &http.Server{
