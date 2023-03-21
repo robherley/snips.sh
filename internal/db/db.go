@@ -6,7 +6,7 @@ import (
 	"github.com/robherley/snips.sh/internal/snips"
 )
 
-//go:generate mockery --name DB --filename db_mock.go --inpackage
+//go:generate mockery --name DB --filename db_mock.go --inpackage --with-expecter
 type DB interface {
 	// Migrate migrates the database.
 	Migrate(ctx context.Context) error

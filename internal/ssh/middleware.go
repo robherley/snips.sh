@@ -44,7 +44,6 @@ func AssignUser(database db.DB) func(next ssh.Handler) ssh.Handler {
 				}
 
 				user, err = database.CreateUserWithPublicKey(sesh.Context(), pubkey)
-
 				if err != nil {
 					log.Err(err).Msg("unable to create user")
 					wish.Fatalln(sesh, "❌ Unable to authenticate")
