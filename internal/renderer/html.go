@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 
 	"github.com/alecthomas/chroma/v2/formatters/html"
@@ -31,5 +32,6 @@ func ToSyntaxHighlightedHTML(fileType string, fileContent []byte) (template.HTML
 		return "", err
 	}
 
-	return template.HTML(chromaHTML.String()), nil
+	wrapped := fmt.Sprintf("<div class=\"code\">%s</div>", chromaHTML.String())
+	return template.HTML(wrapped), nil
 }

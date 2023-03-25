@@ -1,0 +1,45 @@
+.code .chroma .line {
+  display: flex;
+  line-height: 1.5rem;
+}
+
+.code .chroma .hl .cl {
+  position: relative;
+  flex: 1;
+}
+
+.code .chroma .ln {
+  margin-right: 0.4rem;
+  padding: 0 0.4rem 0 0.8rem;
+}
+
+.code .chroma .ln + .cl {
+  padding-left: 0.75rem
+}
+
+.code .chroma .hl .cl:before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background-color: var(--primary);
+}
+
+.code .chroma .hl .cl:after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--primary);
+  opacity: 0.2;
+}
+
+.code .chroma .hl .lnlinks {
+  color: var(--primary);
+}

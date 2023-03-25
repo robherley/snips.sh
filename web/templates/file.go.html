@@ -7,30 +7,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>">
-  <title>snips.sh - {{ .FileID }}</title>
-  <link rel="stylesheet" href="/static/vendor/primer.css">
-  <link rel="stylesheet" href="/static/chroma.css">
-  <link rel="stylesheet" href="/static/file.css">
-  <script async defer src="/static/file.js"></script>
+  <title>{{ .FileID }} - snips.sh</title>
+  <link rel="stylesheet" href="/static/css/index.css">
+  <link rel="stylesheet" href="/static/css/chroma.css">
+  <link rel="stylesheet" href="/static/css/code.css">
+  <link rel="stylesheet" href="/static/css/markdown.css">
+  <script async defer src="/static/js/file.js"></script>
 </head>
 
 <body>
   <div class="container">
-    <div class="m-4 border rounded-3 overflow-hidden">
-      <div class="d-flex flex-justify-between flex-items-center color-bg-overlay border-bottom p-2 text-mono color-fg-muted">
-      <div>file: <a href=".">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} &middot; {{ .CreatedAt }}</div>
+    <a class="logo" href="/"><h1>snips.sh <span role="img" aria-label="scissors">✂️</span></h1></a>
+    <div class="file-header">
+      <div class="file-details">file: <a href=".">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} &middot; {{ .CreatedAt }} {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}</div>
+
       {{ if .RawHREF }}
-      <a class="btn btn-sm btn-invisible" href="{{ .RawHREF }} " aria-label="view raw file">view raw</a>
+      <a class="view-raw" href="{{ .RawHREF }} " aria-label="view raw file">view raw</a>
       {{ end }}
-      </div>
-      <div class="p-2 overflow-auto">
-        {{ .HTML }}
-      </div>
+    </div>
+    <div class="file-content">
+      {{ .HTML }}
     </div>
   </div>
-  <footer class="text-center text-mono mb-4">
-    <span role="img" aria-label="scissors">✂️</span>
-    <a href="/">snips.sh</a>
-  </footer>
 </body>
 </html>

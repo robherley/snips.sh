@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-dir=$(git rev-parse --show-toplevel)
-mkdir -p "$dir"/tmp
-imgpath="$dir/tmp/profile-$(date +%s).png"
-
-go tool pprof -png http://localhost:8080/_debug/profile > "$imgpath"
-echo "Saved profile png to $imgpath"

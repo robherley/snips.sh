@@ -16,6 +16,10 @@ import (
 
 var md = goldmark.New(
 	goldmark.WithExtensions(
+		extension.Table,
+		extension.Strikethrough,
+		extension.TaskList,
+		extension.Typographer,
 		extension.GFM,
 		emoji.Emoji,
 		highlighting.NewHighlighting(
@@ -39,7 +43,6 @@ func ToMarkdown(fileContent []byte) (template.HTML, error) {
 		return "", err
 	}
 
-	wrapped := fmt.Sprintf("<div class='markdown-body p-5'>%s</div>", mdHTML.String())
-
+	wrapped := fmt.Sprintf("<div class=\"markdown\">%s</div>", mdHTML.String())
 	return template.HTML(wrapped), nil
 }

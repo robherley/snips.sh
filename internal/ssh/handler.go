@@ -360,7 +360,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 
 			noti = Notification{
 				Title:   "SSH 📠",
-				Message: styles.C(styles.Colors.Yellow, h.Config.SSHCommandForFile(file.ID)),
+				Message: styles.C(styles.Colors.Blue, h.Config.SSHCommandForFile(file.ID)),
 				WithStyle: func(s *lipgloss.Style) {
 					s.MarginTop(1)
 				},

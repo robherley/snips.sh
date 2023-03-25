@@ -97,23 +97,19 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 		case snips.FileTypeBinary:
 			html = renderer.BinaryHTMLPlaceholder
 		case snips.FileTypeMarkdown:
-			md, err := renderer.ToMarkdown(file.Content)
+			html, err = renderer.ToMarkdown(file.Content)
 			if err != nil {
 				log.Error().Err(err).Msg("unable to parse file")
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)
 				return
 			}
-
-			html = md
 		default:
-			code, err := renderer.ToSyntaxHighlightedHTML(file.Type, file.Content)
+			html, err = renderer.ToSyntaxHighlightedHTML(file.Type, file.Content)
 			if err != nil {
 				log.Error().Err(err).Msg("unable to parse file")
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)
 				return
 			}
-
-			html = code
 		}
 
 		vars := map[string]interface{}{
@@ -123,6 +119,7 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 			"FileType":  strings.ToLower(file.Type),
 			"RawHREF":   rawHref,
 			"HTML":      html,
+			"Private":   file.Private,
 		}
 
 		tmpl.ExecuteTemplate(w, "file.go.html", vars)
