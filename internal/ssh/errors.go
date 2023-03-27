@@ -3,6 +3,7 @@ package ssh
 import "errors"
 
 var (
+	ErrFileNotFound      = errors.New("file not found")
 	ErrFileTooLarge      = errors.New("file too large")
 	ErrNilProgram        = errors.New("nil program")
 	ErrPrivateFileAccess = errors.New("private file access")

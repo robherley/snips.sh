@@ -118,12 +118,17 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 
 	file, err := h.DB.FindFile(sesh.Context(), fileID)
 	if err != nil {
-		sesh.Error(err, "Unable to get file", "File not found: %q", fileID)
+		sesh.Error(err, "Unable to get file", "File not found: %s", fileID)
+		return
+	}
+
+	if file == nil {
+		sesh.Error(ErrFileNotFound, "Unable to get file", "File not found: %s", fileID)
 		return
 	}
 
 	if file.Private && file.UserID != userID {
-		sesh.Error(ErrPrivateFileAccess, "Unable to get file", "File not found: %q", fileID)
+		sesh.Error(ErrPrivateFileAccess, "Unable to get file", "File not found: %s", fileID)
 		return
 	}
 
@@ -375,9 +380,6 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			noti = Notification{
 				Title:   "URL 🔗",
 				Message: url,
-				WithStyle: func(s *lipgloss.Style) {
-					s.MarginTop(1)
-				},
 			}
 
 			if file.Private {
