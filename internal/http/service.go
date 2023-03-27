@@ -20,7 +20,6 @@ func New(cfg *config.Config, database db.DB, webFS *embed.FS, readme string) (*S
 
 	templates := template.Must(template.ParseFS(webFS, "web/templates/*"))
 
-	// TODO(robherley): gzip?
 	static, err := fs.Sub(webFS, "web/static")
 	if err != nil {
 		return nil, err
@@ -29,7 +28,7 @@ func New(cfg *config.Config, database db.DB, webFS *embed.FS, readme string) (*S
 	mux.HandleFunc("/", IndexHandler(readme, templates))
 	mux.HandleFunc("/health", HealthHandler)
 	mux.HandleFunc("/f/", FileHandler(cfg, database, templates))
-	mux.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.FS(static))))
+	mux.Handle("/static/", WithGZip(http.StripPrefix("/static", http.FileServer(http.FS(static)))))
 
 	if cfg.Debug {
 		mux.HandleFunc("/_debug/pprof/", pprof.Index)
