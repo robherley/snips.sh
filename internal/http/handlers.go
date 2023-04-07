@@ -2,7 +2,6 @@ package http
 
 import (
 	"html/template"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -113,25 +112,14 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 			}
 		}
 
-		var colors = [...]string{
-			"blue",
-			"red",
-			"amber",
-			"green",
-			"teal",
-			"purple",
-			"pink",
-		}
-
 		vars := map[string]interface{}{
-			"FileID":       file.ID,
-			"FileSize":     humanize.Bytes(file.Size),
-			"CreatedAt":    humanize.Time(file.CreatedAt),
-			"FileType":     strings.ToLower(file.Type),
-			"RawHREF":      rawHref,
-			"HTML":         html,
-			"Private":      file.Private,
-			"PrimaryColor": colors[rand.Intn(len(colors))],
+			"FileID":    file.ID,
+			"FileSize":  humanize.Bytes(file.Size),
+			"CreatedAt": humanize.Time(file.CreatedAt),
+			"FileType":  strings.ToLower(file.Type),
+			"RawHREF":   rawHref,
+			"HTML":      html,
+			"Private":   file.Private,
 		}
 
 		tmpl.ExecuteTemplate(w, "file.go.html", vars)

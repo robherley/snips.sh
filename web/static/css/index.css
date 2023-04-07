@@ -96,6 +96,8 @@
   --color-pink-8:#de2670;
   --color-pink-9:#f76191;
   --color-pink-10:#feecf4;
+
+  --color-primary: var(--color-teal-9);
 }
 
 ::selection {
@@ -148,6 +150,10 @@ a:hover {
   align-items: center;
 }
 
+.title .bracket {
+  color: var(--color-primary);
+}
+
 .title:after {
   content: "";
   display: block;
@@ -155,7 +161,7 @@ a:hover {
   height: 1.5rem;
   /* https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/repeating-linear-gradient#zebra_stripes */
   background-image: repeating-linear-gradient(
-    -45deg,
+    90deg,
     var(--color-primary) 0 3px,
     transparent 3px 10px
   );

@@ -58,6 +58,8 @@ func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 }
 
 func (h *SessionHandler) Interactive(sesh *UserSession) {
+	log := logger.From(sesh.Context())
+
 	pty, winChan, _ := sesh.Pty()
 
 	files, err := h.DB.FindFilesByUser(sesh.Context(), sesh.UserID())

@@ -12,17 +12,12 @@
   <link rel="stylesheet" href="/static/css/chroma.css">
   <link rel="stylesheet" href="/static/css/code.css">
   <link rel="stylesheet" href="/static/css/markdown.css">
-  <style>
-    :root {
-      --color-primary: var(--color-{{ with .PrimaryColor }}{{ . }}{{ else }}{{ "blue" }}{{ end }}-9);
-    }
-  </style>
   <script async defer src="/static/js/file.js"></script>
 </head>
 
 <body>
   <div class="container">
-    <a class="title" href="/"><h1>snips.sh</h1></a>
+    <a class="title" href="/"><h1><span class="bracket">[</span>snips.sh<span class="bracket">]</span></h1></a>
     <div class="file-header">
       <div class="file-details">file: <a href=".">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} &middot; {{ .CreatedAt }} {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}</div>
       {{ if .RawHREF }}
