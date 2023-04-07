@@ -156,6 +156,33 @@ func (s *SqliteSuite) TestCreateFile() {
 	s.Require().Equal(file.UserID, userID)
 }
 
+func (s *SqliteSuite) TestCreateFile_FileLimit() {
+	database := s.getTestDB(true)
+
+	userID := id.New()
+
+	for i := 0; i <= snips.FileLimit; i++ {
+		err := database.CreateFile(context.TODO(), &snips.File{
+			Size:    11,
+			Content: []byte("hello world"),
+			Private: false,
+			Type:    "plaintext",
+			UserID:  userID,
+		})
+		s.Require().NoError(err)
+	}
+
+	err := database.CreateFile(context.TODO(), &snips.File{
+		Size:    11,
+		Content: []byte("should fail"),
+		Private: false,
+		Type:    "plaintext",
+		UserID:  userID,
+	})
+
+	s.Require().ErrorIs(err, snips.ErrFileLimit)
+}
+
 func (s *SqliteSuite) TestUpdateFile() {
 	database := s.getTestDB(true)
 

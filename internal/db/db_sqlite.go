@@ -97,11 +97,27 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 }
 
 func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File) error {
+	const countQuery = `
+		SELECT COUNT(*)
+		FROM files
+		WHERE user_id = ?
+	`
+
+	var count int
+	row := s.QueryRowContext(ctx, countQuery, file.UserID)
+	if err := row.Scan(&count); err != nil {
+		return err
+	}
+
+	if count > snips.FileLimit {
+		return snips.ErrFileLimit
+	}
+
 	file.ID = id.New()
 	file.CreatedAt = time.Now().UTC()
 	file.UpdatedAt = time.Now().UTC()
 
-	const query = `
+	const insertQuery = `
 		INSERT INTO files (
 			id,
 			created_at,
@@ -114,7 +130,7 @@ func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File) error {
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
-	if _, err := s.ExecContext(ctx, query,
+	if _, err := s.ExecContext(ctx, insertQuery,
 		file.ID,
 		file.CreatedAt,
 		file.UpdatedAt,
@@ -184,6 +200,7 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 			user_id
 		FROM files
 		WHERE user_id = ?
+		ORDER BY created_at DESC
 	`
 
 	rows, err := s.QueryContext(ctx, query, userID)
