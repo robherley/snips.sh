@@ -3,7 +3,7 @@ package views
 type View int
 
 const (
-	FileList View = iota
+	FileTable View = iota
 	FileOptions
 	Code
 	Prompt

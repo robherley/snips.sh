@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,8 +13,8 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/robherley/snips.sh/internal/tui/views"
 	"github.com/robherley/snips.sh/internal/tui/views/code"
-	"github.com/robherley/snips.sh/internal/tui/views/filelist"
 	"github.com/robherley/snips.sh/internal/tui/views/fileoptions"
+	"github.com/robherley/snips.sh/internal/tui/views/filetable"
 	"github.com/robherley/snips.sh/internal/tui/views/prompt"
 	"github.com/rs/zerolog/log"
 )
@@ -44,9 +43,9 @@ func New(cfg *config.Config, width, height int, userID string, fingerprint strin
 		width:     width,
 		height:    height,
 		file:      nil,
-		viewStack: []views.View{views.FileList},
+		viewStack: []views.View{views.FileTable},
 		views: map[views.View]tea.Model{
-			views.FileList:    filelist.New(width, height-1, files),
+			views.FileTable:   filetable.New(width, height-1, files),
 			views.Code:        code.New(width, height-1),
 			views.FileOptions: fileoptions.New(cfg),
 			views.Prompt:      prompt.New(database),
@@ -80,7 +79,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return t, tea.Quit
 			} else {
 				batchedCmds = append(batchedCmds, cmds.PopView())
-				if t.currentView() == views.FileList {
+				if t.currentView() == views.FileTable {
 					batchedCmds = append(batchedCmds, cmds.DeselectFile())
 				}
 				return t, tea.Batch(batchedCmds...)
@@ -131,18 +130,9 @@ func (t TUI) View() string {
 }
 
 func (t TUI) titleBar() string {
-	titleText := "┃ snips.sh"
-	if t.file != nil {
-		titleText += fmt.Sprintf(" / %s", t.file.ID)
-	}
-	titleText += " "
+	title := styles.BC(styles.Colors.Green, "[") + styles.BC(styles.Colors.White, "snips.sh") + styles.BC(styles.Colors.Green, "]")
 
-	title := lipgloss.NewStyle().
-		Foreground(styles.Colors.Green).
-		Bold(false).
-		Render(titleText)
-
-	return title + strings.Repeat(styles.C(styles.Colors.Green, "┃"), t.width-lipgloss.Width((title)))
+	return title + " " + strings.Repeat(styles.C(styles.Colors.Green, "|"), t.width-lipgloss.Width((title)))
 }
 
 func (t TUI) currentView() views.View {
