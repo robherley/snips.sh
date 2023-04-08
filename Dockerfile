@@ -9,7 +9,7 @@ RUN go mod verify
 
 COPY . .
 
-RUN go build -a -ldflags='-extldflags=-static' -o 'snips.sh'
+RUN go build -a -o 'snips.sh'
 
 FROM gcr.io/distroless/base-debian11
 
