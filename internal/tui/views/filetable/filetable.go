@@ -59,11 +59,6 @@ type FileTable struct {
 }
 
 func New(width, height int, files []*snips.File) FileTable {
-	// only first 10 files
-	// if len(files) > 10 {
-	// 	files = files[:10]
-	// }
-
 	return FileTable{
 		files:  files,
 		height: height,
@@ -150,6 +145,10 @@ func (ft FileTable) renderHeader() string {
 }
 
 func (ft FileTable) renderFooter() string {
+	if len(ft.files) == 0 {
+		return lipgloss.NewStyle().Foreground(styles.Colors.Muted).Render("No files found")
+	}
+
 	return lipgloss.
 		NewStyle().
 		Foreground(styles.Colors.Blue).
@@ -161,7 +160,7 @@ func (ft FileTable) renderRow(i int) string {
 	rowStyle := lipgloss.NewStyle()
 
 	if i == ft.index {
-		row.WriteString("→ ")
+		row.WriteString("◾ ")
 		rowStyle = rowStyle.Foreground(styles.Colors.Yellow).Bold(true)
 	} else {
 		rowStyle = rowStyle.Foreground(styles.Colors.Muted)
