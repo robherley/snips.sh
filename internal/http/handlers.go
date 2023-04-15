@@ -31,11 +31,10 @@ func IndexHandler(readme string, tmpl *template.Template) http.HandlerFunc {
 		}
 
 		vars := map[string]interface{}{
-			"FileID":    "README.md",
-			"FileSize":  humanize.Bytes(uint64(len(bs))),
-			"CreatedAt": humanize.Time(time.Now()),
-			"FileType":  "markdown",
-			"HTML":      md,
+			"FileID":   "README.md",
+			"FileSize": humanize.Bytes(uint64(len(bs))),
+			"FileType": "markdown",
+			"HTML":     md,
 		}
 
 		tmpl.ExecuteTemplate(w, "file.go.html", vars)
