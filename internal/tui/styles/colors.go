@@ -40,3 +40,11 @@ func B(s string) string {
 func BC(c lipgloss.TerminalColor, s string) string {
 	return lipgloss.NewStyle().Foreground(c).Bold(true).Render(s)
 }
+
+func U(s string) string {
+	return lipgloss.NewStyle().Underline(true).Render(s)
+}
+
+func UC(c lipgloss.TerminalColor, s string) string {
+	return lipgloss.NewStyle().Foreground(c).Underline(true).Render(s)
+}
