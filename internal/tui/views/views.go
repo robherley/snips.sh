@@ -3,8 +3,7 @@ package views
 type View int
 
 const (
-	FileTable View = iota
-	FileOptions
+	Browser View = iota
 	Code
 	Prompt
 )

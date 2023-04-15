@@ -83,12 +83,7 @@ func (m *Code) renderContent(file *snips.File) string {
 		Border(lipgloss.NormalBorder(), false).
 		BorderForeground(styles.Colors.Muted)
 
-	builder := strings.Builder{}
-
-	builder.WriteString(strings.Repeat(" ", int(maxDigits)))
-	builder.WriteString(styles.C(styles.Colors.Muted, lipgloss.NormalBorder().TopLeft))
-	builder.WriteString(styles.C(styles.Colors.Muted, strings.Repeat(lipgloss.NormalBorder().Bottom, m.viewport.Width-int(maxDigits))))
-	builder.WriteRune('\n')
+	renderedLines := make([]string, 0, len(lines))
 
 	for i, line := range lines {
 		lineNumber := borderStyle.
@@ -96,15 +91,10 @@ func (m *Code) renderContent(file *snips.File) string {
 			BorderRight(true).
 			MarginRight(1).
 			Render(fmt.Sprintf("%*d", int(maxDigits), i+1))
-		builder.WriteString(lineNumber)
-		builder.WriteString(strings.ReplaceAll(line, "\t", "    "))
-		builder.WriteRune('\n')
+
+		scrubbed := strings.ReplaceAll(line, "\t", "    ")
+		renderedLines = append(renderedLines, lineNumber+scrubbed)
 	}
 
-	builder.WriteString(strings.Repeat(" ", int(maxDigits)))
-	builder.WriteString(styles.C(styles.Colors.Muted, lipgloss.NormalBorder().BottomLeft))
-	builder.WriteString(styles.C(styles.Colors.Muted, strings.Repeat(lipgloss.NormalBorder().Top, m.viewport.Width-int(maxDigits))))
-	builder.WriteRune('\n')
-
-	return builder.String()
+	return strings.Join(renderedLines, "\n")
 }

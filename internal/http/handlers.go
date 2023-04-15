@@ -44,7 +44,7 @@ func IndexHandler(readme string, tmpl *template.Template) http.HandlerFunc {
 
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Healthy\n"))
+	w.Write([]byte("💚\n"))
 }
 
 func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) http.HandlerFunc {
@@ -116,6 +116,7 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 			"FileID":    file.ID,
 			"FileSize":  humanize.Bytes(file.Size),
 			"CreatedAt": humanize.Time(file.CreatedAt),
+			"UpdatedAt": humanize.Time(file.UpdatedAt),
 			"FileType":  strings.ToLower(file.Type),
 			"RawHREF":   rawHref,
 			"HTML":      html,

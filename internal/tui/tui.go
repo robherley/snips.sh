@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,9 +13,8 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/robherley/snips.sh/internal/tui/views"
+	"github.com/robherley/snips.sh/internal/tui/views/browser"
 	"github.com/robherley/snips.sh/internal/tui/views/code"
-	"github.com/robherley/snips.sh/internal/tui/views/fileoptions"
-	"github.com/robherley/snips.sh/internal/tui/views/filetable"
 	"github.com/robherley/snips.sh/internal/tui/views/prompt"
 	"github.com/rs/zerolog/log"
 )
@@ -43,12 +43,11 @@ func New(cfg *config.Config, width, height int, userID string, fingerprint strin
 		width:     width,
 		height:    height,
 		file:      nil,
-		viewStack: []views.View{views.FileTable},
+		viewStack: []views.View{views.Browser},
 		views: map[views.View]tea.Model{
-			views.FileTable:   filetable.New(width, height-1, files),
-			views.Code:        code.New(width, height-1),
-			views.FileOptions: fileoptions.New(cfg),
-			views.Prompt:      prompt.New(database),
+			views.Browser: browser.New(cfg, width, height-1, files),
+			views.Code:    code.New(width, height-1),
+			views.Prompt:  prompt.New(database),
 		},
 	}
 }
@@ -79,7 +78,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return t, tea.Quit
 			} else {
 				batchedCmds = append(batchedCmds, cmds.PopView())
-				if t.currentView() == views.FileTable {
+				if t.currentView() == views.Browser {
 					batchedCmds = append(batchedCmds, cmds.DeselectFile())
 				}
 				return t, tea.Batch(batchedCmds...)
@@ -130,9 +129,10 @@ func (t TUI) View() string {
 }
 
 func (t TUI) titleBar() string {
-	title := styles.BC(styles.Colors.Green, "[") + styles.BC(styles.Colors.White, "snips.sh") + styles.BC(styles.Colors.Green, "]")
-
-	return title + " " + strings.Repeat(styles.C(styles.Colors.Green, "|"), t.width-lipgloss.Width((title)))
+	textStyle := lipgloss.NewStyle().Foreground(styles.Colors.Black).Background(styles.Colors.Primary).Padding(0, 1).Bold(true)
+	title := textStyle.Render("snips.sh")
+	user := textStyle.Render(fmt.Sprintf("u:%s", t.UserID))
+	return title + strings.Repeat(styles.BC(styles.Colors.Primary, "╱"), t.width-lipgloss.Width(title)-lipgloss.Width(user)) + user
 }
 
 func (t TUI) currentView() views.View {

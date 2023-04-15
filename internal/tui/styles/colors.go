@@ -4,25 +4,28 @@ import "github.com/charmbracelet/lipgloss"
 
 var (
 	Colors = struct {
-		Green  lipgloss.TerminalColor
-		Red    lipgloss.TerminalColor
-		Cyan   lipgloss.TerminalColor
-		Yellow lipgloss.TerminalColor
-		Blue   lipgloss.TerminalColor
-		Pink   lipgloss.TerminalColor
-		Purple lipgloss.TerminalColor
-		White  lipgloss.TerminalColor
-		Muted  lipgloss.TerminalColor
+		Primary lipgloss.TerminalColor
+		Green   lipgloss.TerminalColor
+		Red     lipgloss.TerminalColor
+		Cyan    lipgloss.TerminalColor
+		Yellow  lipgloss.TerminalColor
+		Blue    lipgloss.TerminalColor
+		Pink    lipgloss.TerminalColor
+		Purple  lipgloss.TerminalColor
+		White   lipgloss.TerminalColor
+		Muted   lipgloss.TerminalColor
+		Black   lipgloss.TerminalColor
 	}{
-		Green:  lipgloss.Color("36"),
-		Red:    lipgloss.Color("9"),
-		Cyan:   lipgloss.Color("6"),
-		Yellow: lipgloss.Color("11"),
-		Blue:   lipgloss.Color("4"),
-		Pink:   lipgloss.Color("169"),
-		Purple: lipgloss.Color("56"),
-		White:  lipgloss.Color("7"),
-		Muted:  lipgloss.Color("247"),
+		Primary: lipgloss.Color("#0ac5b2"),
+		Green:   lipgloss.Color("#63c174"),
+		Red:     lipgloss.Color("#ff6368"),
+		Yellow:  lipgloss.Color("#f1a10d"),
+		Blue:    lipgloss.Color("#52a9ff"),
+		Pink:    lipgloss.Color("#f76191"),
+		Purple:  lipgloss.Color("#bf7af0"),
+		White:   lipgloss.Color("7"),
+		Muted:   lipgloss.Color("8"),
+		Black:   lipgloss.Color("16"),
 	}
 )
 

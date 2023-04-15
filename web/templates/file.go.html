@@ -17,15 +17,17 @@
 
 <body>
   <div class="container">
-    <a class="title" href="/"><h1><span class="bracket">[</span>snips.sh<span class="bracket">]</span></h1></a>
-    <div class="file-header">
-      <div class="file-details">file: <a href=".">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} &middot; {{ .CreatedAt }} {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}</div>
-      {{ if .RawHREF }}
-      <a class="view-raw" href="{{ .RawHREF }} " aria-label="view raw file">view raw</a>
-      {{ end }}
-    </div>
-    <div class="file-content">
-      {{ .HTML }}
+    <h1 class="title"><a href="/">snips.sh</a></h1>
+    <div class="file">
+      <div class="file-header">
+        <div class="file-details">file: <a href=".">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} &middot; created: {{ .CreatedAt }} &middot; updated: {{ .UpdatedAt }} {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}</div>
+        {{ if .RawHREF }}
+        <a class="view-raw" href="{{ .RawHREF }} " aria-label="view raw file">view raw</a>
+        {{ end }}
+      </div>
+      <div class="file-content">
+        {{ .HTML }}
+      </div>
     </div>
   </div>
   <footer>
