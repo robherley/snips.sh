@@ -169,6 +169,10 @@ func (m Prompt) renderPrompt() string {
 func (m Prompt) handleSubmit() tea.Cmd {
 	log := logger.From(m.ctx)
 
+	if m.finished {
+		return nil
+	}
+
 	var commands []tea.Cmd
 
 	switch m.pk {
