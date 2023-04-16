@@ -20,7 +20,7 @@
     <h1 class="title"><a href="/">snips.sh</a></h1>
     <div class="file">
       <div class="file-header">
-        <div class="file-details">file: <a href=".">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} {{ if .UpdatedAt }} &middot; modified: {{ .UpdatedAt }} {{ end }} {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}</div>
+        <div class="file-details">file: <a href="/f/{{ .FileID }}">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} {{ if .UpdatedAt }} &middot; modified: {{ .UpdatedAt }} {{ end }} {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}</div>
         {{ if .RawHREF }}
         <a class="view-raw" href="{{ .RawHREF }} " aria-label="view raw file">view raw</a>
         {{ end }}

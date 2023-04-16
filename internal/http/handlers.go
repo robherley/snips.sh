@@ -53,9 +53,19 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 
 		fileID := strings.TrimPrefix(r.URL.Path, "/f/")
 
+		if fileID == "" {
+			http.NotFound(w, r)
+			return
+		}
+
 		file, err := database.FindFile(r.Context(), fileID)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to lookup file")
+			http.NotFound(w, r)
+			return
+		}
+
+		if file == nil {
 			http.NotFound(w, r)
 			return
 		}
