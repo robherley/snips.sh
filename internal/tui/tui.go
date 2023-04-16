@@ -87,13 +87,13 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if len(t.viewStack) == 1 {
 				return t, tea.Quit
-			} else {
-				batchedCmds = append(batchedCmds, cmds.PopView())
-				if t.currentView() == views.Browser {
-					batchedCmds = append(batchedCmds, cmds.DeselectFile())
-				}
-				return t, tea.Batch(batchedCmds...)
 			}
+
+			batchedCmds = append(batchedCmds, cmds.PopView())
+			if t.currentView() == views.Browser {
+				batchedCmds = append(batchedCmds, cmds.DeselectFile())
+			}
+			return t, tea.Batch(batchedCmds...)
 		}
 
 		// otherwise, send key msgs to the current view

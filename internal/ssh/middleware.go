@@ -78,7 +78,7 @@ func BlockIfNoPublicKey(next ssh.Handler) ssh.Handler {
 		if key := sesh.PublicKey(); key == nil {
 			wish.Println(sesh, "❌ Unfortunately snips.sh only supports public key authentication.")
 			wish.Println(sesh, "🔐 Please generate a keypair and try again.")
-			sesh.Exit(1)
+			_ = sesh.Exit(1)
 			return
 		}
 		next(sesh)

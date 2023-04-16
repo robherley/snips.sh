@@ -64,14 +64,13 @@ func (m Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEnter:
+		if msg.Type == tea.KeyEnter {
 			return m, m.handleSubmit()
 		}
-	case PromptFeedbackMsg:
+	case FeedbackMsg:
 		m.feedback = msg.Feedback
 		m.finished = msg.Finished
-	case PromptKindSetMsg:
+	case KindSetMsg:
 		m.pk = msg.Kind
 	case msgs.FileLoaded:
 		m.file = msg.File

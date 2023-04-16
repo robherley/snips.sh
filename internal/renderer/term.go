@@ -33,7 +33,7 @@ func ToSyntaxHighlightedTerm(fileType string, fileContent []byte) (string, error
 	formatter := formatters.Get(TermFormatter)
 
 	chromaTerm := bytes.NewBuffer(nil)
-	formatter.Format(chromaTerm, style, it)
+	err = formatter.Format(chromaTerm, style, it)
 	if err != nil {
 		return "", err
 	}

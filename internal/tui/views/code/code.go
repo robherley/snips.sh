@@ -64,7 +64,7 @@ func (m *Code) renderContent(file *snips.File) string {
 		return ""
 	}
 
-	content, err := renderer.ToSyntaxHighlightedTerm(file.Type, []byte(file.Content))
+	content, err := renderer.ToSyntaxHighlightedTerm(file.Type, file.Content)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to render file as syntax highlighted")
 		content = string(file.Content)
@@ -90,7 +90,7 @@ func (m *Code) renderContent(file *snips.File) string {
 			Copy().
 			BorderRight(true).
 			MarginRight(1).
-			Render(fmt.Sprintf("%*d", int(maxDigits), i+1))
+			Render(fmt.Sprintf("%*d", maxDigits, i+1))
 
 		scrubbed := strings.ReplaceAll(line, "\t", "    ")
 		renderedLines = append(renderedLines, lineNumber+scrubbed)

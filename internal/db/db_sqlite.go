@@ -13,7 +13,7 @@ import (
 	"ariga.io/atlas/sql/migrate"
 	aschema "ariga.io/atlas/sql/schema"
 	asqlite "ariga.io/atlas/sql/sqlite"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3" // sqlite driver
 )
 
 var (
@@ -269,7 +269,9 @@ func (s *Sqlite) CreateUserWithPublicKey(ctx context.Context, publickey *snips.P
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	user := &snips.User{
 		ID:        id.New(),

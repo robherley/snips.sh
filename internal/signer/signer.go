@@ -26,7 +26,7 @@ func (signer *Signer) SignURL(u url.URL) url.URL {
 	signature := signer.computeMac(u.String())
 
 	params := u.Query()
-	params.Set(SignatureQueryParameter, string(base64.URLEncoding.EncodeToString(signature)))
+	params.Set(SignatureQueryParameter, base64.URLEncoding.EncodeToString(signature))
 	u.RawQuery = params.Encode()
 
 	return u

@@ -37,13 +37,18 @@ func IndexHandler(readme string, tmpl *template.Template) http.HandlerFunc {
 			"HTML":     md,
 		}
 
-		tmpl.ExecuteTemplate(w, "file.go.html", vars)
+		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)
+		if err != nil {
+			log.Error().Err(err).Msg("unable to render template")
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
-func HealthHandler(w http.ResponseWriter, r *http.Request) {
+func HealthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("💚\n"))
+	_, _ = w.Write([]byte("💚\n"))
 }
 
 func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) http.HandlerFunc {
@@ -81,7 +86,7 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 		if ShouldSendRaw(r) {
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(http.StatusOK)
-			w.Write(file.Content)
+			_, _ = w.Write(file.Content)
 			return
 		}
 
@@ -132,7 +137,12 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 			"Private":   file.Private,
 		}
 
-		tmpl.ExecuteTemplate(w, "file.go.html", vars)
+		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)
+		if err != nil {
+			log.Error().Err(err).Msg("unable to render template")
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 

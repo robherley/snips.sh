@@ -69,9 +69,9 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if bwsr.options.focused {
 			return bwsr.handleOptionsNavigation(msg)
-		} else {
-			return bwsr.handleTableNavigation(msg)
 		}
+
+		return bwsr.handleTableNavigation(msg)
 	case tea.WindowSizeMsg:
 		bwsr.width, bwsr.height = msg.Width, msg.Height
 	case msgs.ReloadFiles:

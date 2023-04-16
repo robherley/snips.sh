@@ -71,9 +71,5 @@ func (df *DeleteFlags) Parse(out io.Writer, args []string) error {
 
 	df.BoolVar(&df.Force, "f", false, "force delete without confirmation")
 
-	if err := df.FlagSet.Parse(args); err != nil {
-		return err
-	}
-
-	return nil
+	return df.FlagSet.Parse(args)
 }

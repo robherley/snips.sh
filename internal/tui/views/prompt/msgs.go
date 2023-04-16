@@ -1,10 +1,10 @@
 package prompt
 
-type PromptKindSetMsg struct {
+type KindSetMsg struct {
 	Kind Kind
 }
 
-type PromptFeedbackMsg struct {
+type FeedbackMsg struct {
 	Feedback string
 	Finished bool
 }

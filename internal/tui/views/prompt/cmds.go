@@ -7,7 +7,7 @@ import (
 
 func SetPromptKindCmd(pk Kind) tea.Cmd {
 	return func() tea.Msg {
-		return PromptKindSetMsg{
+		return KindSetMsg{
 			Kind: pk,
 		}
 	}
@@ -15,7 +15,7 @@ func SetPromptKindCmd(pk Kind) tea.Cmd {
 
 func SetPromptFeedbackCmd(feedback string, finished bool) tea.Cmd {
 	return func() tea.Msg {
-		return PromptFeedbackMsg{
+		return FeedbackMsg{
 			Feedback: feedback,
 			Finished: finished,
 		}
@@ -24,7 +24,7 @@ func SetPromptFeedbackCmd(feedback string, finished bool) tea.Cmd {
 
 func SetPromptErrorCmd(err error) tea.Cmd {
 	return func() tea.Msg {
-		return PromptFeedbackMsg{
+		return FeedbackMsg{
 			Feedback: styles.C(styles.Colors.Red, err.Error()),
 			Finished: false,
 		}

@@ -27,7 +27,7 @@ func ToSyntaxHighlightedHTML(fileType string, fileContent []byte) (template.HTML
 
 	chromaHTML := bytes.NewBuffer(nil)
 	// using fallback style because we'll use custom prebaked CSS
-	formatter.Format(chromaHTML, styles.Fallback, it)
+	err = formatter.Format(chromaHTML, styles.Fallback, it)
 	if err != nil {
 		return "", err
 	}

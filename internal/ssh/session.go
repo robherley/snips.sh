@@ -52,7 +52,7 @@ func (sesh *UserSession) Error(err error, title string, f string, v ...interface
 	}
 
 	noti.Render(sesh)
-	sesh.Exit(1)
+	_ = sesh.Exit(1)
 }
 
 func (sesh *UserSession) IsPTY() bool {

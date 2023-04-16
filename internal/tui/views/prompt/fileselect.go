@@ -36,7 +36,7 @@ func NewExtensionSelector(width int) list.Model {
 	items := []list.Item{}
 
 	for _, ext := range extensions {
-		items = append(items, selectorItem(ext))
+		items = append(items, ext)
 	}
 
 	li := list.New(items, selectorItemDelegate{}, width, 8)
@@ -68,7 +68,7 @@ func (d selectorItemDelegate) Spacing() int {
 	return 0
 }
 
-func (d selectorItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+func (d selectorItemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd {
 	return nil
 }
 

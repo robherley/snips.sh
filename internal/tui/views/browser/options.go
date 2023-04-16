@@ -72,12 +72,12 @@ func (bwsr Browser) handleOptionsNavigation(msg tea.KeyMsg) (tea.Model, tea.Cmd)
 	return bwsr, nil
 }
 
-func (bwser Browser) getOptions() []option {
-	if len(bwser.files) == 0 {
+func (bwsr Browser) getOptions() []option {
+	if len(bwsr.files) == 0 {
 		return nil
 	}
 
-	file := bwser.files[bwser.table.index]
+	file := bwsr.files[bwsr.table.index]
 
 	var opts []option
 	for _, o := range options {

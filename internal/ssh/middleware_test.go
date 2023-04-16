@@ -58,7 +58,7 @@ func TestAssignUser(t *testing.T) {
 			},
 		})
 
-		session.Run("")
+		_ = session.Run("")
 	})
 
 	t.Run("matches existing user by fingerprint", func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestAssignUser(t *testing.T) {
 			},
 		})
 
-		session.Run("")
+		_ = session.Run("")
 	})
 }
 
