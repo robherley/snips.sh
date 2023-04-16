@@ -115,11 +115,6 @@ body {
   color: var(--color-gray-10);
 }
 
-footer {
-  margin: 2rem;
-  text-align: center;
-}
-
 code {
   font-family: var(--font-mono);
 }
@@ -148,6 +143,7 @@ a:hover {
   display: flex;
   align-items: center;
   margin-bottom: 0;
+  border: var(--border);
 }
 
 .title:after {
@@ -205,6 +201,12 @@ a:hover {
 
 .file-content {
   overflow-x: auto;
+}
+
+.file-footer {
+  margin: 2rem;
+  text-align: center;
+  font-family: var(--font-mono);
 }
 
 .danger {
