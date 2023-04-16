@@ -1,0 +1,26 @@
+run:
+  tests: true
+  skip-dirs-use-default: true
+
+linters:
+  disable-all: true
+  # https://golangci-lint.run/usage/linters/
+  enable:
+    # rules enabled by default
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    # - structcheck disabled in 1.18 for now: https://github.com/golangci/golangci-lint/issues/2649
+    - typecheck
+    - unused
+    # additional
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - revive
+    - tenv
+    - unconvert

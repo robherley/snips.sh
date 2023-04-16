@@ -1,5 +1,6 @@
 tmp/
 data/
+bin/
 snips.sh
 .env
 

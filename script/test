@@ -1,0 +1,11 @@
+#!/bin/bash
+
+BINDIR="$(git rev-parse --show-toplevel)"/bin
+BINARY=$BINDIR/gotestsum
+GOTESTSUM_VERSION=v1.10.0
+
+if [ ! -f "$BINARY" ]; then
+  GOBIN=$BINDIR go install gotest.tools/gotestsum@${GOTESTSUM_VERSION}
+fi
+
+$BINARY "$@"
