@@ -138,10 +138,26 @@ func (bwsr Browser) renderFooter() string {
 		return ""
 	}
 
-	return lipgloss.
-		NewStyle().
+	fileCount := lipgloss.NewStyle().
 		Foreground(styles.Colors.Primary).
-		Render(fmt.Sprintf("\n %d/%d files", bwsr.table.index+1, len(bwsr.files)))
+		Render(fmt.Sprintf("%d/%d files", bwsr.table.index+1, len(bwsr.files)))
+
+	helpText := lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		"enter ",
+		styles.C(styles.Colors.Muted, "view"),
+		" tab ",
+		styles.C(styles.Colors.Muted, "options"),
+	)
+
+	return lipgloss.NewStyle().
+		Margin(1, 0, 0, 1).
+		Render(lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			fileCount,
+			" • ",
+			helpText,
+		))
 }
 
 func (bwsr Browser) renderRows() string {

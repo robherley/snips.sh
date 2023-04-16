@@ -77,6 +77,14 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return t, tea.Quit
 		case "esc":
+			if t.currentView() == views.Browser {
+				// special case where options focused, also allow escape to unfocus too
+				if t.views[views.Browser].(browser.Browser).IsOptionsFocused() {
+					// allow browser to capture the escape key
+					break
+				}
+			}
+
 			if len(t.viewStack) == 1 {
 				return t, tea.Quit
 			} else {
@@ -88,7 +96,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		// only send key msgs to the current view
+		// otherwise, send key msgs to the current view
 		var cmd tea.Cmd
 		t.views[t.currentView()], cmd = t.views[t.currentView()].Update(msg)
 		return t, cmd

@@ -56,6 +56,10 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		bwsr.options.index = 0
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "esc":
+			if bwsr.options.focused {
+				bwsr.options.focused = false
+			}
 		case "tab":
 			if bwsr.options.focused {
 				bwsr.options.index = 0
@@ -91,12 +95,21 @@ func (bwsr Browser) View() string {
 	return lipgloss.JoinHorizontal(lipgloss.Left, bwsr.renderTable(), bwsr.renderSeparator(), bwsr.renderOptions())
 }
 
+func (bwsr Browser) IsOptionsFocused() bool {
+	return bwsr.options.focused
+}
+
 func (bwsr Browser) renderSeparator() string {
-	return lipgloss.NewStyle().
+	separatorStyle := lipgloss.NewStyle().
 		Height(bwsr.height).
 		Border(lipgloss.NormalBorder(), false, false, false, true).
 		BorderForeground(styles.Colors.Muted).
-		MarginRight(1).
-		MarginLeft(1).
-		Render("")
+		MarginLeft(1)
+		// options will supply right padding since it needs it for collapse mode
+
+	if bwsr.options.focused {
+		separatorStyle = separatorStyle.BorderForeground(styles.Colors.Primary).BorderStyle(lipgloss.ThickBorder())
+	}
+
+	return separatorStyle.Render(" ")
 }

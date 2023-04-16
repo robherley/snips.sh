@@ -98,7 +98,12 @@ func (bwser Browser) getOptions() []option {
 }
 
 func (bwsr Browser) renderOptions() string {
-	return lipgloss.JoinVertical(lipgloss.Top, bwsr.renderDetails(), bwsr.renderSelector())
+	return lipgloss.NewStyle().
+		PaddingLeft(1).
+		Render(lipgloss.JoinVertical(lipgloss.Top,
+			bwsr.renderDetails(),
+			bwsr.renderSelector(),
+		))
 }
 
 func (bwsr Browser) renderSelector() string {
