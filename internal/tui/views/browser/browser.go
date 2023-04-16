@@ -70,6 +70,12 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		bwsr.width, bwsr.height = msg.Width, msg.Height
+	case msgs.ReloadFiles:
+		bwsr.files = msg.Files
+		bwsr.preRender()
+		bwsr.options.focused = false
+		bwsr.options.index = 0
+		bwsr.table.index = 0
 	}
 	return bwsr, cmd
 }

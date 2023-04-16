@@ -3,11 +3,8 @@ package ssh
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"io"
-	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,17 +18,14 @@ import (
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/renderer"
-	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui"
 	"github.com/robherley/snips.sh/internal/tui/styles"
-	"github.com/rs/zerolog/log"
 )
 
 type SessionHandler struct {
 	Config *config.Config
 	DB     db.DB
-	Signer *signer.Signer
 }
 
 func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
@@ -70,6 +64,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 
 	program := tea.NewProgram(
 		tui.New(
+			sesh.Context(),
 			h.Config,
 			pty.Window.Width,
 			pty.Window.Height,
@@ -156,6 +151,8 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 }
 
 func (h *SessionHandler) DeleteFile(sesh *UserSession, file *snips.File) {
+	log := logger.From(sesh.Context())
+
 	flags := DeleteFlags{}
 	args := sesh.Command()[1:]
 	if err := flags.Parse(sesh.Stderr(), args); err != nil {
@@ -196,10 +193,7 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *snips.File) {
 		return
 	}
 
-	log.Info().Fields(map[string]interface{}{
-		"file_id": file.ID,
-		"user_id": file.UserID,
-	}).Msg("file deleted")
+	log.Info().Str("file_id", file.ID).Msg("file deleted")
 
 	noti := Notification{
 		Color: styles.Colors.Green,
@@ -214,6 +208,8 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *snips.File) {
 }
 
 func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
+	log := logger.From(sesh.Context())
+
 	if !file.Private {
 		sesh.Error(ErrSignPublicFile, "Unable to sign file", "Can only sign private files, %q is not private.", file.ID)
 		return
@@ -229,19 +225,8 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 		return
 	}
 
-	expires := time.Now().Add(flags.TTL)
-
-	// only signing the path + queries of the URL
-	pathToSign := url.URL{
-		Path: fmt.Sprintf("/f/%s", file.ID),
-		RawQuery: url.Values{
-			"exp": []string{strconv.FormatInt(expires.Unix(), 10)},
-		}.Encode(),
-	}
-
-	signedFileURL := h.Signer.SignURL(pathToSign)
-	signedFileURL.Scheme = h.Config.HTTP.External.Scheme
-	signedFileURL.Host = h.Config.HTTP.External.Host
+	signedFileURL, expires := file.GetSignedURL(h.Config, flags.TTL)
+	log.Info().Str("file_id", file.ID).Time("expires_at", expires).Msg("private file signed")
 
 	noti := Notification{
 		Color: styles.Colors.Cyan,

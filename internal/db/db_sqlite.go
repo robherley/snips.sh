@@ -200,7 +200,7 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 			user_id
 		FROM files
 		WHERE user_id = ?
-		ORDER BY created_at DESC
+		ORDER BY updated_at DESC
 	`
 
 	rows, err := s.QueryContext(ctx, query, userID)

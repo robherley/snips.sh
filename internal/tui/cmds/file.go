@@ -39,3 +39,16 @@ func LoadFile(database db.DB, id string) tea.Cmd {
 		}
 	}
 }
+
+func ReloadFiles(database db.DB, userID string) tea.Cmd {
+	return func() tea.Msg {
+		files, err := database.FindFilesByUser(context.Background(), userID)
+		if err != nil {
+			return msgs.Error{Err: err}
+		}
+
+		return msgs.ReloadFiles{
+			Files: files,
+		}
+	}
+}

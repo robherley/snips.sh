@@ -4,6 +4,7 @@ type PromptKindSetMsg struct {
 	Kind Kind
 }
 
-type PromptError struct {
-	Err error
+type PromptFeedbackMsg struct {
+	Feedback string
+	Finished bool
 }

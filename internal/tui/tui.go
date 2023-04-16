@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -24,6 +25,7 @@ type TUI struct {
 	Fingerprint string
 	DB          db.DB
 
+	ctx    context.Context
 	cfg    *config.Config
 	width  int
 	height int
@@ -33,12 +35,13 @@ type TUI struct {
 	views     map[views.View]tea.Model
 }
 
-func New(cfg *config.Config, width, height int, userID string, fingerprint string, database db.DB, files []*snips.File) TUI {
+func New(ctx context.Context, cfg *config.Config, width, height int, userID string, fingerprint string, database db.DB, files []*snips.File) TUI {
 	return TUI{
 		UserID:      userID,
 		Fingerprint: fingerprint,
 		DB:          database,
 
+		ctx:       ctx,
 		cfg:       cfg,
 		width:     width,
 		height:    height,
@@ -47,7 +50,7 @@ func New(cfg *config.Config, width, height int, userID string, fingerprint strin
 		views: map[views.View]tea.Model{
 			views.Browser: browser.New(cfg, width, height-1, files),
 			views.Code:    code.New(width, height-1),
-			views.Prompt:  prompt.New(database),
+			views.Prompt:  prompt.New(ctx, cfg, database, width),
 		},
 	}
 }
@@ -109,7 +112,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return t, tea.Batch(batchedCmds...)
 	case msgs.FileSelected:
 		return t, cmds.LoadFile(t.DB, msg.ID)
-	case msgs.FileDeselected:
+	case msgs.FileDeselected, msgs.ReloadFiles:
 		t.file = nil
 	case msgs.FileLoaded:
 		t.file = msg.File

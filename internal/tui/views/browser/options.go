@@ -109,13 +109,14 @@ func (bwsr Browser) renderSelector() string {
 		prefix := "  "
 		if i == bwsr.options.index && bwsr.options.focused {
 			prefix = Selector
-			color = styles.Colors.Yellow
+			color = styles.Colors.White
 			if o.danger {
 				color = styles.Colors.Red
 			}
 		}
 
-		selector.WriteString(styles.C(color, prefix+o.name))
+		selector.WriteString(styles.C(styles.Colors.Yellow, prefix))
+		selector.WriteString(styles.C(color, o.name))
 		selector.WriteRune('\n')
 	}
 

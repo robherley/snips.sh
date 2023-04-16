@@ -5,7 +5,6 @@ import (
 	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/signer"
 )
 
 type Service struct {
@@ -16,7 +15,6 @@ func New(cfg *config.Config, db db.DB) (*Service, error) {
 	sessionHandler := &SessionHandler{
 		Config: cfg,
 		DB:     db,
-		Signer: signer.New(cfg.HMACKey),
 	}
 
 	sshServer, err := wish.NewServer(
