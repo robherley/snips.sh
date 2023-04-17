@@ -78,9 +78,6 @@ table "files" {
   column "user_id" {
     type = text
   }
-  column "foobar" {
-    type = text
-  }
   primary_key {
     columns = [column.id]
   }
