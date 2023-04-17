@@ -1,0 +1,47 @@
+name: Database Check
+
+on:
+  pull_request:
+    paths:
+      - 'internal/db/schema.hcl'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  schema-diff:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+    - name: Setup atlas
+      run: |
+        script/atlas
+    - name: Check schema
+      run: |
+        echo '## Schema Diff' >> diff-output.md
+        echo '```sql' >> diff-output.md
+        script/schema-diff >> diff-output.md
+        echo '```' >> diff-output.md
+    - name: Add comment and label
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const body = fs.readFileSync('diff-output.md', {encoding:'utf8'});
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body
+          });
+          github.rest.issues.addLabels({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['schema-diff']
+          });

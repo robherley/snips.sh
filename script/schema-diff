@@ -1,0 +1,15 @@
+#!/bin/bash
+
+TOPDIR="$(git rev-parse --show-toplevel)"
+SCRIPTDIR="$TOPDIR"/script
+TMPDIR="$TOPDIR"/tmp
+MAIN_SCHEMA="$TMPDIR"/schema.hcl
+CURRENT_SCHEMA="$TOPDIR"/internal/db/schema.hcl
+
+mkdir -p "$TMPDIR"
+curl -sSL https://raw.githubusercontent.com/robherley/snips.sh/main/internal/db/schema.hcl > "$MAIN_SCHEMA"
+
+"$SCRIPTDIR"/atlas schema diff \
+  --dev-url sqlite://file?mode=memory \
+  --from file://"$MAIN_SCHEMA" \
+  --to file://"$CURRENT_SCHEMA"

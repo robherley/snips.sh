@@ -1,0 +1,11 @@
+#!/bin/bash
+
+BINDIR="$(git rev-parse --show-toplevel)"/bin
+BINARY=$BINDIR/atlas
+ATLAS_VERSION=v0.10.1
+
+if [ ! -f "$BINARY" ]; then
+  GOBIN=$BINDIR go install ariga.io/atlas/cmd/atlas@${ATLAS_VERSION}
+fi
+
+$BINARY "$@"
