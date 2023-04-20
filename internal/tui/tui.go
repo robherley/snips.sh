@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/robherley/snips.sh/internal/config"
@@ -31,12 +32,13 @@ type TUI struct {
 	height int
 
 	file      *snips.File
-	viewStack []views.View
-	views     map[views.View]tea.Model
+	viewStack []views.Kind
+	views     map[views.Kind]views.Model
+	help      help.Model
 }
 
 func New(ctx context.Context, cfg *config.Config, width, height int, userID string, fingerprint string, database db.DB, files []*snips.File) TUI {
-	return TUI{
+	t := TUI{
 		UserID:      userID,
 		Fingerprint: fingerprint,
 		DB:          database,
@@ -46,17 +48,31 @@ func New(ctx context.Context, cfg *config.Config, width, height int, userID stri
 		width:     width,
 		height:    height,
 		file:      nil,
-		viewStack: []views.View{views.Browser},
-		views: map[views.View]tea.Model{
-			views.Browser: browser.New(cfg, width, height-1, files),
-			views.Code:    code.New(width, height-1),
-			views.Prompt:  prompt.New(ctx, cfg, database, width),
-		},
+		viewStack: []views.Kind{views.Browser},
+		help:      help.New(),
 	}
+
+	t.views = map[views.Kind]views.Model{
+		views.Browser: browser.New(cfg, width, t.innerViewHeight(), files),
+		views.Code:    code.New(width, t.innerViewHeight()),
+		views.Prompt:  prompt.New(ctx, cfg, database, width),
+	}
+
+	t.help.Styles = styles.Help
+
+	return t
 }
 
 func (t TUI) Init() tea.Cmd {
-	return nil
+	var cmds []tea.Cmd
+	for _, view := range t.views {
+		vcmd := view.Init()
+		if vcmd != nil {
+			cmds = append(cmds, vcmd)
+		}
+	}
+
+	return tea.Batch(cmds...)
 }
 
 func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -70,6 +86,9 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return t, tea.Quit
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "?":
+			t.help.ShowAll = !t.help.ShowAll
+			t.updateViewSize()
 		case "q":
 			if !t.inPrompt() {
 				return t, tea.Quit
@@ -77,12 +96,10 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return t, tea.Quit
 		case "esc":
-			if t.currentView() == views.Browser {
+			if t.currentViewKind() == views.Browser && t.views[views.Browser].(browser.Browser).IsOptionsFocused() {
 				// special case where options focused, also allow escape to unfocus too
-				if t.views[views.Browser].(browser.Browser).IsOptionsFocused() {
-					// allow browser to capture the escape key
-					break
-				}
+				// allows browser to capture the escape key
+				break
 			}
 
 			if len(t.viewStack) == 1 {
@@ -90,15 +107,15 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			batchedCmds = append(batchedCmds, cmds.PopView())
-			if t.currentView() == views.Browser {
+			if t.currentViewKind() == views.Browser {
 				batchedCmds = append(batchedCmds, cmds.DeselectFile())
 			}
 			return t, tea.Batch(batchedCmds...)
 		}
 
 		// otherwise, send key msgs to the current view
-		var cmd tea.Cmd
-		t.views[t.currentView()], cmd = t.views[t.currentView()].Update(msg)
+		view, cmd := t.views[t.currentViewKind()].Update(msg)
+		t.views[t.currentViewKind()] = view.(views.Model)
 		return t, cmd
 	case msgs.PushView:
 		t.pushView(msg.View)
@@ -108,14 +125,8 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		t.width = msg.Width
 		t.height = msg.Height
 
-		for key, view := range t.views {
-			var cmd tea.Cmd
-			t.views[key], cmd = view.Update(tea.WindowSizeMsg{
-				Width:  t.width,
-				Height: t.height - 1,
-			})
-			batchedCmds = append(batchedCmds, cmd)
-		}
+		batchedCmds = append(batchedCmds, t.updateViewSize()...)
+		t.help.Width = msg.Width
 
 		return t, tea.Batch(batchedCmds...)
 	case msgs.FileSelected:
@@ -127,8 +138,8 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	for key, view := range t.views {
-		var cmd tea.Cmd
-		t.views[key], cmd = view.Update(msg)
+		newView, cmd := view.Update(msg)
+		t.views[key] = newView.(views.Model)
 		batchedCmds = append(batchedCmds, cmd)
 	}
 
@@ -136,7 +147,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (t TUI) View() string {
-	return lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), t.views[t.currentView()].View())
+	return lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), t.currentViewModel().View(), t.helpBar())
 }
 
 func (t TUI) titleBar() string {
@@ -146,11 +157,23 @@ func (t TUI) titleBar() string {
 	return title + strings.Repeat(styles.BC(styles.Colors.Primary, "╱"), t.width-lipgloss.Width(title)-lipgloss.Width(user)) + user
 }
 
-func (t TUI) currentView() views.View {
+func (t TUI) helpBar() string {
+	if len(t.views) == 0 {
+		return ""
+	}
+
+	return t.help.View(t.currentViewModel().Keys())
+}
+
+func (t TUI) currentViewKind() views.Kind {
 	return t.viewStack[len(t.viewStack)-1]
 }
 
-func (t *TUI) pushView(view views.View) {
+func (t TUI) currentViewModel() views.Model {
+	return t.views[t.currentViewKind()]
+}
+
+func (t *TUI) pushView(view views.Kind) {
 	t.viewStack = append(t.viewStack, view)
 }
 
@@ -158,6 +181,30 @@ func (t *TUI) popView() {
 	t.viewStack = t.viewStack[:len(t.viewStack)-1]
 }
 
-func (t *TUI) inPrompt() bool {
-	return t.currentView() == views.Prompt
+func (t TUI) inPrompt() bool {
+	return t.currentViewKind() == views.Prompt
+}
+
+func (t TUI) innerViewHeight() int {
+	height := t.height - (lipgloss.Height(t.titleBar()) + lipgloss.Height(t.helpBar()))
+	if height < 0 {
+		return 0
+	}
+
+	return height
+}
+
+func (t *TUI) updateViewSize() []tea.Cmd {
+	batchedCmds := make([]tea.Cmd, 0, len(t.views))
+
+	for key, view := range t.views {
+		newView, cmd := view.Update(tea.WindowSizeMsg{
+			Width:  t.width,
+			Height: t.innerViewHeight(),
+		})
+		t.views[key] = newView.(views.Model)
+		batchedCmds = append(batchedCmds, cmd)
+	}
+
+	return batchedCmds
 }

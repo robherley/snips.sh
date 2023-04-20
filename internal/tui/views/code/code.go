@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -57,6 +58,10 @@ func (m *Code) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Code) View() string {
 	return m.viewport.View()
+}
+
+func (m Code) Keys() help.KeyMap {
+	return keys
 }
 
 func (m *Code) renderContent(file *snips.File) string {
