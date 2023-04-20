@@ -8,3 +8,5 @@ type FeedbackMsg struct {
 	Feedback string
 	Finished bool
 }
+
+type SelectorInitMsg struct{}

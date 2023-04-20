@@ -39,7 +39,7 @@ func NewExtensionSelector(width int) list.Model {
 		items = append(items, ext)
 	}
 
-	li := list.New(items, selectorItemDelegate{}, width, 8)
+	li := list.New(items, selectorItemDelegate{}, width, 12)
 	li.SetShowTitle(false)
 	li.SetShowPagination(false)
 	li.SetShowHelp(false)

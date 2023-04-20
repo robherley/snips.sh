@@ -6,7 +6,7 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/views"
 )
 
-func PushView(view views.View) tea.Cmd {
+func PushView(view views.Kind) tea.Cmd {
 	return func() tea.Msg {
 		return msgs.PushView{
 			View: view,

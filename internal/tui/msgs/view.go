@@ -3,7 +3,7 @@ package msgs
 import "github.com/robherley/snips.sh/internal/tui/views"
 
 type PushView struct {
-	View views.View
+	View views.Kind
 }
 
 type PopView struct{}

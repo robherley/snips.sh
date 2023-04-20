@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -29,7 +30,7 @@ type Prompt struct {
 	finished bool
 
 	file              *snips.File
-	pk                Kind
+	kind              Kind
 	textInput         textinput.Model
 	extensionSelector list.Model
 	feedback          string
@@ -52,11 +53,11 @@ func New(ctx context.Context, cfg *config.Config, db db.DB, width int) Prompt {
 	}
 }
 
-func (m Prompt) Init() tea.Cmd {
+func (p Prompt) Init() tea.Cmd {
 	return tea.Batch(textinput.Blink)
 }
 
-func (m Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd      tea.Cmd
 		commands []tea.Cmd
@@ -65,67 +66,81 @@ func (m Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyEnter {
-			return m, m.handleSubmit()
+			return p, p.handleSubmit()
 		}
 	case FeedbackMsg:
-		m.feedback = msg.Feedback
-		m.finished = msg.Finished
+		p.feedback = msg.Feedback
+		p.finished = msg.Finished
 	case KindSetMsg:
-		m.pk = msg.Kind
+		p.kind = msg.Kind
+		if msg.Kind == ChangeExtension {
+			commands = append(commands, SelectorInitCmd)
+		}
 	case msgs.FileLoaded:
-		m.file = msg.File
+		p.file = msg.File
 	case msgs.PopView:
-		m.reset()
-		return m, nil
+		p.reset()
+		return p, nil
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.extensionSelector.SetWidth(msg.Width)
+		p.width = msg.Width
+		p.extensionSelector.SetWidth(msg.Width)
+	case SelectorInitMsg:
+		// bit of a hack to get the extension selector to filter on init
+		p.extensionSelector, cmd = p.extensionSelector.Update(tea.KeyMsg{
+			Type:  tea.KeyRunes,
+			Runes: []rune{'/'},
+		})
+		return p, cmd
 	}
 
-	switch m.pk {
+	switch p.kind {
 	case GenerateSignedURL, DeleteFile, ChangeVisibility:
-		m.textInput, cmd = m.textInput.Update(msg)
+		p.textInput, cmd = p.textInput.Update(msg)
 		commands = append(commands, cmd)
 	case ChangeExtension:
-		m.extensionSelector, cmd = m.extensionSelector.Update(msg)
+		p.extensionSelector, cmd = p.extensionSelector.Update(msg)
 		commands = append(commands, cmd)
 	}
-	return m, tea.Batch(commands...)
+	return p, tea.Batch(commands...)
 }
 
-func (m Prompt) View() string {
-	if m.file == nil || m.pk == None {
+func (p Prompt) View() string {
+	if p.file == nil || p.kind == None {
 		return ""
 	}
 
-	return m.renderPrompt()
+	return p.renderPrompt()
 }
 
-func (m *Prompt) reset() {
-	m.textInput.Reset()
-	m.extensionSelector.ResetFilter()
-	m.extensionSelector.ResetSelected()
-	m.feedback = ""
-	m.finished = false
+func (p Prompt) Keys() help.KeyMap {
+	return keys
 }
 
-func (m Prompt) renderPrompt() string {
+func (p *Prompt) reset() {
+	p.textInput.Reset()
+	p.extensionSelector.ResetFilter()
+	p.extensionSelector.ResetSelected()
+	p.feedback = ""
+	p.finished = false
+}
+
+func (p Prompt) renderPrompt() string {
 	var question string
-	switch m.pk {
+	switch p.kind {
 	case ChangeExtension:
-		question = "What extension do you want to change the file to?\n" + styles.C(styles.Colors.Muted, "(type / to filter)")
+		question = "What extension do you want to change the file to?"
 	case ChangeVisibility:
-		question = fmt.Sprintf("Do you want to make the file %q ", m.file.ID)
-		if m.file.Private {
+		question = fmt.Sprintf("Do you want to make the file %q ", p.file.ID)
+		if p.file.Private {
 			question += "public"
 		} else {
 			question += "private"
 		}
 		question += "?\n(y/n)"
 	case GenerateSignedURL:
-		question = fmt.Sprintf("How long do you want the signed url for %q to last for?\n%s", m.file.ID, styles.C(styles.Colors.Muted, "(e.g. 30s, 5m, 3h)"))
+		question = fmt.Sprintf("How long do you want the signed url for %q to last for?\n%s", p.file.ID, styles.C(styles.Colors.Muted, "(e.g. 30s, 5m, 3h)"))
 	case DeleteFile:
-		question = fmt.Sprintf("Are you sure you want to delete %q?\nType the file ID to confirm.", m.file.ID)
+		question = fmt.Sprintf("Are you sure you want to delete %q?\nType the file ID to confirm.", p.file.ID)
 	}
 
 	question = lipgloss.NewStyle().
@@ -137,16 +152,16 @@ func (m Prompt) renderPrompt() string {
 		Render(question)
 
 	var prompt string
-	switch m.pk {
+	switch p.kind {
 	case GenerateSignedURL, DeleteFile, ChangeVisibility:
-		prompt = m.textInput.View()
+		prompt = p.textInput.View()
 	case ChangeExtension:
-		prompt = m.extensionSelector.View()
+		prompt = p.extensionSelector.View()
 	}
 
 	pieces := []string{}
 
-	if !m.finished {
+	if !p.finished {
 		pieces = append(pieces,
 			"",
 			question,
@@ -156,27 +171,25 @@ func (m Prompt) renderPrompt() string {
 		)
 	}
 
-	if m.feedback != "" {
-		pieces = append(pieces, "", wordwrap.String(m.feedback, m.width))
+	if p.feedback != "" {
+		pieces = append(pieces, "", wordwrap.String(p.feedback, p.width))
 	}
-
-	pieces = append(pieces, "", styles.C(styles.Colors.Muted, "(esc to go back)"))
 
 	return lipgloss.JoinVertical(lipgloss.Top, pieces...)
 }
 
-func (m Prompt) handleSubmit() tea.Cmd {
-	log := logger.From(m.ctx)
+func (p Prompt) handleSubmit() tea.Cmd {
+	log := logger.From(p.ctx)
 
-	if m.finished {
+	if p.finished {
 		return nil
 	}
 
 	var commands []tea.Cmd
 
-	switch m.pk {
+	switch p.kind {
 	case ChangeVisibility:
-		result := m.textInputYN()
+		result := p.textInputYN()
 
 		if result == Undecided {
 			return SetPromptErrorCmd(errors.New("please specify yes or no"))
@@ -186,34 +199,34 @@ func (m Prompt) handleSubmit() tea.Cmd {
 			return cmds.PopView()
 		}
 
-		m.file.Private = !m.file.Private
+		p.file.Private = !p.file.Private
 
-		err := m.db.UpdateFile(m.ctx, m.file)
+		err := p.db.UpdateFile(p.ctx, p.file)
 		if err != nil {
 			return SetPromptErrorCmd(err)
 		}
 
-		log.Info().Str("file", m.file.ID).Bool("private", m.file.Private).Msg("updated file visibility")
+		log.Info().Str("file", p.file.ID).Bool("private", p.file.Private).Msg("updated file visibility")
 
-		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q is now %s", m.file.ID, m.file.Visibility()))
-		commands = append(commands, cmds.ReloadFiles(m.db, m.file.UserID), SetPromptFeedbackCmd(msg, true))
+		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q is now %s", p.file.ID, p.file.Visibility()))
+		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
 
 	case ChangeExtension:
-		item := m.extensionSelector.SelectedItem().(selectorItem)
+		item := p.extensionSelector.SelectedItem().(selectorItem)
 
-		m.file.Type = item.name
+		p.file.Type = item.name
 
-		err := m.db.UpdateFile(m.ctx, m.file)
+		err := p.db.UpdateFile(p.ctx, p.file)
 		if err != nil {
 			return SetPromptErrorCmd(err)
 		}
 
-		log.Info().Str("file", m.file.ID).Str("type", m.file.Type).Msg("updated file type")
+		log.Info().Str("file", p.file.ID).Str("type", p.file.Type).Msg("updated file type")
 
-		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q extension set to %q", m.file.ID, item.name))
-		commands = append(commands, cmds.ReloadFiles(m.db, m.file.UserID), SetPromptFeedbackCmd(msg, true))
+		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q extension set to %q", p.file.ID, item.name))
+		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
 	case GenerateSignedURL:
-		dur, err := time.ParseDuration(m.textInput.Value())
+		dur, err := time.ParseDuration(p.textInput.Value())
 		if err != nil {
 			return SetPromptErrorCmd(err)
 		}
@@ -222,25 +235,25 @@ func (m Prompt) handleSubmit() tea.Cmd {
 			return SetPromptErrorCmd(errors.New("duration must be greater than 0"))
 		}
 
-		url, expires := m.file.GetSignedURL(m.cfg, dur)
-		log.Info().Str("file_id", m.file.ID).Time("expires_at", expires).Msg("private file signed")
+		url, expires := p.file.GetSignedURL(p.cfg, dur)
+		log.Info().Str("file_id", p.file.ID).Time("expires_at", expires).Msg("private file signed")
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("%s\n\nexpires at: %s", url.String(), expires.Format(time.RFC3339)))
 		commands = append(commands, SetPromptFeedbackCmd(msg, true))
 	case DeleteFile:
-		if cmd := m.validateInputIsFileID(); cmd != nil {
+		if cmd := p.validateInputIsFileID(); cmd != nil {
 			return cmd
 		}
 
-		err := m.db.DeleteFile(m.ctx, m.file.ID)
+		err := p.db.DeleteFile(p.ctx, p.file.ID)
 		if err != nil {
 			return SetPromptErrorCmd(err)
 		}
 
-		log.Info().Str("file_id", m.file.ID).Msg("file deleted")
+		log.Info().Str("file_id", p.file.ID).Msg("file deleted")
 
-		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q deleted", m.file.ID))
-		commands = append(commands, cmds.ReloadFiles(m.db, m.file.UserID), SetPromptFeedbackCmd(msg, true))
+		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q deleted", p.file.ID))
+		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
 	default:
 		return nil
 	}
@@ -248,8 +261,8 @@ func (m Prompt) handleSubmit() tea.Cmd {
 	return tea.Batch(commands...)
 }
 
-func (m Prompt) validateInputIsFileID() tea.Cmd {
-	if m.textInput.Value() != m.file.ID {
+func (p Prompt) validateInputIsFileID() tea.Cmd {
+	if p.textInput.Value() != p.file.ID {
 		return SetPromptErrorCmd(errors.New("please specify the file id to confirm"))
 	}
 
@@ -264,8 +277,8 @@ const (
 	No
 )
 
-func (m Prompt) textInputYN() YNResult {
-	lower := strings.ToLower(m.textInput.Value())
+func (p Prompt) textInputYN() YNResult {
+	lower := strings.ToLower(p.textInput.Value())
 	if len(lower) == 0 {
 		return Undecided
 	}

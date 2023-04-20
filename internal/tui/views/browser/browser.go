@@ -1,6 +1,7 @@
 package browser
 
 import (
+	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/robherley/snips.sh/internal/config"
@@ -93,6 +94,10 @@ func (bwsr Browser) View() string {
 	}
 
 	return lipgloss.JoinHorizontal(lipgloss.Left, bwsr.renderTable(), bwsr.renderSeparator(), bwsr.renderOptions())
+}
+
+func (bwsr Browser) Keys() help.KeyMap {
+	return getKeyMap(bwsr.IsOptionsFocused())
 }
 
 func (bwsr Browser) IsOptionsFocused() bool {

@@ -30,3 +30,7 @@ func SetPromptErrorCmd(err error) tea.Cmd {
 		}
 	}
 }
+
+func SelectorInitCmd() tea.Msg {
+	return SelectorInitMsg{}
+}
