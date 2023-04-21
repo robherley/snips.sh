@@ -1,61 +1,84 @@
+<div align="center">
+
 # snips.sh ✂️
 
-[snips.sh](https://snips.sh) is a simple, free, and open source pastebin service.
+**SSH-powered pastebin with a human-friendly TUI and web UI**
 
-⚠️ it's still _very_ alpha 🐛 lots of bugs, breaking changes and bad decisions
+</div>
 
-## 🔑 No passwords, ever.
+<img alt="tui" align="right" src="https://vhs.charm.sh/vhs-3jcrPS4PG7r0ELPcqFXDDw.gif" width="75%" />
 
-snips.sh uses SSH public key authentication, so as long as you have keypair, you have an account:
+### Features
 
-```
-$ cat my-amazing-code.go | ssh snips.sh
-✅ File Uploaded Successfully!
-💳 ID: 7KLqCzRGr
-🏋️ Size: 876 B
-📁 Type: go
-🔗 URL: https://snips.sh/f/7KLqCzRGr
-📠 SSH Command: ssh f:7KLqCzRGr@snips.sh
-```
+- ⚡ Zero-install
+- 🌐 Web UI
+- 💻 TUI
+- 🔑 No passwords
+- 🕵️ Anonymous
+- ⏰ URLs with TTL
+- 🖨️ Self-hostable
 
-now wherever you need the file, just ssh and pipe it to your favorite `$PAGER` or, check out [web ui](https://snips.sh)
 
-```
-$ ssh f:7KLqCzRGr@snips.sh | bat
-```
+<br>
+<br>
+<br>
+<br>
+<br>
 
-snips.sh will try it's best to detect the file type on upload. if not, you can always give it a hint:
 
-```
-$ cat README.md | ssh snips.sh -- -ext md
-```
+## Getting Started 🎯
 
-## 💣 Time-bombed links
-
-have something super secret to share? you can make it private:
+If you have an SSH key, you can upload:
 
 ```
-$ cat SUPER_SECRET.txt | ssh snips.sh -- -private
+echo '{ "hello" : "world" }' | ssh snips.sh
 ```
 
-then mint a signed url with a ttl:
+To access the TUI:
 
 ```
-$ ssh f:rEyxCKRJi1@snips.sh -- sign -ttl 5m
-⏰ Signed file expires: 2023-01-30T22:46:53-05:00
-🔗 https://snips.sh/f/rEyxCKRJi1?exp=1675136813&sig=RGs4TbQItOcZ5ShwRq14B7mLPExFxWO5sx3NBz6uC34%3D
+ssh snips.sh
 ```
 
-## 🗑️ Deleting files
+## Examples 👀
 
-don't want it anymore? nuke it:
+<div align="center">
 
-```
-$ ssh f:rEyxCKRJi1@snips.sh -- rm
-```
+<table>
+  <tr align="center">
+    <td>Upload from any machine, no install necessary.</td>
+  </tr>
+  <tr align="center">
+    <td>
+      <img alt="upload" width="600" src="https://vhs.charm.sh/vhs-2GYlJ8Fh4RYnYpN141jgtT.gif" />
+    </td>
+  </tr>
+  <tr align="center">
+    <td>Download files and pipe into your favorite <code>$PAGER</code>. </td>
+  </tr>
+  <tr align="center">
+    <td>
+      <img alt="download" width="600" src="https://vhs.charm.sh/vhs-7j0LzNCGaBjF6v91QkXJgr.gif" />
+    </td>
+  </tr>
+  <tr align="center">
+    <td>Something secret to share? Create a temporary, time-bound URL for restricted access.</td>
+  </tr>
+  <tr align="center">
+    <td>
+      <img alt="private" width="600" src="https://vhs.charm.sh/vhs-52eZOU1lp0y0ZwUFN6lkUm.gif" />
+    </td>
+  </tr>
+</table>
 
-## ✨ Coming soon: Interactive TUI
+</div>
 
-```
-$ ssh snips.sh
-```
+## Acknowledgements 🏆
+
+The technology behind snips.sh is powered by these amazing projects:
+
+- [`charmbracelet`](https://github.com/charmbracelet)
+  - [`charmbracelet/wish`](https://github.com/charmbracelet/wish): SSH server
+  - [`charmbracelet/bubbletea`](https://github.com/charmbracelet/bubbletea): TUI framework
+- [`alecthomas/chroma`](https://github.com/alecthomas/chroma): Syntax Highlighter
+- [`yuin/goldmark`](github.com/yuin/goldmark): Markdown Parser
