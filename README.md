@@ -4,29 +4,29 @@
 
 **SSH-powered pastebin with a human-friendly TUI and web UI**
 
-</div>
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#examples">Examples</a> •
+  <a href="#credits">Credits</a>
+</p>
 
-<img alt="tui" align="right" src="https://vhs.charm.sh/vhs-3jcrPS4PG7r0ELPcqFXDDw.gif" width="75%" />
+<img alt="tui" width="75%" src="https://vhs.charm.sh/vhs-1MRS4DCN6XUpxzM2PrqCfL.gif" />
+
+</div>
 
 ### Features
 
-- ⚡ Zero-install
-- 🌐 Web UI
-- 💻 TUI
-- 🔑 No passwords
-- 🕵️ Anonymous
-- ⏰ URLs with TTL
-- 🖨️ Self-hostable
+  - ⚡ **Zero-install**: use from any machine with SSH client installed
+  - 🌐 **Web UI**: share your syntax-highlighted code with short links
+  - 💻 **TUI**: never leave your terminal for management/viewing
+  - 🔑 **No passwords**: all you need is an SSH key
+  - 🕵️ **Anonymous**: no sign ups, no logins, no email required
+  - ⏰ **URLs with TTL**: time-bombed access for sensitive sharing
+  - 📦 **Self-hostable**: containerized and light on resources
 
 
-<br>
-<br>
-<br>
-<br>
-<br>
-
-
-## Getting Started 🎯
+## Quick Start
 
 If you have an SSH key, you can upload:
 
@@ -40,7 +40,7 @@ To access the TUI:
 ssh snips.sh
 ```
 
-## Examples 👀
+## Examples
 
 <div align="center">
 
@@ -73,7 +73,7 @@ ssh snips.sh
 
 </div>
 
-## Acknowledgements 🏆
+## Credits
 
 The technology behind snips.sh is powered by these amazing projects:
 

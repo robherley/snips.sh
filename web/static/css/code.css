@@ -11,6 +11,7 @@
 .code .chroma .ln {
   margin-right: 0.4rem;
   padding: 0 0.4rem 0 0.8rem;
+  scroll-margin-top: 2.5rem;
 }
 
 .code .chroma .ln + .cl {

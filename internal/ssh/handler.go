@@ -235,7 +235,7 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 			s.MarginTop(1)
 		},
 	}
-	noti.Messagef("Expires in: %s", styles.C(styles.Colors.Yellow, expires.Format(time.RFC3339)))
+	noti.Messagef("Expires at: %s", styles.C(styles.Colors.Yellow, expires.Format(time.RFC3339)))
 	noti.Render(sesh)
 
 	url := lipgloss.NewStyle().

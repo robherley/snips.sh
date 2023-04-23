@@ -172,7 +172,7 @@ func (p Prompt) renderPrompt() string {
 	}
 
 	if p.feedback != "" {
-		pieces = append(pieces, "", wordwrap.String(p.feedback, p.width))
+		pieces = append(pieces, "", wordwrap.String(p.feedback, p.width), "")
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Top, pieces...)
