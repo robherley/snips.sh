@@ -158,7 +158,6 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *snips.File) {
 	if err := flags.Parse(sesh.Stderr(), args); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			log.Warn().Err(err).Msg("invalid user specified flags")
-			flags.PrintDefaults()
 		}
 		return
 	}
@@ -264,7 +263,6 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 	if err := flags.Parse(sesh.Stderr(), sesh.Command()); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			log.Warn().Err(err).Msg("invalid user specified flags")
-			flags.PrintDefaults()
 		}
 		return
 	}
