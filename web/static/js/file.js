@@ -71,9 +71,21 @@ const watchForShiftClick = () => {
   });
 };
 
+const setToTopButton = () => {
+  const element = document.querySelector("#to-top");
+  if (!element) return;
+
+  if (window.scrollY > 0) {
+    element.removeAttribute("data-hide");
+  } else {
+    element.setAttribute("data-hide", "");
+  }
+};
+
+window.addEventListener("scroll", setToTopButton);
+window.addEventListener("hashchange", highlightLines);
 window.addEventListener("load", () => {
   watchForShiftClick();
   highlightLines();
+  setToTopButton();
 });
-
-window.addEventListener("hashchange", highlightLines);

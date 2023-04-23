@@ -2,6 +2,7 @@
   font-family: var(--font-sans);
   box-sizing: border-box;
   padding: 1.5rem;
+  font-size: 16px;
 }
 
 .markdown > :first-child {
@@ -61,4 +62,5 @@
 
 .markdown code {
   padding: 0.2rem 0.4rem;
+  line-height: 1.6rem;
 }

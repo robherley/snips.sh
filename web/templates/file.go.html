@@ -20,9 +20,15 @@
     <h1 class="title"><a href="/">snips.sh</a></h1>
     <div class="file">
       <div class="file-header">
-        <div class="file-details">file: <a href="/f/{{ .FileID }}">{{ .FileID }}</a> ({{ .FileType }}) &middot; {{ .FileSize }} {{ if .UpdatedAt }} &middot; modified: {{ .UpdatedAt }} {{ end }} {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}</div>
+        <div class="file-details">
+          file: <a href="{{ if .IsReadme }} / {{ else }} /f/{{ .FileID }} {{ end }}">{{ .FileID }}</a>
+          ({{ .FileType }}) &middot; {{ .FileSize }}
+          {{ if .UpdatedAt }} &middot; modified: {{ .UpdatedAt }} {{ end }}
+          {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}
+        </div>
+        <a class="file-header-link" id="to-top" href="#" data-hide aria-label="go to top">&#8593; top</a>
         {{ if .RawHREF }}
-        <a class="view-raw" href="{{ .RawHREF }} " aria-label="view raw file">view raw</a>
+        <a class="file-header-link" href="{{ .RawHREF }}" aria-label="view raw file">view raw</a>
         {{ end }}
       </div>
       <div class="file-content">
@@ -31,7 +37,6 @@
     </div>
   </div>
   <footer class="file-footer">
-    powered by
     <a href="https://github.com/robherley/snips.sh">robherley/snips.sh</a>
     <span role="img" aria-label="scissors">✂️</span>
   </footer>
