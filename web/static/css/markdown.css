@@ -2,6 +2,7 @@
   font-family: var(--font-sans);
   box-sizing: border-box;
   padding: 1.5rem;
+  font-size: 16px;
 }
 
 .markdown > :first-child {
