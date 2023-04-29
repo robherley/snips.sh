@@ -4,10 +4,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/alecthomas/chroma/v2"
 	"github.com/robherley/guesslang-go/pkg/guesser"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/rs/zerolog/log"
+)
+
+const (
+	// MinimumContentGuessLength is the minimum length of the content to use guesslang, smaller content will use the fallback lexer.
+	MinimumContentGuessLength = 64
 )
 
 var (
@@ -32,11 +36,11 @@ func DetectFileType(content []byte, hint string, useGuesser bool) string {
 		return snips.FileTypeBinary
 	}
 
-	var lexer chroma.Lexer
+	lexer := FallbackLexer
 	switch {
 	case hint != "":
 		lexer = GetLexer(hint)
-	case useGuesser:
+	case useGuesser && len(content) > MinimumContentGuessLength:
 		answer, err := guesslang.Guess(string(content))
 		if err != nil {
 			log.Warn().Err(err).Msg("failed to guess the file type")
