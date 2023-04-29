@@ -9,10 +9,19 @@ RUN go mod verify
 
 COPY . .
 
+RUN script/install-libtensorflow
+
 RUN go build -a -o 'snips.sh'
 
-FROM gcr.io/distroless/base-debian11
+# using ubuntu instead of something smaller like alpine so we don't need to deal with musl
+# thanks tensorflow https://github.com/tensorflow/tensorflow/issues/15563#issuecomment-353797058
+FROM ubuntu:20.04
 
-COPY --from=build /build/snips.sh /
+RUN apt update && apt install -y curl
 
-CMD [ "/snips.sh" ]
+COPY --from=build /build/snips.sh /usr/bin/snips.sh
+COPY --from=build /build/script/install-libtensorflow /tmp/install-libtensorflow
+
+RUN /tmp/install-libtensorflow && rm /tmp/install-libtensorflow
+
+CMD [ "/usr/bin/snips.sh" ]
