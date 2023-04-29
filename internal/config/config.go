@@ -20,6 +20,8 @@ KEY	TYPE	DEFAULT	DESCRIPTION
 type Config struct {
 	Debug bool `default:"false" desc:"enable debug logging"`
 
+	EnableGuesser bool `default:"true" desc:"enable guessing of file types using tensorflow and guesslang model"`
+
 	HMACKey string `default:"correct-horse-battery-staple" desc:"symmetric key used to sign URLs"`
 
 	DB struct {

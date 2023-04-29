@@ -24,6 +24,7 @@
   - 🕵️ **Anonymous**: no sign ups, no logins, no email required
   - ⏰ **URLs with TTL**: time-bombed access for sensitive sharing
   - 📦 **Self-hostable**: containerized and light on resources
+  - 🧠 **ML language detection**: uses [guesslang model](https://github.com/yoeo/guesslang) to identify source code
 
 
 ## Quick Start
