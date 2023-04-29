@@ -33,9 +33,10 @@ func DetectFileType(content []byte, hint string, useGuesser bool) string {
 	}
 
 	var lexer chroma.Lexer
-	if hint != "" {
+	switch {
+	case hint != "":
 		lexer = GetLexer(hint)
-	} else if useGuesser {
+	case useGuesser:
 		answer, err := guesslang.Guess(string(content))
 		if err != nil {
 			log.Warn().Err(err).Msg("failed to guess the file type")
@@ -43,7 +44,7 @@ func DetectFileType(content []byte, hint string, useGuesser bool) string {
 			guess := strings.ToLower(answer.Predictions[0].Language)
 			lexer = GetLexer(guess)
 		}
-	} else {
+	default:
 		lexer = Analyze(string(content))
 	}
 
