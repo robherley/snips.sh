@@ -40,7 +40,7 @@ func DetectFileType(content []byte, hint string, useGuesser bool) string {
 	switch {
 	case hint != "":
 		lexer = GetLexer(hint)
-	case useGuesser && len(content) > MinimumContentGuessLength:
+	case useGuesser && len(content) >= MinimumContentGuessLength:
 		answer, err := guesslang.Guess(string(content))
 		if err != nil {
 			log.Warn().Err(err).Msg("failed to guess the file type")
