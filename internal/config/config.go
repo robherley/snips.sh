@@ -38,6 +38,10 @@ type Config struct {
 		External    url.URL `default:"ssh://localhost:2222" desc:"external ssh address displayed in commands"`
 		HostKeyPath string  `default:"data/keys/snips" desc:"path to host keys (without extension)"`
 	}
+
+	Metrics struct {
+		Statsd *url.URL `desc:"(optional) address of statsd server (e.g. udp://localhost:8125)"`
+	}
 }
 
 func (cfg *Config) PrintUsage() error {

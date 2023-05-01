@@ -3,6 +3,7 @@ package ssh
 import (
 	"time"
 
+	"github.com/armon/go-metrics"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/db"
@@ -49,6 +50,7 @@ func AssignUser(database db.DB) func(next ssh.Handler) ssh.Handler {
 					wish.Fatalln(sesh, "❌ Unable to authenticate")
 					return
 				}
+				metrics.IncrCounter([]string{"user", "create"}, 1)
 			} else {
 				// find user
 				user, err = database.FindUser(sesh.Context(), pubkey.UserID)
@@ -65,6 +67,7 @@ func AssignUser(database db.DB) func(next ssh.Handler) ssh.Handler {
 				return c.Str("user_id", user.ID)
 			})
 			logger.From(sesh.Context()).Info().Msg("user authenticated")
+			metrics.IncrCounter([]string{"ssh", "session", "authenticated"}, 1)
 
 			next(sesh)
 		}
@@ -76,6 +79,7 @@ func AssignUser(database db.DB) func(next ssh.Handler) ssh.Handler {
 func BlockIfNoPublicKey(next ssh.Handler) ssh.Handler {
 	return func(sesh ssh.Session) {
 		if key := sesh.PublicKey(); key == nil {
+			metrics.IncrCounter([]string{"ssh", "session", "no_public_key"}, 1)
 			wish.Println(sesh, "❌ Unfortunately snips.sh only supports public key authentication.")
 			wish.Println(sesh, "🔐 Please generate a keypair and try again.")
 			_ = sesh.Exit(1)
@@ -107,5 +111,14 @@ func WithLogger(next ssh.Handler) ssh.Handler {
 		reqLog.Info().Msg("connected")
 		next(sesh)
 		reqLog.Info().Dur("dur", time.Since(start)).Msg("disconnected")
+	}
+}
+
+func WithSessionMetrics(next ssh.Handler) ssh.Handler {
+	return func(sesh ssh.Session) {
+		start := time.Now()
+		metrics.IncrCounter([]string{"ssh", "session", "connected"}, 1)
+		next(sesh)
+		metrics.MeasureSince([]string{"ssh", "session", "duration"}, start)
 	}
 }

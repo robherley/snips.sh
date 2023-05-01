@@ -5,9 +5,11 @@ import (
 	"flag"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/armon/go-metrics"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
@@ -53,6 +55,7 @@ func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 
 func (h *SessionHandler) Interactive(sesh *UserSession) {
 	log := logger.From(sesh.Context())
+	metrics.IncrCounter([]string{"ssh", "session", "interactive"}, 1)
 
 	pty, winChan, _ := sesh.Pty()
 
@@ -192,6 +195,8 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *snips.File) {
 		return
 	}
 
+	metrics.IncrCounter([]string{"file", "delete"}, 1)
+
 	log.Info().Str("file_id", file.ID).Msg("file deleted")
 
 	noti := Notification{
@@ -226,6 +231,8 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 
 	signedFileURL, expires := file.GetSignedURL(h.Config, flags.TTL)
 	log.Info().Str("file_id", file.ID).Time("expires_at", expires).Msg("private file signed")
+
+	metrics.IncrCounter([]string{"file", "sign"}, 1)
 
 	noti := Notification{
 		Color: styles.Colors.Cyan,
@@ -312,6 +319,11 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
 				return
 			}
+
+			metrics.IncrCounterWithLabels([]string{"file", "create"}, 1, []metrics.Label{
+				{Name: "private", Value: strconv.FormatBool(file.Private)},
+				{Name: "type", Value: file.Type},
+			})
 
 			log.Info().Fields(map[string]interface{}{
 				"file_id":   file.ID,

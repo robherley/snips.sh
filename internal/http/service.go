@@ -16,8 +16,6 @@ type Service struct {
 }
 
 func New(cfg *config.Config, database db.DB, webFS *embed.FS, readme string) (*Service, error) {
-	mux := http.NewServeMux()
-
 	templates := template.Must(template.ParseFS(webFS, "web/templates/*"))
 
 	static, err := fs.Sub(webFS, "web/static")
@@ -25,22 +23,23 @@ func New(cfg *config.Config, database db.DB, webFS *embed.FS, readme string) (*S
 		return nil, err
 	}
 
-	mux.HandleFunc("/", IndexHandler(readme, templates))
-	mux.HandleFunc("/health", HealthHandler)
-	mux.HandleFunc("/f/", FileHandler(cfg, database, templates))
-	mux.Handle("/static/", WithGZip(http.StripPrefix("/static", http.FileServer(http.FS(static)))))
+	r := NewRouter()
+	r.HandleFunc("/", IndexHandler(readme, templates))
+	r.HandleFunc("/health", HealthHandler)
+	r.HandleFunc("/f/", FileHandler(cfg, database, templates))
+	r.Handle("/static/", WithGZip(http.StripPrefix("/static", http.FileServer(http.FS(static)))))
 
 	if cfg.Debug {
-		mux.HandleFunc("/_debug/pprof/", pprof.Index)
-		mux.HandleFunc("/_debug/pprof/cmdline", pprof.Cmdline)
-		mux.HandleFunc("/_debug/pprof/profile", pprof.Profile)
-		mux.HandleFunc("/_debug/pprof/symbol", pprof.Symbol)
-		mux.HandleFunc("/_debug/pprof/trace", pprof.Trace)
+		r.HandleFunc("/_debug/pprof/", pprof.Index)
+		r.HandleFunc("/_debug/pprof/cmdline", pprof.Cmdline)
+		r.HandleFunc("/_debug/pprof/profile", pprof.Profile)
+		r.HandleFunc("/_debug/pprof/symbol", pprof.Symbol)
+		r.HandleFunc("/_debug/pprof/trace", pprof.Trace)
 	}
 
 	httpServer := &http.Server{
 		Addr:    cfg.HTTP.Internal.Host,
-		Handler: WithMiddleware(mux, WithRecover, WithLogger, WithRequestID),
+		Handler: WithMiddleware(r, WithRecover, WithLogger, WithRequestID),
 	}
 
 	return &Service{httpServer}, nil

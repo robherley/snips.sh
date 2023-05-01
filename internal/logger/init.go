@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Init() {
+func Initialize() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	if isatty.IsTerminal(os.Stdout.Fd()) {
