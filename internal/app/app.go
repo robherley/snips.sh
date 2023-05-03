@@ -17,26 +17,17 @@ import (
 )
 
 type App struct {
-	SSH  *ssh.Service
-	HTTP *http.Service
-	DB   db.DB
+	SSH        *ssh.Service
+	HTTP       *http.Service
+	DB         db.DB
+	OnShutdown func(context.Context)
 }
 
-type service interface {
-	ListenAndServe() error
-	Shutdown(ctx context.Context) error
-}
-
-func (app *App) Start() error {
+func (app *App) Boot() error {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	services := []service{
-		app.SSH,
-		app.HTTP,
-	}
-
-	start(services)
+	app.listen()
 
 	sig := <-done
 	log.Warn().Str("signal", sig.String()).Msg("received signal, shutting down services")
@@ -45,14 +36,23 @@ func (app *App) Start() error {
 		cancel()
 	}()
 
-	stop(ctx, services)
+	app.shutdown(ctx)
 
 	return nil
 }
 
-func start(services []service) {
+func (app *App) listen() {
+	type listenable interface {
+		ListenAndServe() error
+	}
+
+	services := []listenable{
+		app.SSH,
+		app.HTTP,
+	}
+
 	for i := range services {
-		go func(svc service) {
+		go func(svc listenable) {
 			if err := svc.ListenAndServe(); err != nil {
 				log.Warn().Err(err)
 			}
@@ -60,18 +60,37 @@ func start(services []service) {
 	}
 }
 
-func stop(ctx context.Context, services []service) {
+func (app *App) shutdown(ctx context.Context) {
+	type shutdownable interface {
+		Shutdown(context.Context) error
+	}
+
+	services := []shutdownable{
+		app.SSH,
+		app.HTTP,
+	}
+
 	wg := sync.WaitGroup{}
 	wg.Add(len(services))
 
+	if app.OnShutdown != nil {
+		wg.Add(1)
+		go func(a *App) {
+			defer wg.Done()
+			a.OnShutdown(ctx)
+		}(app)
+	}
+
 	for i := range services {
-		go func(svc service) {
+		go func(svc shutdownable) {
 			defer wg.Done()
 			if err := svc.Shutdown(ctx); err != nil {
 				log.Warn().Err(err)
 			}
 		}(services[i])
 	}
+
+	wg.Wait()
 }
 
 func New(cfg *config.Config, webFS *embed.FS, readme string) (*App, error) {

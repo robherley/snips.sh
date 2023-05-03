@@ -34,6 +34,7 @@ func New(cfg *config.Config, db db.DB) (*Service, error) {
 			BlockIfNoPublicKey,
 			WithLogger,
 			WithRequestID,
+			WithSessionMetrics,
 		),
 	)
 	if err != nil {
