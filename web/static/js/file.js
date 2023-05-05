@@ -9,6 +9,10 @@ const getSelectedLines = () => {
 };
 
 const highlightLines = () => {
+  [...document.querySelectorAll(".hl")].forEach((el) => {
+    el.classList.remove("hl");
+  });
+
   const hash = location.hash;
   if (!hash) return;
 
@@ -17,10 +21,6 @@ const highlightLines = () => {
 
   const start = lines[0];
   const end = lines[1] || start;
-
-  [...document.querySelectorAll(".hl")].forEach((el) => {
-    el.classList.remove("hl");
-  });
 
   for (let i = start; i <= end; i++) {
     const el = document.querySelector(`#L${i}`);
@@ -75,7 +75,12 @@ const setToTopButton = () => {
   const element = document.querySelector("#to-top");
   if (!element) return;
 
-  if (window.scrollY > 0) {
+  const parent = element.parentElement;
+  if (!parent) return;
+
+  const { top } = parent.getBoundingClientRect();
+
+  if (top === 0) {
     element.removeAttribute("data-hide");
   } else {
     element.setAttribute("data-hide", "");
