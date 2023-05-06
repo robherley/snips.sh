@@ -8,6 +8,7 @@
   <a href="#features">Features</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#examples">Examples</a> •
+  <a href="#docs">Docs</a> •
   <a href="#credits">Credits</a>
 </p>
 
@@ -74,9 +75,10 @@ ssh snips.sh
 
 </div>
 
-## Policy
+## Docs
 
-By using snips.sh, you accept the [Terms of Service](/docs/TOS.md) and [Acceptable Use Policy](/docs/AUP.md)
+- [Terms of Service](/docs/TOS.md)
+- [Acceptable Use Policy](/docs/AUP.md)
 
 ## Credits
 
