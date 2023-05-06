@@ -3,7 +3,6 @@ package http
 import (
 	"embed"
 	"html/template"
-	"io/fs"
 	"net/http"
 	"net/http/pprof"
 
@@ -18,7 +17,7 @@ type Service struct {
 func New(cfg *config.Config, database db.DB, webFS *embed.FS, readme string) (*Service, error) {
 	templates := template.Must(template.ParseFS(webFS, "web/templates/*"))
 
-	static, err := fs.Sub(webFS, "web/static")
+	assets, err := MinififyStaticAssets(webFS)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +26,8 @@ func New(cfg *config.Config, database db.DB, webFS *embed.FS, readme string) (*S
 	r.HandleFunc("/", IndexHandler(readme, templates))
 	r.HandleFunc("/health", HealthHandler)
 	r.HandleFunc("/f/", FileHandler(cfg, database, templates))
-	r.Handle("/static/", WithGZip(http.StripPrefix("/static", http.FileServer(http.FS(static)))))
+	r.HandleFunc("/assets/index.js", assets.Handler)
+	r.HandleFunc("/assets/index.css", assets.Handler)
 
 	if cfg.Debug {
 		r.HandleFunc("/_debug/pprof/", pprof.Index)

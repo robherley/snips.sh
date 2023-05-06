@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/robherley/snips.sh/internal/id"
@@ -66,23 +65,5 @@ func WithRecover(next http.Handler) http.Handler {
 			}
 		}()
 		next.ServeHTTP(w, r)
-	})
-}
-
-func WithGZip(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hasGzip := strings.Contains(strings.ToLower(r.Header.Get("Accept-Encoding")), "gzip")
-		if !hasGzip {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		w.Header().Set("Content-Encoding", "gzip")
-		w.Header().Set("Vary", "Accept-Encoding")
-
-		gzrw := NewGZipResponseWriter(w)
-		defer gzrw.Close()
-
-		next.ServeHTTP(gzrw, r)
 	})
 }
