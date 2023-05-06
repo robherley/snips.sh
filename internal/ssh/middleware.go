@@ -56,7 +56,7 @@ func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) 
 				}
 
 				if !accept {
-					sesh.Exit(1)
+					_ = sesh.Exit(1)
 					return
 				}
 
