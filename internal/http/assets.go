@@ -3,6 +3,7 @@ package http
 import (
 	"compress/gzip"
 	"embed"
+	"html/template"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -29,61 +30,62 @@ var (
 	}
 
 	jsFiles = []string{
-		"file.js",
+		"snips.js",
 	}
 )
 
-type StaticAssets struct {
+type Assets struct {
 	fs   *embed.FS
+	tmpl *template.Template
 	mini *minify.M
 	css  []byte
 	js   []byte
 }
 
-// MinififyStaticAssets minifies the static assets.
-func MinififyStaticAssets(fs *embed.FS) (*StaticAssets, error) {
-	s := &StaticAssets{
+// NewAssets holds the templates, static content and minifies accordingly.
+func NewAssets(fs *embed.FS) (*Assets, error) {
+	assets := &Assets{
 		fs:   fs,
 		mini: minify.New(),
 	}
 
-	s.mini.AddFunc(cssMime, css.Minify)
-	s.mini.AddFunc(jsMime, js.Minify)
-
 	var err error
 
-	s.css, err = s.minify(cssPath, cssFiles, cssMime)
-	if err != nil {
+	if assets.tmpl, err = template.ParseFS(fs, "web/templates/*"); err != nil {
 		return nil, err
 	}
 
-	s.js, err = s.minify(jsPath, jsFiles, jsMime)
-	if err != nil {
+	assets.mini.AddFunc(cssMime, css.Minify)
+	if assets.css, err = assets.minify(cssPath, cssFiles, cssMime); err != nil {
 		return nil, err
 	}
 
-	return s, nil
-}
-
-func (s *StaticAssets) JS() string {
-	return string(s.js)
-}
-
-func (s *StaticAssets) CSS() string {
-	return string(s.css)
-}
-
-// Handler serves the static assets, gzipped.
-func (s *StaticAssets) Handler(w http.ResponseWriter, r *http.Request) {
-	switch filepath.Ext(r.URL.Path) {
-	case ".css":
-		serve(w, r, s.css, cssMime)
-	case ".js":
-		serve(w, r, s.js, jsMime)
-	default:
-		http.NotFound(w, r)
-		return
+	assets.mini.AddFunc(jsMime, js.Minify)
+	if assets.js, err = assets.minify(jsPath, jsFiles, jsMime); err != nil {
+		return nil, err
 	}
+
+	return assets, nil
+}
+
+func (a *Assets) JS() []byte {
+	return a.js
+}
+
+func (a *Assets) CSS() []byte {
+	return a.css
+}
+
+func (a *Assets) Templates() *template.Template {
+	return a.tmpl
+}
+
+func (a *Assets) ServeJS(w http.ResponseWriter, r *http.Request) {
+	serve(w, r, a.js, jsMime)
+}
+
+func (a *Assets) ServeCSS(w http.ResponseWriter, r *http.Request) {
+	serve(w, r, a.css, cssMime)
 }
 
 // serve serves the content, gzipped if the client accepts it.
@@ -104,11 +106,11 @@ func serve(w http.ResponseWriter, r *http.Request, content []byte, contentType s
 }
 
 // minify combines all the files and minifies them.
-func (s *StaticAssets) minify(path string, files []string, mime string) ([]byte, error) {
+func (a *Assets) minify(path string, files []string, mime string) ([]byte, error) {
 	sb := strings.Builder{}
 
 	for _, file := range files {
-		bites, err := s.fs.ReadFile(filepath.Join(path, file))
+		bites, err := a.fs.ReadFile(filepath.Join(path, file))
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +119,7 @@ func (s *StaticAssets) minify(path string, files []string, mime string) ([]byte,
 		sb.WriteByte('\n')
 	}
 
-	content, err := s.mini.String(mime, sb.String())
+	content, err := a.mini.String(mime, sb.String())
 	if err != nil {
 		return nil, err
 	}

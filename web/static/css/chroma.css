@@ -1,5 +1,6 @@
 /*
   Generated from base16-snazzy chroma theme, replaced with css vars for convenience
+  If these class names ever change, be sure to update them in internal/render/sanitizer.go so they aren't stripped
  */
 
 /* Other */ .chroma .x {  }
@@ -73,11 +74,11 @@
 /* CommentPreproc */ .chroma .cp { color: var(--color-gray-9) }
 /* CommentPreprocFile */ .chroma .cpf { color: var(--color-gray-9) }
 /* Generic */ .chroma .g {  }
-/* GenericDeleted */ .chroma .gd { color: var(--color-pink-9) }
+/* GenericDeleted */ .chroma .gd { color: var(--color-red-9) }
 /* GenericEmph */ .chroma .ge { text-decoration: underline }
-/* GenericError */ .chroma .gr { color: var(--color-pink-9) }
+/* GenericError */ .chroma .gr { color: var(--color-red-9) }
 /* GenericHeading */ .chroma .gh { font-weight: bold }
-/* GenericInserted */ .chroma .gi { font-weight: bold }
+/* GenericInserted */ .chroma .gi { font-weight: bold; color: var(--color-green-9) }
 /* GenericOutput */ .chroma .go { color: var(--color-gray-9) }
 /* GenericPrompt */ .chroma .gp {  }
 /* GenericStrong */ .chroma .gs { font-style: italic }

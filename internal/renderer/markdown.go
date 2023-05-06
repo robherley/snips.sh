@@ -7,7 +7,6 @@ import (
 
 	"github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/alecthomas/chroma/v2/styles"
-	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
 	emoji "github.com/yuin/goldmark-emoji"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
@@ -17,7 +16,7 @@ import (
 )
 
 var (
-	md = goldmark.New(
+	unsafeMarkdown = goldmark.New(
 		goldmark.WithExtensions(
 			extension.Table,
 			extension.Strikethrough,
@@ -41,20 +40,16 @@ var (
 			gmhtml.WithUnsafe(),
 		),
 	)
-
-	sanitizer = bluemonday.UGCPolicy().
-			AllowAttrs("align").Globally().
-			AllowAttrs("width").Globally()
 )
 
 func ToMarkdown(fileContent []byte) (template.HTML, error) {
-	mdHTML := bytes.NewBuffer(nil)
+	unsafeMarkdownHTML := bytes.NewBuffer(nil)
 
-	if err := md.Convert(fileContent, mdHTML); err != nil {
+	if err := unsafeMarkdown.Convert(fileContent, unsafeMarkdownHTML); err != nil {
 		return "", err
 	}
 
-	sanitized := sanitizer.Sanitize(mdHTML.String())
+	sanitized := htmlSanitizer.Sanitize(unsafeMarkdownHTML.String())
 	wrapped := fmt.Sprintf("<div class=\"markdown\">%s</div>", sanitized)
 
 	return template.HTML(wrapped), nil

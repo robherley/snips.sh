@@ -1,3 +1,6 @@
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.1.0/+esm";
+
+// getSelectedLines will return the lines specified in the hash.
 const getSelectedLines = () => {
   if (!location.hash?.startsWith("#L")) return [];
   return location.hash
@@ -8,6 +11,7 @@ const getSelectedLines = () => {
     .sort((a, b) => a - b);
 };
 
+// highlightLines will highlight the lines specified in the hash.
 const highlightLines = () => {
   [...document.querySelectorAll(".hl")].forEach((el) => {
     el.classList.remove("hl");
@@ -29,6 +33,7 @@ const highlightLines = () => {
   }
 };
 
+// watchForShiftClick watches for shift-clicks on line numbers, and will set the anchor appropriately.
 const watchForShiftClick = () => {
   const chroma = document.querySelector(".chroma");
   if (!chroma) return;
@@ -71,6 +76,7 @@ const watchForShiftClick = () => {
   });
 };
 
+// setToTopButton hides the "to top" button when the top of the page is visible, and shows it when it's not.
 const setToTopButton = () => {
   const element = document.querySelector("#to-top");
   if (!element) return;
@@ -89,8 +95,13 @@ const setToTopButton = () => {
 
 window.addEventListener("scroll", setToTopButton);
 window.addEventListener("hashchange", highlightLines);
-window.addEventListener("load", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   watchForShiftClick();
   highlightLines();
   setToTopButton();
+
+  mermaid.initialize({ startOnLoad: false, theme: "dark" });
+  await mermaid.run({
+    querySelector: "code.language-mermaid",
+  });
 });

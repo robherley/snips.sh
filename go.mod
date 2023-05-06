@@ -5,6 +5,7 @@ go 1.20
 require (
 	ariga.io/atlas v0.10.0
 	github.com/alecthomas/chroma/v2 v2.7.0
+	github.com/armon/go-metrics v0.4.1
 	github.com/charmbracelet/bubbles v0.15.0
 	github.com/charmbracelet/bubbletea v0.23.1
 	github.com/charmbracelet/lipgloss v0.6.0
@@ -21,6 +22,7 @@ require (
 	github.com/robherley/guesslang-go v0.1.0
 	github.com/rs/zerolog v1.28.0
 	github.com/stretchr/testify v1.8.2
+	github.com/tdewolff/minify/v2 v2.12.5
 	github.com/yuin/goldmark v1.5.3
 	github.com/yuin/goldmark-emoji v1.0.1
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20220924101305-151362477c87
@@ -31,7 +33,6 @@ require (
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
-	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52 v1.2.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
@@ -61,7 +62,6 @@ require (
 	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/sahilm/fuzzy v0.1.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/tdewolff/minify/v2 v2.12.5 // indirect
 	github.com/tdewolff/parse/v2 v2.6.5 // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
