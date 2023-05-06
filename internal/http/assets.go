@@ -5,6 +5,7 @@ import (
 	"embed"
 	"html/template"
 	"net/http"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -14,6 +15,10 @@ import (
 )
 
 const (
+	tmplPattern = "web/templates/*"
+
+	docsPath = "docs/"
+
 	cssPath = "web/static/css"
 	cssMime = "text/css"
 
@@ -35,32 +40,37 @@ var (
 )
 
 type Assets struct {
-	fs   *embed.FS
-	tmpl *template.Template
-	mini *minify.M
-	css  []byte
-	js   []byte
+	webFS  *embed.FS
+	docsFS *embed.FS
+	readme []byte
+	css    []byte
+	js     []byte
+	tmpl   *template.Template
+	mini   *minify.M
 }
 
 // NewAssets holds the templates, static content and minifies accordingly.
-func NewAssets(fs *embed.FS) (*Assets, error) {
+func NewAssets(webFS *embed.FS, docsFS *embed.FS, readme []byte) (*Assets, error) {
 	assets := &Assets{
-		fs:   fs,
-		mini: minify.New(),
+		webFS:  webFS,
+		docsFS: docsFS,
+		readme: readme,
 	}
+
+	assets.mini = minify.New()
+	assets.mini.AddFunc(cssMime, css.Minify)
+	assets.mini.AddFunc(jsMime, js.Minify)
 
 	var err error
 
-	if assets.tmpl, err = template.ParseFS(fs, "web/templates/*"); err != nil {
+	if assets.tmpl, err = template.ParseFS(webFS, tmplPattern); err != nil {
 		return nil, err
 	}
 
-	assets.mini.AddFunc(cssMime, css.Minify)
 	if assets.css, err = assets.minify(cssPath, cssFiles, cssMime); err != nil {
 		return nil, err
 	}
 
-	assets.mini.AddFunc(jsMime, js.Minify)
 	if assets.js, err = assets.minify(jsPath, jsFiles, jsMime); err != nil {
 		return nil, err
 	}
@@ -76,7 +86,19 @@ func (a *Assets) CSS() []byte {
 	return a.css
 }
 
-func (a *Assets) Templates() *template.Template {
+func (a *Assets) ReadME() []byte {
+	return a.readme
+}
+
+func (a *Assets) Doc(filename string) ([]byte, error) {
+	if filename == "README.md" {
+		return a.readme, nil
+	}
+
+	return a.docsFS.ReadFile(path.Join(docsPath, filename))
+}
+
+func (a *Assets) Template() *template.Template {
 	return a.tmpl
 }
 
@@ -110,7 +132,7 @@ func (a *Assets) minify(path string, files []string, mime string) ([]byte, error
 	sb := strings.Builder{}
 
 	for _, file := range files {
-		bites, err := a.fs.ReadFile(filepath.Join(path, file))
+		bites, err := a.webFS.ReadFile(filepath.Join(path, file))
 		if err != nil {
 			return nil, err
 		}

@@ -17,13 +17,18 @@ import (
 	"github.com/robherley/snips.sh/internal/snips"
 )
 
-func IndexHandler(readme string, tmpl *template.Template) http.HandlerFunc {
+func DocHandler(name string, assets *Assets) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
-		bs := []byte(readme)
+		content, err := assets.Doc(name)
+		if err != nil {
+			log.Error().Err(err).Msg("unable to load file")
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
 
-		md, err := renderer.ToMarkdown(bs)
+		md, err := renderer.ToMarkdown(content)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to parse file")
 			http.Error(w, "unable to parse file", http.StatusInternalServerError)
@@ -31,13 +36,13 @@ func IndexHandler(readme string, tmpl *template.Template) http.HandlerFunc {
 		}
 
 		vars := map[string]interface{}{
-			"FileID":   "README.md",
-			"FileSize": humanize.Bytes(uint64(len(bs))),
+			"FileID":   name,
+			"FileSize": humanize.Bytes(uint64(len(content))),
 			"FileType": "markdown",
 			"HTML":     md,
 		}
 
-		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)
+		err = assets.Template().ExecuteTemplate(w, "file.go.html", vars)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to render template")
 			http.Error(w, "internal error", http.StatusInternalServerError)

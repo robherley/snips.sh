@@ -7,6 +7,7 @@ import (
 
 	"github.com/robherley/snips.sh/internal/app"
 	"github.com/robherley/snips.sh/internal/config"
+	"github.com/robherley/snips.sh/internal/http"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/stats"
 	"github.com/rs/zerolog"
@@ -17,7 +18,9 @@ var (
 	//go:embed web/*
 	webFS embed.FS
 	//go:embed README.md
-	readme string
+	readme []byte
+	//go:embed docs/*.md
+	docsFS embed.FS
 )
 
 func main() {
@@ -44,7 +47,16 @@ func main() {
 		return
 	}
 
-	application, err := app.New(cfg, &webFS, readme)
+	assets, err := http.NewAssets(
+		&webFS,
+		&docsFS,
+		readme,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to load assets")
+	}
+
+	application, err := app.New(cfg, assets)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}

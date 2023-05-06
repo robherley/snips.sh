@@ -30,7 +30,7 @@ func New(cfg *config.Config, db db.DB) (*Service, error) {
 		// note: middleware is evaulated in reverse order
 		wish.WithMiddleware(
 			sessionHandler.HandleFunc,
-			AssignUser(db),
+			AssignUser(db, cfg.HTTP.External),
 			BlockIfNoPublicKey,
 			WithLogger,
 			WithRequestID,
