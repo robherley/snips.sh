@@ -31,7 +31,6 @@ func IndexHandler(readme string, tmpl *template.Template) http.HandlerFunc {
 		}
 
 		vars := map[string]interface{}{
-			"IsReadme": true,
 			"FileID":   "README.md",
 			"FileSize": humanize.Bytes(uint64(len(bs))),
 			"FileType": "markdown",

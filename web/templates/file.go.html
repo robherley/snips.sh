@@ -8,32 +8,28 @@
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>">
   <title>{{ .FileID }} - snips.sh</title>
-  <link rel="stylesheet" href="/static/css/index.css">
-  <link rel="stylesheet" href="/static/css/chroma.css">
-  <link rel="stylesheet" href="/static/css/code.css">
-  <link rel="stylesheet" href="/static/css/markdown.css">
-  <script async defer src="/static/js/file.js"></script>
+  <link rel="stylesheet" href="/assets/index.css">
+  <script type="module" src="/assets/index.js"></script>
 </head>
 
 <body>
+  <div class="stripes"></div>
   <div class="container">
-    <h1 class="title"><a href="/">snips.sh</a></h1>
-    <div class="file">
-      <div class="file-header">
-        <div class="file-details">
-          file: <a href="{{ if .IsReadme }} / {{ else }} /f/{{ .FileID }} {{ end }}">{{ .FileID }}</a>
-          ({{ .FileType }}) &middot; {{ .FileSize }}
-          {{ if .UpdatedAt }} &middot; modified: {{ .UpdatedAt }} {{ end }}
-          {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}
-        </div>
-        <a class="file-header-link" id="to-top" href="#" data-hide aria-label="go to top">&#8593; top</a>
-        {{ if .RawHREF }}
-        <a class="file-header-link" href="{{ .RawHREF }}" aria-label="view raw file">view raw</a>
-        {{ end }}
+    <h1 class="title"><a href="/">snips<span class="sh">.sh</span></a></h1>
+    <div class="file-header">
+      <div class="file-details">
+        file: <a href="#">{{ .FileID }}</a>
+        ({{ .FileType }}) &middot; {{ .FileSize }}
+        {{ if .UpdatedAt }} &middot; modified: {{ .UpdatedAt }} {{ end }}
+        {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}
       </div>
-      <div class="file-content">
-        {{ .HTML }}
-      </div>
+      <a class="file-header-link" id="to-top" href="#" data-hide aria-label="go to top">&#8593; top</a>
+      {{ if .RawHREF }}
+      <a class="file-header-link" href="{{ .RawHREF }}" aria-label="view raw file">view raw</a>
+      {{ end }}
+    </div>
+    <div class="file-content">
+      {{ .HTML }}
     </div>
   </div>
   <footer class="file-footer">

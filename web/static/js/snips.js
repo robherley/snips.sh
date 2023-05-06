@@ -1,3 +1,6 @@
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.1.0/+esm";
+
+// getSelectedLines will return the lines specified in the hash.
 const getSelectedLines = () => {
   if (!location.hash?.startsWith("#L")) return [];
   return location.hash
@@ -8,7 +11,12 @@ const getSelectedLines = () => {
     .sort((a, b) => a - b);
 };
 
+// highlightLines will highlight the lines specified in the hash.
 const highlightLines = () => {
+  [...document.querySelectorAll(".hl")].forEach((el) => {
+    el.classList.remove("hl");
+  });
+
   const hash = location.hash;
   if (!hash) return;
 
@@ -18,10 +26,6 @@ const highlightLines = () => {
   const start = lines[0];
   const end = lines[1] || start;
 
-  [...document.querySelectorAll(".hl")].forEach((el) => {
-    el.classList.remove("hl");
-  });
-
   for (let i = start; i <= end; i++) {
     const el = document.querySelector(`#L${i}`);
     if (!el) return;
@@ -29,6 +33,7 @@ const highlightLines = () => {
   }
 };
 
+// watchForShiftClick watches for shift-clicks on line numbers, and will set the anchor appropriately.
 const watchForShiftClick = () => {
   const chroma = document.querySelector(".chroma");
   if (!chroma) return;
@@ -71,11 +76,17 @@ const watchForShiftClick = () => {
   });
 };
 
+// setToTopButton hides the "to top" button when the top of the page is visible, and shows it when it's not.
 const setToTopButton = () => {
   const element = document.querySelector("#to-top");
   if (!element) return;
 
-  if (window.scrollY > 0) {
+  const parent = element.parentElement;
+  if (!parent) return;
+
+  const { top } = parent.getBoundingClientRect();
+
+  if (top === 0) {
     element.removeAttribute("data-hide");
   } else {
     element.setAttribute("data-hide", "");
@@ -84,8 +95,13 @@ const setToTopButton = () => {
 
 window.addEventListener("scroll", setToTopButton);
 window.addEventListener("hashchange", highlightLines);
-window.addEventListener("load", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   watchForShiftClick();
   highlightLines();
   setToTopButton();
+
+  mermaid.initialize({ startOnLoad: false, theme: "dark" });
+  await mermaid.run({
+    querySelector: "code.language-mermaid",
+  });
 });

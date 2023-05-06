@@ -1,8 +1,9 @@
 .markdown {
   font-family: var(--font-sans);
   box-sizing: border-box;
-  padding: 1.5rem;
+  padding: 2rem;
   font-size: 16px;
+  line-height: 1.6;
 }
 
 .markdown > :first-child {
@@ -30,8 +31,12 @@
 }
 
 .markdown table th {
-  background: var(--color-gray-1);
+  background: var(--color-gray-3);
   font-weight: 600;
+}
+
+.markdown tr:nth-child(2n) {
+  background: var(--color-gray-3);
 }
 
 .markdown table th, .markdown table td {
@@ -47,12 +52,12 @@
 }
 
 .markdown code, .markdown pre {
-  margin: unset !important;
-  background: var(--color-gray-1);
+  background: var(--color-gray-3);
   border-radius: var(--border-radius);
 }
 
 .markdown pre {
+  margin: 0.5rem 0;
   padding: 1rem;
 }
 
@@ -61,6 +66,7 @@
 }
 
 .markdown code {
-  padding: 0.2rem 0.4rem;
-  line-height: 1.6rem;
+  margin: unset !important;
+  padding: 0.2em 0.4em;
+  font-size: 85%;
 }
