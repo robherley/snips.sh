@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"embed"
 	"os"
 	"os/signal"
 	"sync"
@@ -93,7 +92,7 @@ func (app *App) shutdown(ctx context.Context) {
 	wg.Wait()
 }
 
-func New(cfg *config.Config, webFS *embed.FS, readme string) (*App, error) {
+func New(cfg *config.Config, assets *http.Assets) (*App, error) {
 	database, err := db.NewSqlite(cfg.DB.FilePath)
 	if err != nil {
 		return nil, err
@@ -104,7 +103,7 @@ func New(cfg *config.Config, webFS *embed.FS, readme string) (*App, error) {
 		return nil, err
 	}
 
-	http, err := http.New(cfg, database, webFS, readme)
+	http, err := http.New(cfg, database, assets)
 	if err != nil {
 		return nil, err
 	}

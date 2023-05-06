@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"net/url"
 	"time"
 
 	"github.com/armon/go-metrics"
@@ -17,7 +18,7 @@ import (
 
 // AssignUser will attempt to match a user with a public key fingerprint.
 // If a user is not found, one will be created with the current fingerprint attached.
-func AssignUser(database db.DB) func(next ssh.Handler) ssh.Handler {
+func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) ssh.Handler {
 	return func(next ssh.Handler) ssh.Handler {
 		return func(sesh ssh.Session) {
 			fingerprint := gossh.FingerprintSHA256(sesh.PublicKey())
@@ -39,6 +40,26 @@ func AssignUser(database db.DB) func(next ssh.Handler) ssh.Handler {
 
 			// upsert and create user if not found
 			if pubkey == nil {
+				wish.Println(sesh, "Welcome to snips.sh! 👋")
+				wish.Println(sesh, "Please take a moment to read our terms of service.")
+				wish.Printf(sesh, "\n🔗 %s/tos\n\n", externalAddress.String())
+
+				confirmation := Confirm{
+					Question: "Do you accept these terms?",
+				}
+
+				accept, err := confirmation.Prompt(sesh)
+				if err != nil {
+					log.Err(err).Msg("unable to prompt user")
+					wish.Fatalln(sesh, "❌ Unable to authenticate")
+					return
+				}
+
+				if !accept {
+					sesh.Exit(1)
+					return
+				}
+
 				pubkey = &snips.PublicKey{
 					Fingerprint: fingerprint,
 					Type:        sesh.PublicKey().Type(),

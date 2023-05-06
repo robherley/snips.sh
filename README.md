@@ -74,6 +74,10 @@ ssh snips.sh
 
 </div>
 
+## Policy
+
+By using snips.sh, you accept the [Terms of Service](/docs/TOS.md) and [Acceptable Use Policy](/docs/AUP.md)
+
 ## Credits
 
 The technology behind snips.sh is powered by these amazing projects:

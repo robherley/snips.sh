@@ -1,7 +1,10 @@
 package ssh_test
 
 import (
+	"bytes"
+	"net/url"
 	"testing"
+	"time"
 
 	cssh "github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish/testsession"
@@ -17,6 +20,8 @@ import (
 )
 
 var (
+	testTimeout = 5 * time.Second
+	testHost, _ = url.Parse("http://localhost:8080")
 	privateKey  = testdata.PEMBytes["ed25519"]
 	fingerprint = "SHA256:mV1mPX4S6TE+odyfWDXGrC5fvQbLh+w8o2NK3q2MmYw"
 )
@@ -48,7 +53,7 @@ func TestAssignUser(t *testing.T) {
 		}
 
 		session := testsession.New(t, &cssh.Server{
-			Handler: ssh.AssignUser(database)(nextFunc),
+			Handler: ssh.AssignUser(database, *testHost)(nextFunc),
 			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
 				return true
 			},
@@ -56,7 +61,37 @@ func TestAssignUser(t *testing.T) {
 			Auth: []gossh.AuthMethod{
 				testPrivateKeyAuth(),
 			},
+			Timeout: testTimeout,
 		})
+
+		session.Stdin = bytes.NewBuffer([]byte("y\n"))
+
+		_ = session.Run("")
+	})
+
+	t.Run("does not create user if terms rejected", func(t *testing.T) {
+		database := db.NewMockDB(t)
+
+		database.EXPECT().
+			FindPublicKeyByFingerprint(mock.Anything, fingerprint).Return(nil, nil)
+
+		nextFunc := func(sesh cssh.Session) {
+			panic("this should not be called")
+		}
+
+		session := testsession.New(t, &cssh.Server{
+			Handler: ssh.AssignUser(database, *testHost)(nextFunc),
+			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+				return true
+			},
+		}, &gossh.ClientConfig{
+			Auth: []gossh.AuthMethod{
+				testPrivateKeyAuth(),
+			},
+			Timeout: testTimeout,
+		})
+
+		session.Stdin = bytes.NewBuffer([]byte("n\n"))
 
 		_ = session.Run("")
 	})
@@ -80,7 +115,7 @@ func TestAssignUser(t *testing.T) {
 		}
 
 		session := testsession.New(t, &cssh.Server{
-			Handler: ssh.AssignUser(database)(nextFunc),
+			Handler: ssh.AssignUser(database, *testHost)(nextFunc),
 			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
 				return true
 			},
@@ -88,6 +123,7 @@ func TestAssignUser(t *testing.T) {
 			Auth: []gossh.AuthMethod{
 				testPrivateKeyAuth(),
 			},
+			Timeout: testTimeout,
 		})
 
 		_ = session.Run("")
@@ -112,6 +148,7 @@ func TestBlockIfNoPublicKey(t *testing.T) {
 			Auth: []gossh.AuthMethod{
 				gossh.Password("password"),
 			},
+			Timeout: testTimeout,
 		})
 
 		err := session.Run("")
@@ -131,6 +168,7 @@ func TestBlockIfNoPublicKey(t *testing.T) {
 			Auth: []gossh.AuthMethod{
 				testPrivateKeyAuth(),
 			},
+			Timeout: testTimeout,
 		})
 
 		err := session.Run("")

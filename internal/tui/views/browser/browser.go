@@ -1,6 +1,8 @@
 package browser
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -86,6 +88,15 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (bwsr Browser) View() string {
+	if len(bwsr.files) == 0 {
+		return lipgloss.
+			NewStyle().
+			PaddingTop(1).
+			PaddingBottom(1).
+			Foreground(styles.Colors.Primary).
+			Render(fmt.Sprintf("No files found!\nLearn how to started at: %s", bwsr.cfg.HTTP.External.String()))
+	}
+
 	if bwsr.width < BreakPoint {
 		if bwsr.options.focused {
 			return bwsr.renderOptions()

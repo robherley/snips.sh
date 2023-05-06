@@ -1,0 +1,18 @@
+#!/bin/bash
+# Create a temporary SSH key and connect to a remote host with it.
+
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 user@host"
+    exit 1
+fi
+
+tmpdir=$(mktemp -d)
+
+cleanup() {
+  rm -rf "$tmpdir"
+}
+
+trap cleanup EXIT
+
+ssh-keygen -t ecdsa -f "$tmpdir/id_ecdsa" -q -N ""
+ssh -F /dev/null -i "$tmpdir/id_ecdsa" -o IdentitiesOnly=yes "$@"

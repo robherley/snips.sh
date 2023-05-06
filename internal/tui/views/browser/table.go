@@ -121,10 +121,6 @@ func (bwsr Browser) renderTable() string {
 }
 
 func (bwsr Browser) renderHeader() string {
-	if len(bwsr.files) == 0 {
-		return lipgloss.NewStyle().Foreground(styles.Colors.Primary).Render("No files found")
-	}
-
 	header := make([]string, 0, len(columns))
 	for i, col := range columns {
 		header = append(header, fmt.Sprintf("%-*s", bwsr.table.preRenderedWidths[i], col.name))
