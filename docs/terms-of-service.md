@@ -16,7 +16,7 @@
 
     We will not use or share your content for any purpose other than providing the snips.sh service, except as required by law.
 
-3. User Conduct:
+3. User Conduct
 
     You agree to use snips.sh only for lawful purposes and in a manner that does not infringe the rights of any third party. You also agree not to:
 

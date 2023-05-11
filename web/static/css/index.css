@@ -215,3 +215,7 @@ a:hover {
 .danger {
   color: var(--color-red-9);
 }
+
+.muted {
+  color: var(--color-gray-6);
+}
