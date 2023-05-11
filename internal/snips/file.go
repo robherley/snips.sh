@@ -1,7 +1,6 @@
 package snips
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -12,13 +11,8 @@ import (
 )
 
 const (
-	FileLimit        = 100
 	FileTypeBinary   = "binary"
 	FileTypeMarkdown = "markdown"
-)
-
-var (
-	ErrFileLimit = errors.New("file limit reached")
 )
 
 type File struct {

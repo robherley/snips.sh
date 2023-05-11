@@ -22,6 +22,7 @@ func New(cfg *config.Config, database db.DB, assets *Assets) (*Service, error) {
 	r.HandleFunc("/f/", FileHandler(cfg, database, assets.Template()))
 	r.HandleFunc("/assets/index.js", assets.ServeJS)
 	r.HandleFunc("/assets/index.css", assets.ServeCSS)
+	r.HandleFunc("/meta.json", MetaHandler(cfg))
 
 	if cfg.Debug {
 		r.HandleFunc("/_debug/pprof/", pprof.Index)

@@ -288,8 +288,8 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		size += uint64(n)
 		content = append(content, buf[:n]...)
 
-		if size > MaxUploadSize {
-			sesh.Error(ErrFileTooLarge, "Unable to upload file", "File too large, max size is %s", humanize.Bytes(MaxUploadSize))
+		if size > h.Config.Limits.FileSize {
+			sesh.Error(ErrFileTooLarge, "Unable to upload file", "File too large, max size is %s", humanize.Bytes(h.Config.Limits.FileSize))
 			return
 		}
 
@@ -315,7 +315,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				Type:    renderer.DetectFileType(content, flags.Extension, h.Config.EnableGuesser),
 			}
 
-			if err := h.DB.CreateFile(sesh.Context(), &file); err != nil {
+			if err := h.DB.CreateFile(sesh.Context(), &file, h.Config.Limits.FilesPerUser); err != nil {
 				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
 				return
 			}

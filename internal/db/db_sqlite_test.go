@@ -124,7 +124,7 @@ func (s *SqliteSuite) TestCreateFile() {
 		UserID:  id.New(),
 	}
 
-	err := database.CreateFile(context.TODO(), file)
+	err := database.CreateFile(context.TODO(), file, 1337)
 	s.Require().NoError(err)
 
 	s.Require().NotEmpty(file.ID)
@@ -161,14 +161,16 @@ func (s *SqliteSuite) TestCreateFile_FileLimit() {
 
 	userID := id.New()
 
-	for i := 0; i <= snips.FileLimit; i++ {
+	maxFiles := uint64(5)
+
+	for i := uint64(0); i < maxFiles; i++ {
 		err := database.CreateFile(context.TODO(), &snips.File{
 			Size:    11,
 			Content: []byte("hello world"),
 			Private: false,
 			Type:    "plaintext",
 			UserID:  userID,
-		})
+		}, maxFiles)
 		s.Require().NoError(err)
 	}
 
@@ -178,9 +180,9 @@ func (s *SqliteSuite) TestCreateFile_FileLimit() {
 		Private: false,
 		Type:    "plaintext",
 		UserID:  userID,
-	})
+	}, maxFiles)
 
-	s.Require().ErrorIs(err, snips.ErrFileLimit)
+	s.Require().ErrorIs(err, db.ErrFileLimit)
 }
 
 func (s *SqliteSuite) TestUpdateFile() {

@@ -12,8 +12,8 @@ type DB interface {
 	Migrate(ctx context.Context) error
 	// FindFile returns a file by its ID. Includes file content.
 	FindFile(ctx context.Context, id string) (*snips.File, error)
-	// CreateFile creates a new file.
-	CreateFile(ctx context.Context, file *snips.File) error
+	// CreateFile creates a new file. If a user has more than maxFiles, an error is returned.
+	CreateFile(ctx context.Context, file *snips.File, maxFiles uint64) error
 	// UpdateFile updates a file.
 	UpdateFile(ctx context.Context, file *snips.File) error
 	// DeleteFile deletes a file by its ID.
