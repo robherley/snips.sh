@@ -6,6 +6,10 @@ on:
   release:
     types: [ published ]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -31,6 +35,8 @@ jobs:
             type=sha
             # adds release ref tag as-is (e.g. v1.2.3)
             type=ref,event=tag
+            # sets latest when on default branch
+            type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
