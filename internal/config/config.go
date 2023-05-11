@@ -18,11 +18,11 @@ KEY	TYPE	DEFAULT	DESCRIPTION
 )
 
 type Config struct {
-	Debug bool `default:"false" desc:"enable debug logging"`
+	Debug bool `default:"False" desc:"enable debug logging and pprof"`
 
-	EnableGuesser bool `default:"true" desc:"enable guessing of file types using tensorflow and guesslang model"`
+	EnableGuesser bool `default:"True" desc:"enable guesslang model to detect file types"`
 
-	HMACKey string `default:"correct-horse-battery-staple" desc:"symmetric key used to sign URLs"`
+	HMACKey string `default:"hmac-and-cheese" desc:"symmetric key used to sign URLs"`
 
 	DB struct {
 		FilePath string `default:"data/snips.db" desc:"path to database file"`
@@ -40,12 +40,12 @@ type Config struct {
 	}
 
 	Metrics struct {
-		Statsd *url.URL `desc:"(optional) address of statsd server (e.g. udp://localhost:8125)"`
+		Statsd *url.URL `desc:"statsd server address (e.g. udp://localhost:8125)"`
 	}
 }
 
 func (cfg *Config) PrintUsage() error {
-	tabs := tabwriter.NewWriter(os.Stdout, 1, 0, 4, ' ', 0)
+	tabs := tabwriter.NewWriter(os.Stdout, 1, 0, 2, ' ', 0)
 	defer tabs.Flush()
 
 	return envconfig.Usagef(ApplicationName, cfg, tabs, UsageFormat)

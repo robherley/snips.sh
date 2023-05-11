@@ -12,20 +12,20 @@
   <a href="#credits">Credits</a>
 </p>
 
-<img alt="tui" width="75%" src="https://vhs.charm.sh/vhs-1MRS4DCN6XUpxzM2PrqCfL.gif" />
+<img alt="tui" width="85%" src="https://vhs.charm.sh/vhs-1MRS4DCN6XUpxzM2PrqCfL.gif" />
 
 </div>
 
 ### Features
 
   - ⚡ **Zero-install**: use from any machine with SSH client installed
-  - 🌐 **Web UI**: share your syntax-highlighted code with short links
-  - 💻 **TUI**: never leave your terminal for management/viewing
+  - 🌐 **Web UI**: syntax-highlighted code with short links and markdown rendering
+  - 💻 **TUI**: never leave your terminal for snippet management/viewing
   - 🔑 **No passwords**: all you need is an SSH key
   - 🕵️ **Anonymous**: no sign ups, no logins, no email required
-  - ⏰ **URLs with TTL**: time-bombed access for sensitive sharing
+  - ⏰ **URLs with TTL**: time-limited access for sensitive sharing
   - 📦 **Self-hostable**: containerized and light on resources
-  - 🧠 **ML language detection**: uses [guesslang model](https://github.com/yoeo/guesslang) to identify source code
+  - 🧠 **ML language detection**: intelligently identify source code
 
 
 ## Quick Start
@@ -77,8 +77,10 @@ ssh snips.sh
 
 ## Docs
 
-- [Terms of Service](/docs/TOS.md)
-- [Acceptable Use Policy](/docs/AUP.md)
+- [Database](/docs/database.md): How snips.sh stores it's data
+- [Self Hosting](/docs/self-hosting.md): How to host your own instance of snips.sh
+- [Terms of Service](/docs/terms-of-service.md): What we (snips.sh provider) and you can/can't do
+- [Acceptable Use Policy](/docs/acceptable-use-policy.md): What you can/can't upload
 
 ## Credits
 
@@ -87,5 +89,9 @@ The technology behind snips.sh is powered by these amazing projects:
 - [`charmbracelet`](https://github.com/charmbracelet)
   - [`charmbracelet/wish`](https://github.com/charmbracelet/wish): SSH server
   - [`charmbracelet/bubbletea`](https://github.com/charmbracelet/bubbletea): TUI framework
+- [`yoeo/guesslang`](https://github.com/yoeo/guesslang): Guesslang model to detect programming language source code
+  - [`robherley/guesslang-go`](https://github.com/robherley/guesslang-go): Go port of tensorflow guesslang model
 - [`alecthomas/chroma`](https://github.com/alecthomas/chroma): Syntax Highlighter
-- [`yuin/goldmark`](github.com/yuin/goldmark): Markdown Parser
+- [`yuin/goldmark`](https://github.com/yuin/goldmark): Markdown Parser
+- [`microcosm-cc/bluemonday`](https://github.com/microcosm-cc/bluemonday): HTML Sanitizer
+- [`tdewolff/minify`](https://github.com/tdewolff/minify): Minifier

@@ -59,6 +59,7 @@
 .markdown pre {
   margin: 0.5rem 0;
   padding: 1rem;
+  overflow-x: auto;
 }
 
 .markdown pre code {

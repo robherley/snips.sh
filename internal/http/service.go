@@ -15,8 +15,9 @@ type Service struct {
 func New(cfg *config.Config, database db.DB, assets *Assets) (*Service, error) {
 	r := NewRouter()
 	r.HandleFunc("/", DocHandler("README.md", assets))
-	r.HandleFunc("/tos", DocHandler("TOS.md", assets))
-	r.HandleFunc("/aup", DocHandler("AUP.md", assets))
+	r.HandleFunc("/docs/", func(w http.ResponseWriter, r *http.Request) {
+		DocHandler(r.URL.Path[len("/docs/"):], assets)(w, r)
+	})
 	r.HandleFunc("/health", HealthHandler)
 	r.HandleFunc("/f/", FileHandler(cfg, database, assets.Template()))
 	r.HandleFunc("/assets/index.js", assets.ServeJS)
