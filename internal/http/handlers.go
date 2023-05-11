@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -16,6 +17,36 @@ import (
 	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/robherley/snips.sh/internal/snips"
 )
+
+func HealthHandler(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("💚\n"))
+}
+
+func MetaHandler(cfg *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		metadata := map[string]interface{}{
+			"limits": map[string]interface{}{
+				"file_size_bytes": cfg.Limits.FileSize,
+				"file_size_human": humanize.Bytes(cfg.Limits.FileSize),
+				"files_per_user":  cfg.Limits.FilesPerUser,
+			},
+			"guesser_enabled": cfg.EnableGuesser,
+			"http":            cfg.HTTP.External.String(),
+			"ssh":             cfg.SSH.External.String(),
+		}
+
+		metabites, err := json.MarshalIndent(metadata, "", "  ")
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		_, _ = w.Write(metabites)
+	}
+}
 
 func DocHandler(name string, assets *Assets) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -49,11 +80,6 @@ func DocHandler(name string, assets *Assets) http.HandlerFunc {
 			return
 		}
 	}
-}
-
-func HealthHandler(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("💚\n"))
 }
 
 func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) http.HandlerFunc {

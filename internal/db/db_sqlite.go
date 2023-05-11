@@ -96,21 +96,21 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 	return file, nil
 }
 
-func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File) error {
+func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount uint64) error {
 	const countQuery = `
 		SELECT COUNT(*)
 		FROM files
 		WHERE user_id = ?
 	`
 
-	var count int
+	var count uint64
 	row := s.QueryRowContext(ctx, countQuery, file.UserID)
 	if err := row.Scan(&count); err != nil {
 		return err
 	}
 
-	if count > snips.FileLimit {
-		return snips.ErrFileLimit
+	if maxFileCount > 0 && count >= maxFileCount {
+		return ErrFileLimit
 	}
 
 	file.ID = id.New()
