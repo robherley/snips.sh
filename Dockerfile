@@ -13,15 +13,17 @@ RUN script/install-libtensorflow
 
 RUN go build -a -o 'snips.sh'
 
-# using ubuntu instead of something smaller like alpine so we don't need to deal with musl
-# thanks tensorflow https://github.com/tensorflow/tensorflow/issues/15563#issuecomment-353797058
 FROM ubuntu:20.04
 
-RUN apt update && apt install -y curl
-
 COPY --from=build /build/snips.sh /usr/bin/snips.sh
-COPY --from=build /build/script/install-libtensorflow /tmp/install-libtensorflow
+COPY --from=build /usr/local/lib/libtensorflow.so.2 /usr/local/lib/
+COPY --from=build /usr/local/lib/libtensorflow_framework.so.2 /usr/local/lib/
 
-RUN /tmp/install-libtensorflow && rm /tmp/install-libtensorflow
+RUN ldconfig
 
-CMD [ "/usr/bin/snips.sh" ]
+ENV SNIPS_HTTP_INTERNAL=http://0.0.0.0:8080
+ENV SNIPS_SSH_INTERNAL=ssh://0.0.0.0:2222
+
+EXPOSE 8080 2222
+
+ENTRYPOINT [ "/usr/bin/snips.sh" ]
