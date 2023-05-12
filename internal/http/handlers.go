@@ -29,9 +29,11 @@ func MetaHandler(cfg *config.Config) http.HandlerFunc {
 
 		metadata := map[string]interface{}{
 			"limits": map[string]interface{}{
-				"file_size_bytes": cfg.Limits.FileSize,
-				"file_size_human": humanize.Bytes(cfg.Limits.FileSize),
-				"files_per_user":  cfg.Limits.FilesPerUser,
+				"file_size_bytes":         cfg.Limits.FileSize,
+				"file_size_human":         humanize.Bytes(cfg.Limits.FileSize),
+				"files_per_user":          cfg.Limits.FilesPerUser,
+				"ssh_session_dur_seconds": cfg.Limits.SessionDuration.Seconds(),
+				"ssh_session_dur_human":   cfg.Limits.SessionDuration.String(),
 			},
 			"guesser_enabled": cfg.EnableGuesser,
 			"http":            cfg.HTTP.External.String(),

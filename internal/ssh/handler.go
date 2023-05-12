@@ -86,7 +86,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 	}
 	defer program.Kill()
 
-	timer := time.NewTimer(MaxSessionDuration)
+	timer := time.NewTimer(h.Config.Limits.SessionDuration)
 	defer timer.Stop()
 
 	go func() {
@@ -97,7 +97,8 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 				return
 			case <-timer.C:
 				log.Warn().Msg("max session duration reached")
-				program.Quit()
+				metrics.IncrCounter([]string{"ssh", "session", "max_duration_reached"}, 1)
+				program.Kill()
 				return
 			case w := <-winChan:
 				if program != nil {
@@ -108,7 +109,9 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 	}()
 
 	if _, err := program.Run(); err != nil {
-		log.Error().Err(err).Msg("app exited with error")
+		if !errors.Is(err, tea.ErrProgramKilled) { // don't log if we killed the program (e.g. session duration reached)
+			log.Error().Err(err).Msg("app exited with error")
+		}
 	}
 }
 
