@@ -37,19 +37,21 @@ docker run ghcr.io/robherley/snips.sh -usage
 ```
 
 ```
-KEY                        TYPE              DEFAULT                DESCRIPTION
-SNIPS_DEBUG                True or False     False                  enable debug logging and pprof
-SNIPS_ENABLEGUESSER        True or False     True                   enable guesslang model to detect file types
-SNIPS_HMACKEY              String            hmac-and-cheese        symmetric key used to sign URLs
-SNIPS_LIMITS_FILESIZE      Unsigned Integer  1048576                maximum file size in bytes
-SNIPS_LIMITS_FILESPERUSER  Unsigned Integer  100                    maximum number of files per user
-SNIPS_DB_FILEPATH          String            data/snips.db          path to database file
-SNIPS_HTTP_INTERNAL        URL               http://localhost:8080  internal address to listen for http requests
-SNIPS_HTTP_EXTERNAL        URL               http://localhost:8080  external http address displayed in commands
-SNIPS_SSH_INTERNAL         URL               ssh://localhost:2222   internal address to listen for ssh requests
-SNIPS_SSH_EXTERNAL         URL               ssh://localhost:2222   external ssh address displayed in commands
-SNIPS_SSH_HOSTKEYPATH      String            data/keys/snips        path to host keys (without extension)
-SNIPS_METRICS_STATSD       URL                                      statsd server address (e.g. udp://localhost:8125)
+KEY                           TYPE              DEFAULT                DESCRIPTION
+SNIPS_DEBUG                   True or False     False                  enable debug logging and pprof
+SNIPS_ENABLEGUESSER           True or False     True                   enable guesslang model to detect file types
+SNIPS_HMACKEY                 String            hmac-and-cheese        symmetric key used to sign URLs
+SNIPS_LIMITS_FILESIZE         Unsigned Integer  1048576                maximum file size in bytes
+SNIPS_LIMITS_FILESPERUSER     Unsigned Integer  100                    maximum number of files per user
+SNIPS_LIMITS_SESSIONDURATION  Duration          15m                    maximum ssh session duration
+SNIPS_DB_FILEPATH             String            data/snips.db          path to database file
+SNIPS_HTTP_INTERNAL           URL               http://localhost:8080  internal address to listen for http requests
+SNIPS_HTTP_EXTERNAL           URL               http://localhost:8080  external http address displayed in commands
+SNIPS_SSH_INTERNAL            URL               ssh://localhost:2222   internal address to listen for ssh requests
+SNIPS_SSH_EXTERNAL            URL               ssh://localhost:2222   external ssh address displayed in commands
+SNIPS_SSH_HOSTKEYPATH         String            data/keys/snips        path to host keys (without extension)
+SNIPS_METRICS_STATSD          URL                                      statsd server address (e.g. udp://localhost:8125)
+SNIPS_METRICS_USEDOGSTATSD    True or False     False                  use dogstatsd instead of statsd
 ```
 
 ### Addresses/Ports

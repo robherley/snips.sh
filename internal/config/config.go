@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"text/tabwriter"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -25,8 +26,9 @@ type Config struct {
 	HMACKey string `default:"hmac-and-cheese" desc:"symmetric key used to sign URLs"`
 
 	Limits struct {
-		FileSize     uint64 `default:"1048576" desc:"maximum file size in bytes"`
-		FilesPerUser uint64 `default:"100" desc:"maximum number of files per user"`
+		FileSize        uint64        `default:"1048576" desc:"maximum file size in bytes"`
+		FilesPerUser    uint64        `default:"100" desc:"maximum number of files per user"`
+		SessionDuration time.Duration `default:"15m" desc:"maximum ssh session duration"`
 	}
 
 	DB struct {
