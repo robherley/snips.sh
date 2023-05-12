@@ -45,7 +45,8 @@ type Config struct {
 	}
 
 	Metrics struct {
-		Statsd *url.URL `desc:"statsd server address (e.g. udp://localhost:8125)"`
+		Statsd       *url.URL `desc:"statsd server address (e.g. udp://localhost:8125)"`
+		UseDogStatsd bool     `default:"False" desc:"use dogstatsd instead of statsd"`
 	}
 }
 

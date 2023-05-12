@@ -31,7 +31,7 @@ func main() {
 		log.Fatal().Err(err).Msg("unable to load config")
 	}
 
-	metrics, err := stats.Initialize(cfg.Metrics.Statsd)
+	statsd, err := stats.Initialize(cfg.Metrics.Statsd, cfg.Metrics.UseDogStatsd)
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to initialize metrics")
 	}
@@ -62,7 +62,7 @@ func main() {
 	}
 
 	application.OnShutdown = func(ctx context.Context) {
-		metrics.Shutdown()
+		statsd.Shutdown()
 	}
 
 	if err := application.DB.Migrate(context.Background()); err != nil {
