@@ -99,6 +99,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 				log.Warn().Msg("max session duration reached")
 				metrics.IncrCounter([]string{"ssh", "session", "max_duration_reached"}, 1)
 				program.Kill()
+				return
 			case w := <-winChan:
 				if program != nil {
 					program.Send(tea.WindowSizeMsg{Width: w.Width, Height: w.Height})
