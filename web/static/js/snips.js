@@ -76,29 +76,34 @@ const watchForShiftClick = () => {
   });
 };
 
-// setToTopButton hides the "to top" button when the top of the page is visible, and shows it when it's not.
-const setToTopButton = () => {
+// initHeaderObserver will hide the "to top" button when the top of the page is visible, and shows it when it's not.
+const initHeaderObserver = () => {
   const element = document.querySelector("#to-top");
   if (!element) return;
 
-  const parent = element.parentElement;
-  if (!parent) return;
+  const nav = element.closest("nav");
+  if (!nav) return;
 
-  const { top } = parent.getBoundingClientRect();
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (!entry.isIntersecting) {
+        element.removeAttribute("data-hide");
+      } else {
+        element.setAttribute("data-hide", "");
+      }
+    },
+    // https://stackoverflow.com/a/61115077
+    { rootMargin: "-1px 0px 0px 0px", threshold: [1] }
+  );
 
-  if (top === 0) {
-    element.removeAttribute("data-hide");
-  } else {
-    element.setAttribute("data-hide", "");
-  }
+  observer.observe(nav);
 };
 
-window.addEventListener("scroll", setToTopButton);
 window.addEventListener("hashchange", highlightLines);
 window.addEventListener("DOMContentLoaded", async () => {
+  initHeaderObserver();
   watchForShiftClick();
   highlightLines();
-  setToTopButton();
 
   mermaid.initialize({ startOnLoad: false, theme: "dark" });
   await mermaid.run({
