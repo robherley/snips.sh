@@ -40,25 +40,10 @@ func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) 
 
 			// upsert and create user if not found
 			if pubkey == nil {
-				wish.Println(sesh, "Welcome to snips.sh! 👋")
-				wish.Println(sesh, "Please take a moment to read our terms of service.")
-				wish.Printf(sesh, "\n🔗 %s/tos\n\n", externalAddress.String())
-
-				confirmation := Confirm{
-					Question: "Do you accept these terms?",
-				}
-
-				accept, err := confirmation.Prompt(sesh)
-				if err != nil {
-					log.Err(err).Msg("unable to prompt user")
-					wish.Fatalln(sesh, "❌ Unable to authenticate")
-					return
-				}
-
-				if !accept {
-					_ = sesh.Exit(1)
-					return
-				}
+				// welcome message over stderr so it doesn't jank up the output if they're piping
+				wish.Errorln(sesh, "Welcome to snips.sh! 👋")
+				wish.Errorln(sesh, "Please take a moment to read our terms of service.")
+				wish.Errorf(sesh, "🔗 %s/docs/terms-of-service.md\n", externalAddress.String())
 
 				pubkey = &snips.PublicKey{
 					Fingerprint: fingerprint,

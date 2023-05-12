@@ -1,7 +1,6 @@
 package ssh_test
 
 import (
-	"bytes"
 	"net/url"
 	"testing"
 	"time"
@@ -63,35 +62,6 @@ func TestAssignUser(t *testing.T) {
 			},
 			Timeout: testTimeout,
 		})
-
-		session.Stdin = bytes.NewBuffer([]byte("y\n"))
-
-		_ = session.Run("")
-	})
-
-	t.Run("does not create user if terms rejected", func(t *testing.T) {
-		database := db.NewMockDB(t)
-
-		database.EXPECT().
-			FindPublicKeyByFingerprint(mock.Anything, fingerprint).Return(nil, nil)
-
-		nextFunc := func(sesh cssh.Session) {
-			panic("this should not be called")
-		}
-
-		session := testsession.New(t, &cssh.Server{
-			Handler: ssh.AssignUser(database, *testHost)(nextFunc),
-			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
-				return true
-			},
-		}, &gossh.ClientConfig{
-			Auth: []gossh.AuthMethod{
-				testPrivateKeyAuth(),
-			},
-			Timeout: testTimeout,
-		})
-
-		session.Stdin = bytes.NewBuffer([]byte("n\n"))
 
 		_ = session.Run("")
 	})
