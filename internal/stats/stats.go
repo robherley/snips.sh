@@ -6,13 +6,15 @@ import (
 	"time"
 
 	"github.com/armon/go-metrics"
+	"github.com/armon/go-metrics/datadog"
+	"github.com/rs/zerolog/log"
 )
 
 var cfg = func() *metrics.Config {
 	c := &metrics.Config{
 		ServiceName:          "snips",
-		EnableHostname:       true,
-		EnableRuntimeMetrics: true,
+		EnableHostname:       false,
+		EnableRuntimeMetrics: false,
 		EnableTypePrefix:     false,
 		TimerGranularity:     time.Millisecond,
 		ProfileInterval:      time.Second,
@@ -24,14 +26,20 @@ var cfg = func() *metrics.Config {
 }()
 
 // Initialize sets the global metrics sink, if url is not specified, it will use the blackhole sink
-func Initialize(statsdURL *url.URL) (*metrics.Metrics, error) {
+func Initialize(statsdURL *url.URL, useDogStatsd bool) (*metrics.Metrics, error) {
 	var (
 		sink metrics.MetricSink = &metrics.BlackholeSink{}
 		err  error
 	)
 
 	if statsdURL != nil && statsdURL.String() != "" {
-		sink, err = metrics.NewStatsdSinkFromURL(statsdURL)
+		if useDogStatsd {
+			log.Info().Str("url", statsdURL.String()).Msg("intializing dogstatsd metrics sink")
+			sink, err = datadog.NewDogStatsdSink(statsdURL.Host, cfg.HostName)
+		} else {
+			log.Info().Str("url", statsdURL.String()).Msg("intializing statsd metrics sink")
+			sink, err = metrics.NewStatsdSinkFromURL(statsdURL)
+		}
 	}
 
 	if err != nil {
@@ -39,9 +47,4 @@ func Initialize(statsdURL *url.URL) (*metrics.Metrics, error) {
 	}
 
 	return metrics.NewGlobal(cfg, sink)
-}
-
-// Default returns the default shared metrics instance
-func Default() *metrics.Metrics {
-	return metrics.Default()
 }

@@ -30,6 +30,7 @@ require (
 )
 
 require (
+	github.com/DataDog/datadog-go v3.2.0+incompatible // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
