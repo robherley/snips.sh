@@ -47,6 +47,7 @@ SNIPS_LIMITS_SESSIONDURATION  Duration          15m                    maximum s
 SNIPS_DB_FILEPATH             String            data/snips.db          path to database file
 SNIPS_HTTP_INTERNAL           URL               http://localhost:8080  internal address to listen for http requests
 SNIPS_HTTP_EXTERNAL           URL               http://localhost:8080  external http address displayed in commands
+SNIPS_HTML_EXTENDHEADFILE     String                                   path to html file for extra content in <head>
 SNIPS_SSH_INTERNAL            URL               ssh://localhost:2222   internal address to listen for ssh requests
 SNIPS_SSH_EXTERNAL            URL               ssh://localhost:2222   external ssh address displayed in commands
 SNIPS_SSH_HOSTKEYPATH         String            data/keys/snips        path to host keys (without extension)

@@ -5,10 +5,12 @@ import (
 	"embed"
 	"html/template"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/js"
@@ -50,7 +52,7 @@ type Assets struct {
 }
 
 // NewAssets holds the templates, static content and minifies accordingly.
-func NewAssets(webFS *embed.FS, docsFS *embed.FS, readme []byte) (*Assets, error) {
+func NewAssets(webFS *embed.FS, docsFS *embed.FS, readme []byte, extendHeadFile string) (*Assets, error) {
 	assets := &Assets{
 		webFS:  webFS,
 		docsFS: docsFS,
@@ -61,9 +63,27 @@ func NewAssets(webFS *embed.FS, docsFS *embed.FS, readme []byte) (*Assets, error
 	assets.mini.AddFunc(cssMime, css.Minify)
 	assets.mini.AddFunc(jsMime, js.Minify)
 
-	var err error
+	var (
+		err               error
+		extendHeadContent string
+	)
 
-	if assets.tmpl, err = template.ParseFS(webFS, tmplPattern); err != nil {
+	if extendHeadFile != "" {
+		if headContent, err := os.ReadFile(extendHeadFile); err == nil {
+			extendHeadContent = string(headContent)
+		} else {
+			log.Warn().Err(err).Msg("unable to extend head content")
+		}
+	}
+
+	tmpl := template.New("file")
+	tmpl.Funcs(template.FuncMap{
+		"ExtendedHeadContent": func() template.HTML {
+			return template.HTML(extendHeadContent)
+		},
+	})
+
+	if assets.tmpl, err = tmpl.ParseFS(webFS, tmplPattern); err != nil {
 		return nil, err
 	}
 

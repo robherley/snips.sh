@@ -40,6 +40,10 @@ type Config struct {
 		External url.URL `default:"http://localhost:8080" desc:"external http address displayed in commands"`
 	}
 
+	HTML struct {
+		ExtendHeadFile string `default:"" desc:"path to html file for extra content in <head>"`
+	}
+
 	SSH struct {
 		Internal    url.URL `default:"ssh://localhost:2222" desc:"internal address to listen for ssh requests"`
 		External    url.URL `default:"ssh://localhost:2222" desc:"external ssh address displayed in commands"`

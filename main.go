@@ -51,6 +51,7 @@ func main() {
 		&webFS,
 		&docsFS,
 		readme,
+		cfg.HTML.ExtendHeadFile,
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load assets")
