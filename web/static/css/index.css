@@ -219,3 +219,9 @@ a:hover {
 .muted {
   color: var(--color-gray-6);
 }
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+}

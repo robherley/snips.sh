@@ -16,7 +16,7 @@
   <div class="stripes"></div>
   <div class="container">
     <h1 class="title"><a href="/">snips<span class="sh">.sh</span></a></h1>
-    <div class="file-header">
+    <nav class="file-header">
       <div class="file-details">
         file: <a href="#">{{ .FileID }}</a>
         ({{ .FileType }}) &middot; {{ .FileSize }}
@@ -27,10 +27,10 @@
       {{ if .RawHREF }}
       <a class="file-header-link" href="{{ .RawHREF }}" aria-label="view raw file">view raw</a>
       {{ end }}
-    </div>
-    <div class="file-content">
+    </nav>
+    <article class="file-content">
       {{ .HTML }}
-    </div>
+    </article>
   </div>
   <footer class="file-footer muted">
     <div style="margin-bottom:0.75rem;">
