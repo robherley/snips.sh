@@ -77,10 +77,17 @@ ssh snips.sh
 
 ## Docs
 
+- [Contributing](/docs/contributing.md): How you can contribute to snips.sh
 - [Database](/docs/database.md): How snips.sh stores it's data
 - [Self Hosting](/docs/self-hosting.md): How to host your own instance of snips.sh
 - [Terms of Service](/docs/terms-of-service.md): What we (snips.sh provider) and you can/can't do
 - [Acceptable Use Policy](/docs/acceptable-use-policy.md): What you can/can't upload
+
+## Contributors
+
+<a href="https://github.com/robherley/snips.sh/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=robherley/snips.sh" />
+</a>
 
 ## Credits
 

@@ -1,0 +1,17 @@
+name: '🎁 Feature request'
+description: Suggest a new feature/enhancement!
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ℹ️ If you have general feedback or questions, consider opening a [Discussion](https://github.com/robherley/snips.sh/discussions)!
+
+        Thanks for submitting a feature request!
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What is the feature or enhancement?
+    validations:
+      required: true

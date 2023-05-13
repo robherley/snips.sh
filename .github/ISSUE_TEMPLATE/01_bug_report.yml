@@ -1,0 +1,26 @@
+name: '🐛 Bug report'
+description: Let us know about a bug!
+labels: ['bug']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened? What is expected?
+      description: |
+        If applicable, add links to snippets, example files or request IDs. If possible, use screenshots/recordings to help explain your problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How can we reproduce it?
+      description: |
+        Please be minimal and precise as possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything else we need to know?
