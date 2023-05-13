@@ -14,7 +14,14 @@ type Service struct {
 
 func New(cfg *config.Config, database db.DB, assets *Assets) (*Service, error) {
 	r := NewRouter()
-	r.HandleFunc("/", DocHandler("README.md", assets))
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+
+		DocHandler("README.md", assets)(w, r)
+	})
 	r.HandleFunc("/docs/", func(w http.ResponseWriter, r *http.Request) {
 		DocHandler(r.URL.Path[len("/docs/"):], assets)(w, r)
 	})
