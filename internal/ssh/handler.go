@@ -383,7 +383,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				log.Info().Str("file_id", file.ID).Time("expires_at", expires).Msg("private file signed")
 				targetUrl = signedUrl.String()
 			} else {
-				targetUrl = h.Config.HTTPAddressForFile((file.ID))
+				targetUrl = h.Config.HTTPAddressForFile(file.ID)
 			}
 
 			url := lipgloss.NewStyle().
