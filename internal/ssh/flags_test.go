@@ -74,7 +74,7 @@ func TestUploadFlags(t *testing.T) {
 			name: "ttl only",
 			args: []string{"-ttl", "30s"},
 			want: ssh.UploadFlags{
-				Private:   true,
+				Private:   false,
 				Extension: "",
 				TTL:       30,
 			},
