@@ -1,0 +1,24 @@
+name: '🚨 Report abuse'
+description: Is there a snippet violating our Terms of Service or Acceptable Use Policy?
+labels: ['abuse']
+body:
+  - type: textarea
+    id: snippet
+    attributes:
+      label: What is the snippet URL that is in violation of our policies?
+    validations:
+      required: true
+
+  - type: textarea
+    id: violation
+    attributes:
+      label: What is the nature of the violation?
+      description: |
+        See the [Terms of Service](https://snips.sh/docs/terms-of-service.md) and [Acceptable Use Policy](https://snips.sh/docs/acceptable-use-policy.md) for more information.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything else we need to know?
