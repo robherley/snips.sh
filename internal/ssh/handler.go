@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"io"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -374,9 +375,11 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			noti.Render(sesh)
 
 			var targetUrl string
+			var expires time.Time
+			var signedUrl url.URL
 
 			if file.Private && flags.TTL.Seconds() > 0 {
-				signedUrl, expires := file.GetSignedURL(h.Config, flags.TTL)
+				signedUrl, expires = file.GetSignedURL(h.Config, flags.TTL)
 				log.Info().Str("file_id", file.ID).Time("expires_at", expires).Msg("private file signed")
 				targetUrl = signedUrl.String()
 			} else {
@@ -395,6 +398,15 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 
 			if file.Private && flags.TTL.Seconds() == 0 {
 				noti.Message = "<none> (requires a signed URL)"
+			}
+
+			noti.Render(sesh)
+
+			if flags.TTL.Seconds() > 0 {
+				noti = Notification{
+					Title:   "Expiration ⌛",
+					Message: styles.C(styles.Colors.Yellow, expires.Local().Format(time.UnixDate)),
+				}
 			}
 
 			noti.Render(sesh)
