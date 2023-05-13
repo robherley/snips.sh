@@ -407,9 +407,8 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 					Title:   "Expiration ⌛",
 					Message: styles.C(styles.Colors.Yellow, expires.Local().Format(time.UnixDate)),
 				}
+				noti.Render(sesh)
 			}
-
-			noti.Render(sesh)
 
 			return
 		}
