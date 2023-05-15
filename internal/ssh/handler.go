@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"io"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -273,6 +274,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 	if err := flags.Parse(sesh.Stderr(), sesh.Command()); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			log.Warn().Err(err).Msg("invalid user specified flags")
+			sesh.Error(err, "Error parsing flag", err.Error())
 		}
 		return
 	}
@@ -372,21 +374,41 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			}
 			noti.Render(sesh)
 
+			var targetURL string
+			var expires time.Time
+			var signedURL url.URL
+
+			if file.Private && flags.TTL.Seconds() > 0 {
+				signedURL, expires = file.GetSignedURL(h.Config, flags.TTL)
+				log.Info().Str("file_id", file.ID).Time("expires_at", expires).Msg("private file signed")
+				targetURL = signedURL.String()
+			} else {
+				targetURL = h.Config.HTTPAddressForFile(file.ID)
+			}
+
 			url := lipgloss.NewStyle().
 				Foreground(styles.Colors.Blue).
 				Underline(true).
-				Render(h.Config.HTTPAddressForFile(file.ID))
+				Render(targetURL)
 
 			noti = Notification{
 				Title:   "URL 🔗",
 				Message: url,
 			}
 
-			if file.Private {
+			if file.Private && flags.TTL.Seconds() == 0 {
 				noti.Message = "<none> (requires a signed URL)"
 			}
 
 			noti.Render(sesh)
+
+			if flags.TTL.Seconds() > 0 {
+				noti = Notification{
+					Title:   "Expiration ⌛",
+					Message: styles.C(styles.Colors.Yellow, expires.Local().Format(time.UnixDate)),
+				}
+				noti.Render(sesh)
+			}
 
 			return
 		}

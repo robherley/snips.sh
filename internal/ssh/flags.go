@@ -18,6 +18,7 @@ type UploadFlags struct {
 
 	Private   bool
 	Extension string
+	TTL       time.Duration
 }
 
 func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
@@ -26,9 +27,14 @@ func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
 
 	uf.BoolVar(&uf.Private, "private", false, "only accessible via creator or signed urls (optional)")
 	uf.StringVar(&uf.Extension, "ext", "", "set the file extension (optional)")
+	uf.DurationVar(&uf.TTL, "ttl", 0, "lifetime of the signed url (optional)")
 
 	if err := uf.FlagSet.Parse(args); err != nil {
 		return err
+	}
+
+	if uf.TTL.Seconds() > 0 && !uf.Private {
+		return fmt.Errorf("%w: -private", ErrFlagRequied)
 	}
 
 	uf.Extension = strings.TrimPrefix(strings.ToLower(uf.Extension), ".")
