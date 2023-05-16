@@ -9,7 +9,7 @@ RUN go mod verify
 
 COPY . .
 
-RUN go build GOARCH=arm64 -a -o 'snips.sh'
+RUN GOARCH=arm64 go build -a -o 'snips.sh'
 
 FROM ubuntu:20.04
 
