@@ -24,7 +24,7 @@ To run it locally. There are some nice defaults for local development. To see al
 go run main.go -usage
 ```
 
-Taking a look at the [`database.md`](/docs/database.md) and [`self-hosting.md`](/docs/selfhosting.md) documents may be useful too.
+Taking a look at the [`database.md`](/docs/database.md) and [`self-hosting.md`](/docs/self-hosting.md) documents may be useful too.
 
 If you are working on the web UI, I recommend installing [air](https://github.com/cosmtrek/air) so the application recompiles when the files change. Otherwise the assets won't update while the binary is running.
 
