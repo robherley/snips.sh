@@ -1,13 +1,11 @@
-//go:build !arm64
+//go:build arm64
 
 package renderer
 
 import (
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/armon/go-metrics"
 	"github.com/robherley/guesslang-go/pkg/guesser"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/rs/zerolog/log"
@@ -24,7 +22,6 @@ var (
 
 func init() {
 	var err error
-	guesslang, err = guesser.New()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to initialize guesslang")
 	}
@@ -44,16 +41,6 @@ func DetectFileType(content []byte, hint string, useGuesser bool) string {
 	switch {
 	case hint != "":
 		lexer = GetLexer(hint)
-	case useGuesser && len(content) >= MinimumContentGuessLength:
-		guessStart := time.Now()
-		answer, err := guesslang.Guess(string(content))
-		metrics.MeasureSince([]string{"guess", "duration"}, guessStart)
-		if err != nil {
-			log.Warn().Err(err).Msg("failed to guess the file type")
-		} else if answer.Reliable {
-			guess := strings.ToLower(answer.Predictions[0].Language)
-			lexer = GetLexer(guess)
-		}
 	default:
 		lexer = Analyze(string(content))
 	}
