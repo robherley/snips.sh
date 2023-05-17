@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # This script downloads and installs libtensorflow (CPU only) for the current platform.
 # If you are on macOS, you can just use `brew install libtensorflow` instead.
@@ -13,7 +13,7 @@ fi
 
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 
-function maybe_sudo() {
+maybe_sudo() {
   if [ "$(id -u)" -ne 0 ]; then
     sudo "$@"
   else
