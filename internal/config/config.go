@@ -72,7 +72,7 @@ func (cfg *Config) HTTPAddressForFile(fileID string) string {
 
 func (cfg *Config) SSHCommandForFile(fileID string) string {
 	sshCommand := fmt.Sprintf("ssh f:%s@%s", fileID, cfg.SSH.External.Hostname())
-	if sshPort := cfg.SSH.External.Port(); sshPort != "22" {
+	if sshPort := cfg.SSH.External.Port(); sshPort != "" && sshPort != "22" {
 		sshCommand += fmt.Sprintf(" -p %s", sshPort)
 	}
 
