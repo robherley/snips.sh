@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 BINDIR="$(git rev-parse --show-toplevel)"/bin
 BINARY=$BINDIR/golangci-lint

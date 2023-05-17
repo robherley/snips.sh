@@ -1,9 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 
 TAPEDIR="$(git rev-parse --show-toplevel)"/docs/tapes
 
-if ! command -v vhs &> /dev/null
-then
+if ! command -v vhs >/dev/null 2>&1; then
   echo "vhs not be found, please install it:"
   echo "https://github.com/charmbracelet/vhs#installation"
   exit 1
@@ -14,7 +13,6 @@ if [ $# -gt 0 ]; then
   for tape in "$@"; do
     vhs "$TAPEDIR/$tape".tape -o "$TAPEDIR"/"$tape".gif
   done
-  exit
 else
   echo "specify a tape name to record"
   exit 1

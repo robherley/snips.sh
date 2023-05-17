@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 TOPDIR="$(git rev-parse --show-toplevel)"
 SCRIPTDIR="$TOPDIR"/script
