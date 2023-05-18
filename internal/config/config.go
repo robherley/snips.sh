@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"runtime"
 	"text/tabwriter"
 	"time"
 
@@ -21,6 +22,9 @@ KEY	TYPE	DEFAULT	DESCRIPTION
 type Config struct {
 	Debug bool `default:"False" desc:"enable debug logging and pprof"`
 
+	// NOTE: always false on arm64 arch.
+	// currently not shipping libtensorflow for arm
+	// https://github.com/robherley/snips.sh/issues/39
 	EnableGuesser bool `default:"True" desc:"enable guesslang model to detect file types"`
 
 	HMACKey string `default:"hmac-and-cheese" desc:"symmetric key used to sign URLs"`
@@ -85,6 +89,8 @@ func Load() (*Config, error) {
 	if err := envconfig.Process(ApplicationName, cfg); err != nil {
 		return nil, err
 	}
+
+	cfg.EnableGuesser = cfg.EnableGuesser && runtime.GOARCH == "amd64"
 
 	return cfg, nil
 }
