@@ -23,7 +23,7 @@ func init() {
 
 func Guess(content string) string {
 	guessStart := time.Now()
-	answer, err := guesslang.Guess(string(content))
+	answer, err := guesslang.Guess(content)
 	metrics.MeasureSince([]string{"guess", "duration"}, guessStart)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to guess the file type")
