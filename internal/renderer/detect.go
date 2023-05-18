@@ -4,23 +4,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/robherley/guesslang-go/pkg/guesser"
 	"github.com/robherley/snips.sh/internal/snips"
-	"github.com/rs/zerolog/log"
 )
 
 const (
 	// MinimumContentGuessLength is the minimum length of the content to use guesslang, smaller content will use the fallback lexer.
 	MinimumContentGuessLength = 64
 )
-
-func init() {
-	var err error
-	guesslang, err = guesser.New()
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to initialize guesslang")
-	}
-}
 
 // DetectFileType returns the type of the file based on the content and the hint.
 // If useGuesser is true, it will try to guess the type of the file using guesslang.
