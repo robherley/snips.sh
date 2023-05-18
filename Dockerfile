@@ -1,4 +1,6 @@
-FROM golang:1.20 as build
+FROM --platform=${BUILDPLATFORM} golang:1.20 as build
+
+ARG TARGETARCH BUILDPLATFORM
 
 WORKDIR /build
 
@@ -9,15 +11,27 @@ RUN go mod verify
 
 COPY . .
 
-RUN script/install-libtensorflow
+RUN dpkg --add-architecture arm64 && \
+	apt update && \
+	apt install -y \
+		gcc-10-aarch64-linux-gnu \
+		libsqlite3-dev:arm64 && \
+	mkdir /tmp/extra-lib
 
-RUN go build -a -o 'snips.sh'
 
-FROM ubuntu:20.04
+RUN if [ "${TARGETARCH}" = "amd64" ]; then \
+  script/install-libtensorflow; \
+  cp /usr/local/lib/libtensorflow.so.2 /tmp/extra-lib/; \
+  cp /usr/local/lib/libtensorflow_framework.so.2 /tmp/extra-lib/; \
+  go build -a -o 'snips.sh'; \
+else \
+  CC=aarch64-linux-gnu-gcc-10 GOARCH=${TARGETARCH} CGO_ENABLED=1 go build -ldflags "-linkmode external -extldflags -static" -a -o 'snips.sh'; \
+fi
 
+
+FROM --platform=${BUILDPLATFORM} ubuntu:20.04
+COPY --from=build /tmp/extra-lib/* /usr/local/lib/
 COPY --from=build /build/snips.sh /usr/bin/snips.sh
-COPY --from=build /usr/local/lib/libtensorflow.so.2 /usr/local/lib/
-COPY --from=build /usr/local/lib/libtensorflow_framework.so.2 /usr/local/lib/
 
 RUN ldconfig
 
