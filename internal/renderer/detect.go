@@ -1,13 +1,9 @@
-//go:build !arm64
-
 package renderer
 
 import (
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/armon/go-metrics"
 	"github.com/robherley/guesslang-go/pkg/guesser"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/rs/zerolog/log"
@@ -16,10 +12,6 @@ import (
 const (
 	// MinimumContentGuessLength is the minimum length of the content to use guesslang, smaller content will use the fallback lexer.
 	MinimumContentGuessLength = 64
-)
-
-var (
-	guesslang *guesser.Guesser
 )
 
 func init() {
@@ -45,13 +37,7 @@ func DetectFileType(content []byte, hint string, useGuesser bool) string {
 	case hint != "":
 		lexer = GetLexer(hint)
 	case useGuesser && len(content) >= MinimumContentGuessLength:
-		guessStart := time.Now()
-		answer, err := guesslang.Guess(string(content))
-		metrics.MeasureSince([]string{"guess", "duration"}, guessStart)
-		if err != nil {
-			log.Warn().Err(err).Msg("failed to guess the file type")
-		} else if answer.Reliable {
-			guess := strings.ToLower(answer.Predictions[0].Language)
+		if guess := Guess(string(content)); guess != "" {
 			lexer = GetLexer(guess)
 		}
 	default:
