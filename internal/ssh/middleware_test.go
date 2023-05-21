@@ -19,14 +19,19 @@ import (
 )
 
 var (
-	testTimeout = 5 * time.Second
-	testHost, _ = url.Parse("http://localhost:8080")
-	privateKey  = testdata.PEMBytes["ed25519"]
-	fingerprint = "SHA256:mV1mPX4S6TE+odyfWDXGrC5fvQbLh+w8o2NK3q2MmYw"
+	testTimeout   = 5 * time.Second
+	testHost, _   = url.Parse("http://localhost:8080")
+	privateKey    = testdata.PEMBytes["ed25519"]
+	publicKey     = []byte("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID7d/uFLuDlRbBc4ZVOsx+GbHKuOrPtLHFvHsjWPwO+/")
+	fingerprint   = "SHA256:mV1mPX4S6TE+odyfWDXGrC5fvQbLh+w8o2NK3q2MmYw"
+	authorizedKey = func() cssh.PublicKey {
+		authorizedKey, _, _, _, _ := cssh.ParseAuthorizedKey(publicKey)
+		return authorizedKey
+	}()
 )
 
-func testPrivateKeyAuth() gossh.AuthMethod {
-	signer, err := gossh.ParsePrivateKey(privateKey)
+func testPrivateKeyAuth(key []byte) gossh.AuthMethod {
+	signer, err := gossh.ParsePrivateKey(key)
 	if err != nil {
 		panic(err)
 	}
@@ -58,7 +63,7 @@ func TestAssignUser(t *testing.T) {
 			},
 		}, &gossh.ClientConfig{
 			Auth: []gossh.AuthMethod{
-				testPrivateKeyAuth(),
+				testPrivateKeyAuth(privateKey),
 			},
 			Timeout: testTimeout,
 		})
@@ -91,7 +96,7 @@ func TestAssignUser(t *testing.T) {
 			},
 		}, &gossh.ClientConfig{
 			Auth: []gossh.AuthMethod{
-				testPrivateKeyAuth(),
+				testPrivateKeyAuth(privateKey),
 			},
 			Timeout: testTimeout,
 		})
@@ -136,7 +141,7 @@ func TestBlockIfNoPublicKey(t *testing.T) {
 			},
 		}, &gossh.ClientConfig{
 			Auth: []gossh.AuthMethod{
-				testPrivateKeyAuth(),
+				testPrivateKeyAuth(privateKey),
 			},
 			Timeout: testTimeout,
 		})
@@ -172,4 +177,65 @@ func TestWithLogger(t *testing.T) {
 
 	err := session.Run("")
 	assert.NoError(t, err)
+}
+
+func TestWithPublicKeyAllowList(t *testing.T) {
+	t.Run("no allowlist", func(t *testing.T) {
+		session := testsession.New(t, &cssh.Server{
+			Handler: ssh.WithPublicKeyAllowList(nil)(func(sesh cssh.Session) {}),
+			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+				return true
+			},
+		}, &gossh.ClientConfig{
+			Auth: []gossh.AuthMethod{
+				testPrivateKeyAuth(privateKey),
+			},
+			Timeout: testTimeout,
+		})
+
+		err := session.Run("")
+		assert.NoError(t, err)
+	})
+
+	t.Run("allowlist blocks user", func(t *testing.T) {
+		nextFunc := func(sesh cssh.Session) {
+			panic("this should not be called")
+		}
+
+		session := testsession.New(t, &cssh.Server{
+			Handler: ssh.WithPublicKeyAllowList(
+				[]cssh.PublicKey{authorizedKey},
+			)(nextFunc),
+			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+				return true
+			},
+		}, &gossh.ClientConfig{
+			Auth: []gossh.AuthMethod{
+				testPrivateKeyAuth(testdata.PEMBytes["rsa"]),
+			},
+			Timeout: testTimeout,
+		})
+
+		err := session.Run("")
+		assert.Error(t, err)
+	})
+
+	t.Run("allowlist allows user", func(t *testing.T) {
+		session := testsession.New(t, &cssh.Server{
+			Handler: ssh.WithPublicKeyAllowList(
+				[]cssh.PublicKey{authorizedKey},
+			)(func(sesh cssh.Session) {}),
+			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+				return true
+			},
+		}, &gossh.ClientConfig{
+			Auth: []gossh.AuthMethod{
+				testPrivateKeyAuth(privateKey),
+			},
+			Timeout: testTimeout,
+		})
+
+		err := session.Run("")
+		assert.NoError(t, err)
+	})
 }
