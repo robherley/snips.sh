@@ -87,11 +87,7 @@ func (f *File) SetContent(in []byte, compress bool) {
 }
 
 func (f *File) isCompressed() bool {
-	magic := []byte{0x28, 0xb5, 0x2F, 0xFD}
-	for i := 0; i < 4; i++ {
-		if f.content[i] != magic[i] {
-			return false
-		}
-	}
-	return true
+	// check if first 4 bytes are ZSTD magic number
+	// https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md#zstandard-frames
+	return len(data) > 4 && binary.BigEndian.Uint32(data) == 0x28B52FFD
 }
