@@ -78,8 +78,12 @@ func (f *File) GetContent() ([]byte, error) {
 
 var encoder, _ = zstd.NewWriter(nil)
 
-func (f *File) SetContent(in []byte) {
-	f.content = encoder.EncodeAll(in, nil)
+func (f *File) SetContent(in []byte, compress bool) {
+	if compress {
+		f.content = encoder.EncodeAll(in, nil)
+	} else {
+		f.content = in
+	}
 }
 
 func (f *File) isCompressed() bool {
