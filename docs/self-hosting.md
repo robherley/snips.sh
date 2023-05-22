@@ -8,7 +8,7 @@ The architecture of snips.sh was designed with self-hosting in mind, it's very s
     - [Addresses/Ports](#addressesports)
     - [Database](#database)
     - [Host Keys](#host-keys)
-    - [Limiting Upload Access](#limiting-upload-access)
+    - [Limiting SSH Access](#limiting-ssh-access)
     - [Statsd Metrics](#statsd-metrics)
   - [Examples](#examples)
     - [Docker Compose](#docker-compose)
@@ -110,13 +110,13 @@ It is also possible that a host key has just been changed.
 
 Be sure to securely backup any host keys in the event they might be lost.
 
-### Limiting Upload Access
+### Limiting SSH Access
 
-By default, any user with an SSH public key can upload to a snips.sh instance.
+By default, any user with an public key can connect to a snips.sh instance via SSH.
 
-If you want to limit access to who can upload snippets, you can use the `SNIPS_SSH_AUTHORIZEDKEYSPATH` environment variable. If specified, this will limit the SSH server to the public keys defined there.
+If you want to limit access to who can SSH (and upload) snippets, you can use the `SNIPS_SSH_AUTHORIZEDKEYSPATH` environment variable. If specified, this will limit the SSH server to the public keys defined there.
 
-The format is exactly the same as `authorized_keys` as `sshd(8)`, e.g.
+The format is exactly the same as `authorized_keys` for `sshd(8)`, e.g.
 
 ```
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEnqsMuqOhEVw3HyWMp2fqqn6l1IZtJHD1UWkOXszUcl
