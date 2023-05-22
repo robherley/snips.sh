@@ -33,11 +33,8 @@ func TestFileContent(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			var f File
-			if tc.compressed {
-				f.SetContent(tc.in)
-			} else {
-				f.content = tc.in
-			}
+			err := f.SetContent(tc.in, tc.compressed)
+			assert.NoError(t, err)
 
 			got, err := f.GetContent()
 			assert.Equal(t, tc.err, err)

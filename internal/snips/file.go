@@ -1,6 +1,7 @@
 package snips
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -62,12 +63,15 @@ func (f *File) Visibility() string {
 	return "public"
 }
 
-var decoder, _ = zstd.NewReader(nil)
-
 func (f *File) GetContent() ([]byte, error) {
 	// check if it has been compressed
 	if !f.isCompressed() {
 		return f.content, nil
+	}
+
+	decoder, err := zstd.NewReader(nil)
+	if err != nil {
+		return nil, err
 	}
 
 	defer decoder.Close()
@@ -76,18 +80,23 @@ func (f *File) GetContent() ([]byte, error) {
 	return decodedBytes, err
 }
 
-var encoder, _ = zstd.NewWriter(nil)
-
-func (f *File) SetContent(in []byte, compress bool) {
-	if compress {
-		f.content = encoder.EncodeAll(in, nil)
-	} else {
+func (f *File) SetContent(in []byte, compress bool) error {
+	if !compress {
 		f.content = in
+		return nil
 	}
+
+	encoder, err := zstd.NewWriter(nil)
+	if err != nil {
+		return err
+	}
+
+	f.content = encoder.EncodeAll(in, nil)
+	return encoder.Close()
 }
 
 func (f *File) isCompressed() bool {
 	// check if first 4 bytes are ZSTD magic number
 	// https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md#zstandard-frames
-	return len(data) > 4 && binary.BigEndian.Uint32(data) == 0x28B52FFD
+	return len(f.content) > 4 && binary.BigEndian.Uint32(f.content) == 0x28B52FFD
 }
