@@ -36,7 +36,7 @@ func New(cfg *config.Config, db db.DB) (*Service, error) {
 		wish.WithMiddleware(
 			sessionHandler.HandleFunc,
 			AssignUser(db, cfg.HTTP.External),
-			WithPublicKeyAllowList(authorizedKeys),
+			WithAuthorizedKeys(authorizedKeys),
 			BlockIfNoPublicKey,
 			WithLogger,
 			WithRequestID,

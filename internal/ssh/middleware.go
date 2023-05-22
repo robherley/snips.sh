@@ -130,9 +130,9 @@ func WithSessionMetrics(next ssh.Handler) ssh.Handler {
 	}
 }
 
-// WithPublicKeyAllowList will block any SSH connections that aren't using a public key in the allow list.
+// WithAuthorizedKeys will block any SSH connections that aren't using a public key in the authorized key list.
 // If authorizedKeys is empty, this middleware will be a no-op.
-func WithPublicKeyAllowList(authorizedKeys []ssh.PublicKey) func(next ssh.Handler) ssh.Handler {
+func WithAuthorizedKeys(authorizedKeys []ssh.PublicKey) func(next ssh.Handler) ssh.Handler {
 	if len(authorizedKeys) == 0 {
 		return func(next ssh.Handler) ssh.Handler {
 			return next
@@ -150,8 +150,8 @@ func WithPublicKeyAllowList(authorizedKeys []ssh.PublicKey) func(next ssh.Handle
 				}
 			}
 
-			metrics.IncrCounter([]string{"ssh", "session", "not_in_allow_list"}, 1)
-			wish.Println(sesh, "❌ Public key not in allow list.")
+			metrics.IncrCounter([]string{"ssh", "session", "not_authorized_key"}, 1)
+			wish.Println(sesh, "❌ Public key not authorized.")
 			_ = sesh.Exit(1)
 		}
 	}

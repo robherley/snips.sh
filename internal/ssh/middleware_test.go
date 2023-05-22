@@ -179,10 +179,10 @@ func TestWithLogger(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestWithPublicKeyAllowList(t *testing.T) {
-	t.Run("no allowlist", func(t *testing.T) {
+func TestWithAuthorizedKeys(t *testing.T) {
+	t.Run("no authorized keys", func(t *testing.T) {
 		session := testsession.New(t, &cssh.Server{
-			Handler: ssh.WithPublicKeyAllowList(nil)(func(sesh cssh.Session) {}),
+			Handler: ssh.WithAuthorizedKeys(nil)(func(sesh cssh.Session) {}),
 			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
 				return true
 			},
@@ -197,13 +197,13 @@ func TestWithPublicKeyAllowList(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("allowlist blocks user", func(t *testing.T) {
+	t.Run("pubkey not in authorized keys", func(t *testing.T) {
 		nextFunc := func(sesh cssh.Session) {
 			panic("this should not be called")
 		}
 
 		session := testsession.New(t, &cssh.Server{
-			Handler: ssh.WithPublicKeyAllowList(
+			Handler: ssh.WithAuthorizedKeys(
 				[]cssh.PublicKey{authorizedKey},
 			)(nextFunc),
 			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
@@ -220,9 +220,9 @@ func TestWithPublicKeyAllowList(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("allowlist allows user", func(t *testing.T) {
+	t.Run("pubkey in authorized keys", func(t *testing.T) {
 		session := testsession.New(t, &cssh.Server{
-			Handler: ssh.WithPublicKeyAllowList(
+			Handler: ssh.WithAuthorizedKeys(
 				[]cssh.PublicKey{authorizedKey},
 			)(func(sesh cssh.Session) {}),
 			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
