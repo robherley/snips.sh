@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/klauspost/compress/zstd"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/signer"
 )
@@ -19,11 +20,13 @@ type File struct {
 	ID        string
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Size      uint64
 	Content   []byte
+	Size      uint64
 	Private   bool
 	Type      string
 	UserID    string
+
+	content []byte
 }
 
 func (f *File) IsBinary() bool {
@@ -57,4 +60,34 @@ func (f *File) Visibility() string {
 	}
 
 	return "public"
+}
+
+var decoder, _ = zstd.NewReader(nil)
+
+func (f *File) GetContent() ([]byte, error) {
+	// check if it has been compressed
+	if !f.isCompressed() {
+		return f.content, nil
+	}
+
+	defer decoder.Close()
+	decodedBytes, err := decoder.DecodeAll(f.content, nil)
+
+	return decodedBytes, err
+}
+
+var encoder, _ = zstd.NewWriter(nil)
+
+func (f *File) SetContent(in []byte) {
+	f.content = encoder.EncodeAll(in, nil)
+}
+
+func (f *File) isCompressed() bool {
+	magic := []byte{0x28, 0xb5, 0x2F, 0xFD}
+	for i := 0; i < 4; i++ {
+		if f.content[i] != magic[i] {
+			return false
+		}
+	}
+	return true
 }
