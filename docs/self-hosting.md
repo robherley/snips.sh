@@ -8,6 +8,7 @@ The architecture of snips.sh was designed with self-hosting in mind, it's very s
     - [Addresses/Ports](#addressesports)
     - [Database](#database)
     - [Host Keys](#host-keys)
+    - [Limiting SSH Access](#limiting-ssh-access)
     - [Statsd Metrics](#statsd-metrics)
   - [Examples](#examples)
     - [Docker Compose](#docker-compose)
@@ -51,6 +52,7 @@ SNIPS_HTML_EXTENDHEADFILE     String                                   path to h
 SNIPS_SSH_INTERNAL            URL               ssh://localhost:2222   internal address to listen for ssh requests
 SNIPS_SSH_EXTERNAL            URL               ssh://localhost:2222   external ssh address displayed in commands
 SNIPS_SSH_HOSTKEYPATH         String            data/keys/snips        path to host keys (without extension)
+SNIPS_SSH_AUTHORIZEDKEYSPATH  String                                   path to authorized keys, if specified will restrict SSH access
 SNIPS_METRICS_STATSD          URL                                      statsd server address (e.g. udp://localhost:8125)
 SNIPS_METRICS_USEDOGSTATSD    True or False     False                  use dogstatsd instead of statsd
 ```
@@ -107,6 +109,32 @@ It is also possible that a host key has just been changed.
 ```
 
 Be sure to securely backup any host keys in the event they might be lost.
+
+### Limiting SSH Access
+
+By default, any user with an public key can connect to a snips.sh instance via SSH.
+
+If you want to limit access to who can SSH (and upload) snippets, you can use the `SNIPS_SSH_AUTHORIZEDKEYSPATH` environment variable. If specified, this will limit the SSH server to the public keys defined there.
+
+The format is exactly the same as `authorized_keys` for `sshd(8)`, e.g.
+
+```
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEnqsMuqOhEVw3HyWMp2fqqn6l1IZtJHD1UWkOXszUcl
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBBMu3TbOgxpvYrcQQG6VHSgrwMzAsFg2s+UX5JMNjNI
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrOJrpYRgEiuGuoNhyPbeEldjIRkwRG/fjjySPUks/y
+```
+
+For an account on GitHub, you can use `https://github.com/<username>.keys` to generate it. For example, if I wanted to allow access for `robherley`:
+
+```
+curl https://github.com/robherley.keys > snips_authorized_keys
+```
+
+Alternatively, tools like [`ssh-import-id`](https://manpages.ubuntu.com/manpages/bionic/man1/ssh-import-id.1.html) can be used as well:
+
+```
+ssh-import-id gh:robherley -o snips_authorized_keys
+```
 
 ### Statsd Metrics
 

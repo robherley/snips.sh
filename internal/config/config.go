@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
 	"os"
@@ -8,7 +9,9 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/charmbracelet/ssh"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -49,9 +52,10 @@ type Config struct {
 	}
 
 	SSH struct {
-		Internal    url.URL `default:"ssh://localhost:2222" desc:"internal address to listen for ssh requests"`
-		External    url.URL `default:"ssh://localhost:2222" desc:"external ssh address displayed in commands"`
-		HostKeyPath string  `default:"data/keys/snips" desc:"path to host keys (without extension)"`
+		Internal           url.URL `default:"ssh://localhost:2222" desc:"internal address to listen for ssh requests"`
+		External           url.URL `default:"ssh://localhost:2222" desc:"external ssh address displayed in commands"`
+		HostKeyPath        string  `default:"data/keys/snips" desc:"path to host keys (without extension)"`
+		AuthorizedKeysPath string  `default:"" desc:"path to authorized keys, if specified will restrict SSH access"`
 	}
 
 	Metrics struct {
@@ -81,6 +85,37 @@ func (cfg *Config) SSHCommandForFile(fileID string) string {
 	}
 
 	return sshCommand
+}
+
+// SSHAuthorizedKeys returns the authorized keys if the file is specified in the config.
+// If the file is not specified, it returns an empty slice.
+func (cfg *Config) SSHAuthorizedKeys() ([]ssh.PublicKey, error) {
+	authorizedKeys := make([]ssh.PublicKey, 0)
+
+	if cfg.SSH.AuthorizedKeysPath == "" {
+		return authorizedKeys, nil
+	}
+
+	authorizedKeysFile, err := os.ReadFile(cfg.SSH.AuthorizedKeysPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read authorized keys file: %w", err)
+	}
+
+	for i, keyBites := range bytes.Split(authorizedKeysFile, []byte("\n")) {
+		if len(bytes.TrimSpace(keyBites)) == 0 {
+			continue
+		}
+
+		out, _, _, _, err := ssh.ParseAuthorizedKey(keyBites)
+		if err != nil {
+			log.Warn().Err(err).Msgf("unable to parse authorized key at line %d", i)
+			continue
+		}
+
+		authorizedKeys = append(authorizedKeys, out)
+	}
+
+	return authorizedKeys, nil
 }
 
 func Load() (*Config, error) {
