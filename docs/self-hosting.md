@@ -53,6 +53,7 @@ SNIPS_SSH_EXTERNAL            URL               ssh://localhost:2222   external 
 SNIPS_SSH_HOSTKEYPATH         String            data/keys/snips        path to host keys (without extension)
 SNIPS_METRICS_STATSD          URL                                      statsd server address (e.g. udp://localhost:8125)
 SNIPS_METRICS_USEDOGSTATSD    True or False     False                  use dogstatsd instead of statsd
+SNIPS_FILE_COMPRESSION        True or False     True                   enable file compression
 ```
 
 ### Addresses/Ports
@@ -80,6 +81,8 @@ SNIPS_SSH_EXTERNAL=ssh://snips.example.com:22
 ### Database
 
 The file specified at `SNIPS_DB_FILEPATH` is the sqlite database that holds all user data. For more infomation managing the database, see [`database.md`](/docs/database.md).
+
+Setting `FILE_COMPRESSION` to `false` will disable compression when storing file content to disk.
 
 ### Host Keys
 
@@ -111,6 +114,7 @@ Be sure to securely backup any host keys in the event they might be lost.
 ### Statsd Metrics
 
 At runtime, snips.sh will emit various metrics if the `SNIPS_METRICS_STATSD` is defined. This should be the full udp address with the protocol, e.g. `udp://localhost:8125`.
+
 
 ## Examples
 

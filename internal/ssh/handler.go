@@ -264,7 +264,12 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 }
 
 func (h *SessionHandler) DownloadFile(sesh *UserSession, file *snips.File) {
-	wish.Print(sesh, string(file.Content))
+	content, err := file.GetContent()
+	if err != nil {
+		wish.Print(sesh, err.Error())
+	} else {
+		wish.Print(sesh, content)
+	}
 }
 
 func (h *SessionHandler) Upload(sesh *UserSession) {
@@ -314,10 +319,14 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 
 			file := snips.File{
 				Private: flags.Private,
-				Content: content,
 				Size:    size,
 				UserID:  sesh.UserID(),
 				Type:    renderer.DetectFileType(content, flags.Extension, h.Config.EnableGuesser),
+			}
+
+			// configure environment variable to allow compression
+			if err := file.SetContent(content, h.Config.Compress); err != nil {
+				sesh.Error(err, "Unable to create file", "There was an error handling the content of the file %s", err.Error())
 			}
 
 			if err := h.DB.CreateFile(sesh.Context(), &file, h.Config.Limits.FilesPerUser); err != nil {

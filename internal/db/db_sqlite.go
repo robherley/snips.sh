@@ -75,13 +75,14 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 
 	file := &snips.File{}
 	row := s.QueryRowContext(ctx, query, id)
+	var rawContent []byte
 
 	if err := row.Scan(
 		&file.ID,
 		&file.CreatedAt,
 		&file.UpdatedAt,
 		&file.Size,
-		&file.Content,
+		&rawContent,
 		&file.Private,
 		&file.Type,
 		&file.UserID,
@@ -92,6 +93,8 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 
 		return nil, err
 	}
+
+	file.SetRawContent(rawContent)
 
 	return file, nil
 }
@@ -117,6 +120,8 @@ func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount 
 	file.CreatedAt = time.Now().UTC()
 	file.UpdatedAt = time.Now().UTC()
 
+	content := file.GetRawContent()
+
 	const insertQuery = `
 		INSERT INTO files (
 			id,
@@ -135,7 +140,7 @@ func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount 
 		file.CreatedAt,
 		file.UpdatedAt,
 		file.Size,
-		file.Content,
+		content,
 		file.Private,
 		file.Type,
 		file.UserID,
@@ -148,6 +153,7 @@ func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount 
 
 func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 	file.UpdatedAt = time.Now().UTC()
+	content := file.GetRawContent()
 
 	const query = `
 		UPDATE files
@@ -163,7 +169,7 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 	if _, err := s.ExecContext(ctx, query,
 		file.UpdatedAt,
 		file.Size,
-		file.Content,
+		content,
 		file.Private,
 		file.Type,
 		file.ID,

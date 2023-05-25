@@ -64,7 +64,6 @@ func (f *File) Visibility() string {
 }
 
 func (f *File) GetContent() ([]byte, error) {
-	// check if it has been compressed
 	if !f.isCompressed() {
 		return f.content, nil
 	}
@@ -80,6 +79,10 @@ func (f *File) GetContent() ([]byte, error) {
 	return decodedBytes, err
 }
 
+func (f *File) GetRawContent() []byte {
+	return f.content
+}
+
 func (f *File) SetContent(in []byte, compress bool) error {
 	if !compress {
 		f.content = in
@@ -93,6 +96,10 @@ func (f *File) SetContent(in []byte, compress bool) error {
 
 	f.content = encoder.EncodeAll(in, nil)
 	return encoder.Close()
+}
+
+func (f *File) SetRawContent(in []byte) {
+	f.content = in
 }
 
 func (f *File) isCompressed() bool {
