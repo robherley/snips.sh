@@ -17,6 +17,11 @@ func New(cfg *config.Config, db db.DB) (*Service, error) {
 		DB:     db,
 	}
 
+	authorizedKeys, err := cfg.SSHAuthorizedKeys()
+	if err != nil {
+		return nil, err
+	}
+
 	sshServer, err := wish.NewServer(
 		wish.WithAddress(cfg.SSH.Internal.Host),
 		wish.WithHostKeyPath(cfg.SSH.HostKeyPath),
@@ -31,6 +36,7 @@ func New(cfg *config.Config, db db.DB) (*Service, error) {
 		wish.WithMiddleware(
 			sessionHandler.HandleFunc,
 			AssignUser(db, cfg.HTTP.External),
+			WithAuthorizedKeys(authorizedKeys),
 			BlockIfNoPublicKey,
 			WithLogger,
 			WithRequestID,

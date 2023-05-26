@@ -120,11 +120,39 @@ func WithLogger(next ssh.Handler) ssh.Handler {
 	}
 }
 
+// WithSessionMetrics will record metrics for each SSH session.
 func WithSessionMetrics(next ssh.Handler) ssh.Handler {
 	return func(sesh ssh.Session) {
 		start := time.Now()
 		metrics.IncrCounter([]string{"ssh", "session", "connected"}, 1)
 		next(sesh)
 		metrics.MeasureSince([]string{"ssh", "session", "duration"}, start)
+	}
+}
+
+// WithAuthorizedKeys will block any SSH connections that aren't using a public key in the authorized key list.
+// If authorizedKeys is empty, this middleware will be a no-op.
+func WithAuthorizedKeys(authorizedKeys []ssh.PublicKey) func(next ssh.Handler) ssh.Handler {
+	if len(authorizedKeys) == 0 {
+		return func(next ssh.Handler) ssh.Handler {
+			return next
+		}
+	}
+
+	log.Debug().Int("allowed_keys", len(authorizedKeys)).Msgf("using SSH allowlist")
+
+	return func(next ssh.Handler) ssh.Handler {
+		return func(sesh ssh.Session) {
+			for _, key := range authorizedKeys {
+				if ssh.KeysEqual(key, sesh.PublicKey()) {
+					next(sesh)
+					return
+				}
+			}
+
+			metrics.IncrCounter([]string{"ssh", "session", "not_authorized_key"}, 1)
+			wish.Println(sesh, "❌ Public key not authorized.")
+			_ = sesh.Exit(1)
+		}
 	}
 }
