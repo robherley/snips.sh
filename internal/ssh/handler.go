@@ -324,7 +324,6 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				Type:    renderer.DetectFileType(content, flags.Extension, h.Config.EnableGuesser),
 			}
 
-			// configure environment variable to allow compression
 			if err := file.SetContent(content, h.Config.FileCompression); err != nil {
 				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
 			}

@@ -116,15 +116,16 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 			return
 		}
 
+		content, err := file.GetContent()
+		if err != nil {
+			log.Error().Err(err).Msg("unable to get file content")
+			http.Error(w, "unable to get file content", http.StatusInternalServerError)
+			return
+		}
+
 		if ShouldSendRaw(r) {
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(http.StatusOK)
-			content, err := file.GetContent()
-			if err != nil {
-				log.Error().Err(err).Msg("unable to get file content")
-				http.Error(w, "unable to get file content", http.StatusInternalServerError)
-				return
-			}
 			_, _ = w.Write(content)
 			return
 		}
@@ -145,12 +146,6 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 		}
 
 		var html template.HTML
-		content, err := file.GetContent()
-		if err != nil {
-			log.Error().Err(err).Msg("unable to get file content")
-			http.Error(w, "unable to get file content", http.StatusInternalServerError)
-			return
-		}
 
 		switch file.Type {
 		case snips.FileTypeBinary:
