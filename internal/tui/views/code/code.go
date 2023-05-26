@@ -69,10 +69,16 @@ func (m *Code) renderContent(file *snips.File) string {
 		return ""
 	}
 
-	content, err := renderer.ToSyntaxHighlightedTerm(file.Type, file.Content)
+	fileContent, err := file.GetContent()
+	if err != nil {
+		log.Error().Err(err).Msg("unable to get file content")
+		return "error getting file content"
+	}
+
+	content, err := renderer.ToSyntaxHighlightedTerm(file.Type, fileContent)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to render file as syntax highlighted")
-		content = string(file.Content)
+		content = string(fileContent)
 	}
 
 	lines := strings.Split(content, "\n")

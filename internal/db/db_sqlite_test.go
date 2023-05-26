@@ -65,14 +65,14 @@ func (s *SqliteSuite) TestFindFile() {
 	database := s.getTestDB(true)
 
 	existingFile := &snips.File{
-		ID:        id.New(),
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-		Size:      11,
-		Content:   []byte("hello world"),
-		Private:   false,
-		Type:      "plaintext",
-		UserID:    id.New(),
+		ID:         id.New(),
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+		Size:       11,
+		RawContent: []byte("hello world"),
+		Private:    false,
+		Type:       "plaintext",
+		UserID:     id.New(),
 	}
 
 	const query = `
@@ -93,7 +93,7 @@ func (s *SqliteSuite) TestFindFile() {
 		existingFile.CreatedAt,
 		existingFile.UpdatedAt,
 		existingFile.Size,
-		existingFile.Content,
+		existingFile.RawContent,
 		existingFile.Private,
 		existingFile.Type,
 		existingFile.UserID,
@@ -117,11 +117,11 @@ func (s *SqliteSuite) TestCreateFile() {
 	database := s.getTestDB(true)
 
 	file := &snips.File{
-		Size:    11,
-		Content: []byte("hello world"),
-		Private: false,
-		Type:    "plaintext",
-		UserID:  id.New(),
+		Size:       11,
+		RawContent: []byte("hello world"),
+		Private:    false,
+		Type:       "plaintext",
+		UserID:     id.New(),
 	}
 
 	err := database.CreateFile(context.TODO(), file, 1337)
@@ -150,7 +150,7 @@ func (s *SqliteSuite) TestCreateFile() {
 	s.Require().Equal(file.CreatedAt, createdAt)
 	s.Require().Equal(file.UpdatedAt, updatedAt)
 	s.Require().Equal(file.Size, size)
-	s.Require().Equal(file.Content, content)
+	s.Require().Equal(file.RawContent, content)
 	s.Require().Equal(file.Private, private)
 	s.Require().Equal(file.Type, fileType)
 	s.Require().Equal(file.UserID, userID)
@@ -165,21 +165,21 @@ func (s *SqliteSuite) TestCreateFile_FileLimit() {
 
 	for i := uint64(0); i < maxFiles; i++ {
 		err := database.CreateFile(context.TODO(), &snips.File{
-			Size:    11,
-			Content: []byte("hello world"),
-			Private: false,
-			Type:    "plaintext",
-			UserID:  userID,
+			Size:       11,
+			RawContent: []byte("hello world"),
+			Private:    false,
+			Type:       "plaintext",
+			UserID:     userID,
 		}, maxFiles)
 		s.Require().NoError(err)
 	}
 
 	err := database.CreateFile(context.TODO(), &snips.File{
-		Size:    11,
-		Content: []byte("should fail"),
-		Private: false,
-		Type:    "plaintext",
-		UserID:  userID,
+		Size:       11,
+		RawContent: []byte("should fail"),
+		Private:    false,
+		Type:       "plaintext",
+		UserID:     userID,
 	}, maxFiles)
 
 	s.Require().ErrorIs(err, db.ErrFileLimit)
@@ -191,14 +191,14 @@ func (s *SqliteSuite) TestUpdateFile() {
 	originalUpdatedAt := time.Now().UTC()
 
 	existingFile := &snips.File{
-		ID:        id.New(),
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: originalUpdatedAt,
-		Size:      11,
-		Content:   []byte("hello world"),
-		Private:   false,
-		Type:      "plaintext",
-		UserID:    id.New(),
+		ID:         id.New(),
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  originalUpdatedAt,
+		Size:       11,
+		RawContent: []byte("hello world"),
+		Private:    false,
+		Type:       "plaintext",
+		UserID:     id.New(),
 	}
 
 	const query = `
@@ -219,7 +219,7 @@ func (s *SqliteSuite) TestUpdateFile() {
 		existingFile.CreatedAt,
 		existingFile.UpdatedAt,
 		existingFile.Size,
-		existingFile.Content,
+		existingFile.RawContent,
 		existingFile.Private,
 		existingFile.Type,
 		existingFile.UserID,
@@ -227,7 +227,7 @@ func (s *SqliteSuite) TestUpdateFile() {
 	s.Require().NoError(err)
 
 	existingFile.Size = 22
-	existingFile.Content = []byte("hello world hello world")
+	existingFile.RawContent = []byte("hello world hello world")
 	existingFile.Private = true
 	existingFile.Type = "markdown"
 
@@ -253,7 +253,7 @@ func (s *SqliteSuite) TestUpdateFile() {
 	s.Require().Equal(existingFile.CreatedAt, createdAt)
 	s.Require().NotEqual(originalUpdatedAt, updatedAt)
 	s.Require().Equal(existingFile.Size, size)
-	s.Require().Equal(existingFile.Content, content)
+	s.Require().Equal(existingFile.RawContent, content)
 	s.Require().Equal(existingFile.Private, private)
 	s.Require().Equal(existingFile.Type, fileType)
 	s.Require().Equal(existingFile.UserID, userID)
@@ -263,14 +263,14 @@ func (s *SqliteSuite) TestDeleteFile() {
 	database := s.getTestDB(true)
 
 	existingFile := &snips.File{
-		ID:        id.New(),
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-		Size:      11,
-		Content:   []byte("hello world"),
-		Private:   false,
-		Type:      "plaintext",
-		UserID:    id.New(),
+		ID:         id.New(),
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+		Size:       11,
+		RawContent: []byte("hello world"),
+		Private:    false,
+		Type:       "plaintext",
+		UserID:     id.New(),
 	}
 
 	const query = `
@@ -291,7 +291,7 @@ func (s *SqliteSuite) TestDeleteFile() {
 		existingFile.CreatedAt,
 		existingFile.UpdatedAt,
 		existingFile.Size,
-		existingFile.Content,
+		existingFile.RawContent,
 		existingFile.Private,
 		existingFile.Type,
 		existingFile.UserID,
@@ -315,14 +315,14 @@ func (s *SqliteSuite) TestFindFilesByUser() {
 
 	for i := 0; i < numFiles; i++ {
 		existingFile := &snips.File{
-			ID:        id.New(),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-			Size:      11,
-			Content:   []byte("hello world"),
-			Private:   false,
-			Type:      "plaintext",
-			UserID:    userID,
+			ID:         id.New(),
+			CreatedAt:  time.Now().UTC(),
+			UpdatedAt:  time.Now().UTC(),
+			Size:       11,
+			RawContent: []byte("hello world"),
+			Private:    false,
+			Type:       "plaintext",
+			UserID:     userID,
 		}
 
 		const query = `
@@ -343,7 +343,7 @@ func (s *SqliteSuite) TestFindFilesByUser() {
 			existingFile.CreatedAt,
 			existingFile.UpdatedAt,
 			existingFile.Size,
-			existingFile.Content,
+			existingFile.RawContent,
 			existingFile.Private,
 			existingFile.Type,
 			existingFile.UserID,
@@ -358,7 +358,7 @@ func (s *SqliteSuite) TestFindFilesByUser() {
 
 	for _, file := range files {
 		s.Require().Equal(userID, file.UserID)
-		s.Require().Empty(file.Content)
+		s.Require().Empty(file.RawContent)
 	}
 }
 

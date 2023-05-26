@@ -325,8 +325,8 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			}
 
 			// configure environment variable to allow compression
-			if err := file.SetContent(content, h.Config.Compress); err != nil {
-				sesh.Error(err, "Unable to create file", "There was an error handling the content of the file %s", err.Error())
+			if err := file.SetContent(content, h.Config.FileCompression); err != nil {
+				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
 			}
 
 			if err := h.DB.CreateFile(sesh.Context(), &file, h.Config.Limits.FilesPerUser); err != nil {

@@ -41,6 +41,7 @@ KEY                           TYPE              DEFAULT                DESCRIPTI
 SNIPS_DEBUG                   True or False     False                  enable debug logging and pprof
 SNIPS_ENABLEGUESSER           True or False     True                   enable guesslang model to detect file types
 SNIPS_HMACKEY                 String            hmac-and-cheese        symmetric key used to sign URLs
+SNIPS_FILECOMPRESSION         True or False     True                   enable compression of file contents
 SNIPS_LIMITS_FILESIZE         Unsigned Integer  1048576                maximum file size in bytes
 SNIPS_LIMITS_FILESPERUSER     Unsigned Integer  100                    maximum number of files per user
 SNIPS_LIMITS_SESSIONDURATION  Duration          15m                    maximum ssh session duration
@@ -53,7 +54,6 @@ SNIPS_SSH_EXTERNAL            URL               ssh://localhost:2222   external 
 SNIPS_SSH_HOSTKEYPATH         String            data/keys/snips        path to host keys (without extension)
 SNIPS_METRICS_STATSD          URL                                      statsd server address (e.g. udp://localhost:8125)
 SNIPS_METRICS_USEDOGSTATSD    True or False     False                  use dogstatsd instead of statsd
-SNIPS_FILE_COMPRESSION        True or False     True                   enable file compression
 ```
 
 ### Addresses/Ports
@@ -82,7 +82,7 @@ SNIPS_SSH_EXTERNAL=ssh://snips.example.com:22
 
 The file specified at `SNIPS_DB_FILEPATH` is the sqlite database that holds all user data. For more infomation managing the database, see [`database.md`](/docs/database.md).
 
-Setting `FILE_COMPRESSION` to `false` will disable compression when storing file content to disk.
+Setting `SNIPS_FILECOMPRESSION` to `false` will disable compression when storing file content to disk. If this option was disabled at any point (or files were created before this option existed), it will not retroactively compress existing files.
 
 ### Host Keys
 
