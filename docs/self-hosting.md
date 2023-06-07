@@ -42,6 +42,7 @@ KEY                           TYPE              DEFAULT                DESCRIPTI
 SNIPS_DEBUG                   True or False     False                  enable debug logging and pprof
 SNIPS_ENABLEGUESSER           True or False     True                   enable guesslang model to detect file types
 SNIPS_HMACKEY                 String            hmac-and-cheese        symmetric key used to sign URLs
+SNIPS_FILECOMPRESSION         True or False     True                   enable compression of file contents
 SNIPS_LIMITS_FILESIZE         Unsigned Integer  1048576                maximum file size in bytes
 SNIPS_LIMITS_FILESPERUSER     Unsigned Integer  100                    maximum number of files per user
 SNIPS_LIMITS_SESSIONDURATION  Duration          15m                    maximum ssh session duration
@@ -82,6 +83,8 @@ SNIPS_SSH_EXTERNAL=ssh://snips.example.com:22
 ### Database
 
 The file specified at `SNIPS_DB_FILEPATH` is the sqlite database that holds all user data. For more infomation managing the database, see [`database.md`](/docs/database.md).
+
+Setting `SNIPS_FILECOMPRESSION` to `false` will disable compression when storing file content to disk. If this option was disabled at any point (or files were created before this option existed), it will not retroactively compress existing files.
 
 ### Host Keys
 
@@ -139,6 +142,7 @@ ssh-import-id gh:robherley -o snips_authorized_keys
 ### Statsd Metrics
 
 At runtime, snips.sh will emit various metrics if the `SNIPS_METRICS_STATSD` is defined. This should be the full udp address with the protocol, e.g. `udp://localhost:8125`.
+
 
 ## Examples
 
