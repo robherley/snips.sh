@@ -268,7 +268,7 @@ func (h *SessionHandler) DownloadFile(sesh *UserSession, file *snips.File) {
 	if err != nil {
 		sesh.Error(err, "Unable to download file", "There was an error downloading the file: %q", file.ID)
 	} else {
-		wish.Print(sesh, content)
+		wish.Print(sesh, string(content))
 	}
 }
 
