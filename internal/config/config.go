@@ -32,6 +32,8 @@ type Config struct {
 
 	HMACKey string `default:"hmac-and-cheese" desc:"symmetric key used to sign URLs"`
 
+	FileCompression bool `default:"True" desc:"enable compression of file contents"`
+
 	Limits struct {
 		FileSize        uint64        `default:"1048576" desc:"maximum file size in bytes"`
 		FilesPerUser    uint64        `default:"100" desc:"maximum number of files per user"`

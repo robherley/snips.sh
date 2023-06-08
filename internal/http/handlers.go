@@ -121,10 +121,17 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			return
 		}
 
+		content, err := file.GetContent()
+		if err != nil {
+			log.Error().Err(err).Msg("unable to get file content")
+			http.Error(w, "unable to get file content", http.StatusInternalServerError)
+			return
+		}
+
 		if ShouldSendRaw(r) {
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write(file.Content)
+			_, _ = w.Write(content)
 			return
 		}
 
@@ -149,14 +156,14 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 		case snips.FileTypeBinary:
 			html = renderer.BinaryHTMLPlaceholder
 		case snips.FileTypeMarkdown:
-			html, err = renderer.ToMarkdown(file.Content)
+			html, err = renderer.ToMarkdown(content)
 			if err != nil {
 				log.Error().Err(err).Msg("unable to parse file")
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)
 				return
 			}
 		default:
-			html, err = renderer.ToSyntaxHighlightedHTML(file.Type, file.Content)
+			html, err = renderer.ToSyntaxHighlightedHTML(file.Type, content)
 			if err != nil {
 				log.Error().Err(err).Msg("unable to parse file")
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)

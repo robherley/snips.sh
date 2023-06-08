@@ -1,10 +1,12 @@
 package snips
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net/url"
 	"time"
 
+	"github.com/klauspost/compress/zstd"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/signer"
 )
@@ -15,14 +17,14 @@ const (
 )
 
 type File struct {
-	ID        string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Size      uint64
-	Content   []byte
-	Private   bool
-	Type      string
-	UserID    string
+	ID         string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Size       uint64
+	RawContent []byte
+	Private    bool
+	Type       string
+	UserID     string
 }
 
 func (f *File) IsBinary() bool {
@@ -51,4 +53,41 @@ func (f *File) Visibility() string {
 	}
 
 	return "public"
+}
+
+func (f *File) GetContent() ([]byte, error) {
+	if !f.isCompressed() {
+		return f.RawContent, nil
+	}
+
+	decoder, err := zstd.NewReader(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer decoder.Close()
+	decodedBytes, err := decoder.DecodeAll(f.RawContent, nil)
+
+	return decodedBytes, err
+}
+
+func (f *File) SetContent(in []byte, compress bool) error {
+	if !compress {
+		f.RawContent = in
+		return nil
+	}
+
+	encoder, err := zstd.NewWriter(nil)
+	if err != nil {
+		return err
+	}
+
+	f.RawContent = encoder.EncodeAll(in, nil)
+	return encoder.Close()
+}
+
+func (f *File) isCompressed() bool {
+	// check if first 4 bytes are ZSTD magic number
+	// https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md#zstandard-frames
+	return len(f.RawContent) > 4 && binary.BigEndian.Uint32(f.RawContent) == 0x28B52FFD
 }
