@@ -2,8 +2,9 @@ package http
 
 import (
 	"net/http"
-	"net/http/pprof"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 )
@@ -13,35 +14,30 @@ type Service struct {
 }
 
 func New(cfg *config.Config, database db.DB, assets *Assets) (*Service, error) {
-	r := NewRouter()
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
-		}
+	router := chi.NewRouter()
 
-		DocHandler("README.md", assets)(w, r)
-	})
-	r.HandleFunc("/docs/", func(w http.ResponseWriter, r *http.Request) {
+	router.Use(WithRequestID)
+	router.Use(WithLogger)
+	router.Use(WithMetrics)
+	router.Use(WithRecover)
+
+	router.Get("/", DocHandler("README.md", assets))
+	router.Get("/docs/", func(w http.ResponseWriter, r *http.Request) {
 		DocHandler(r.URL.Path[len("/docs/"):], assets)(w, r)
 	})
-	r.HandleFunc("/health", HealthHandler)
-	r.HandleFunc("/f/", FileHandler(cfg, database, assets.Template()))
-	r.HandleFunc("/assets/index.js", assets.ServeJS)
-	r.HandleFunc("/assets/index.css", assets.ServeCSS)
-	r.HandleFunc("/meta.json", MetaHandler(cfg))
+	router.Get("/health", HealthHandler)
+	router.Get("/f/{fileID}", FileHandler(cfg, database, assets.Template()))
+	router.Get("/assets/index.js", assets.ServeJS)
+	router.Get("/assets/index.css", assets.ServeCSS)
+	router.Get("/meta.json", MetaHandler(cfg))
 
 	if cfg.Debug {
-		r.HandleFunc("/_debug/pprof/", pprof.Index)
-		r.HandleFunc("/_debug/pprof/cmdline", pprof.Cmdline)
-		r.HandleFunc("/_debug/pprof/profile", pprof.Profile)
-		r.HandleFunc("/_debug/pprof/symbol", pprof.Symbol)
-		r.HandleFunc("/_debug/pprof/trace", pprof.Trace)
+		router.Mount("/_debug", middleware.Profiler())
 	}
 
 	httpServer := &http.Server{
 		Addr:    cfg.HTTP.Internal.Host,
-		Handler: WithMiddleware(r, WithRecover, WithLogger, WithRequestID),
+		Handler: router,
 	}
 
 	return &Service{httpServer}, nil

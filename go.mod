@@ -44,6 +44,7 @@ require (
 	github.com/dlclark/regexp2 v1.8.1 // indirect
 	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20221023090153-6b7fa0680c3e // indirect
 	github.com/galeone/tfgo v0.0.0-20230214145115-56cedbc50978 // indirect
+	github.com/go-chi/chi/v5 v5.0.8 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/gorilla/css v1.0.0 // indirect

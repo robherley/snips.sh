@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/go-chi/chi/v5"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
@@ -89,7 +90,7 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
-		fileID := strings.TrimPrefix(r.URL.Path, "/f/")
+		fileID := chi.URLParam(r, "fileID")
 
 		if fileID == "" {
 			http.NotFound(w, r)
