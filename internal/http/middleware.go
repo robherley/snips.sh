@@ -5,21 +5,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/armon/go-metrics"
+	"github.com/go-chi/chi/v5"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/rs/zerolog/log"
 )
-
-type Middleware func(next http.Handler) http.Handler
-
-// WithMiddleware is a helper function to apply multiple middlewares to a handler.
-func WithMiddleware(handler http.Handler, middlewares ...Middleware) http.Handler {
-	withMiddleware := handler
-	for i := range middlewares {
-		withMiddleware = middlewares[i](withMiddleware)
-	}
-	return withMiddleware
-}
 
 // WithRequestID adds a unique request ID to the request context.
 func WithRequestID(next http.Handler) http.Handler {
@@ -65,5 +56,28 @@ func WithRecover(next http.Handler) http.Handler {
 			}
 		}()
 		next.ServeHTTP(w, r)
+	})
+}
+
+// WithMetrics will record metrics for the request.
+func WithMetrics(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+
+		rctx := chi.RouteContext(r.Context())
+		pattern := rctx.RoutePattern()
+		if pattern == "" {
+			// empty pattern, didn't match router e.g. 404
+			pattern = "*"
+		}
+
+		labels := []metrics.Label{
+			{Name: "path", Value: pattern},
+			{Name: "method", Value: r.Method},
+		}
+
+		metrics.IncrCounterWithLabels([]string{"http", "request"}, 1, labels)
+		metrics.MeasureSinceWithLabels([]string{"http", "request", "duration"}, start, labels)
 	})
 }

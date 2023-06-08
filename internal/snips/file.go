@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/klauspost/compress/zstd"
@@ -37,16 +36,11 @@ func (f *File) IsMarkdown() bool {
 }
 
 func (f *File) GetSignedURL(cfg *config.Config, ttl time.Duration) (url.URL, time.Time) {
-	expires := time.Now().Add(ttl).UTC()
-
 	pathToSign := url.URL{
 		Path: fmt.Sprintf("/f/%s", f.ID),
-		RawQuery: url.Values{
-			"exp": []string{strconv.FormatInt(expires.Unix(), 10)},
-		}.Encode(),
 	}
 
-	signedFileURL := signer.New(cfg.HMACKey).SignURL(pathToSign)
+	signedFileURL, expires := signer.New(cfg.HMACKey).SignURLWithTTL(pathToSign, ttl)
 	signedFileURL.Scheme = cfg.HTTP.External.Scheme
 	signedFileURL.Host = cfg.HTTP.External.Host
 

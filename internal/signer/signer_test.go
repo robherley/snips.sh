@@ -2,7 +2,9 @@ package signer_test
 
 import (
 	"net/url"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/robherley/snips.sh/internal/signer"
 )
@@ -54,6 +56,33 @@ func TestSigner_SignURL(t *testing.T) {
 				t.Errorf("got %s, want %s", got.String(), tc.want.String())
 			}
 		})
+	}
+}
+
+func TestSigner_SignURLWithTTL(t *testing.T) {
+	signer := signer.New(testKey)
+
+	url := parseURL("https://snips.sh/f/5yiAwU0Ax")
+	ttl := 5 * time.Minute
+
+	now := time.Now().UTC()
+	got, _ := signer.SignURLWithTTL(url, ttl)
+
+	expires := got.Query().Get("exp")
+	if expires == "" {
+		t.Errorf("expected exp to be set")
+	}
+
+	expiresUnix, err := strconv.ParseInt(expires, 10, 64)
+	if err != nil {
+		t.Errorf("expected exp to be an integer: %s", err.Error())
+	}
+
+	expiresTime := time.Unix(expiresUnix, 0)
+
+	skew := 10 * time.Second
+	if expiresTime.Before(now.Add(ttl-skew)) || expiresTime.After(now.Add(ttl+skew)) {
+		t.Errorf("expected exp to be within 10 seconds of %s, got %s", now.Add(ttl).String(), expiresTime.String())
 	}
 }
 
@@ -110,6 +139,67 @@ func TestSigner_VerifyURL(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			got := signer.VerifyURL(tc.url)
+
+			if got != tc.want {
+				t.Errorf("got %t, want %t", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestSigner_VerifyURLAndNotExpired(t *testing.T) {
+	signer := signer.New(testKey)
+
+	testcases := []struct {
+		name string
+		url  func() url.URL
+		ttl  time.Duration
+		want bool
+	}{
+		{
+			name: "valid - with exp param",
+			url: func() url.URL {
+				url, _ := signer.SignURLWithTTL(parseURL("https://snips.sh/f/5yiAwU0Ax"), 5*time.Minute)
+				return url
+			},
+			want: true,
+		},
+		{
+			name: "valid - with multiple parameters",
+			url: func() url.URL {
+				url, _ := signer.SignURLWithTTL(parseURL("https://snips.sh/f/5yiAwU0Ax?r=1"), 5*time.Minute)
+				return url
+			},
+			want: true,
+		},
+		{
+			name: "invalid - no params",
+			url: func() url.URL {
+				return parseURL("https://snips.sh/f/5yiAwU0Ax")
+			},
+			want: false,
+		},
+		{
+			name: "invalid - expired",
+			url: func() url.URL {
+				url, _ := signer.SignURLWithTTL(parseURL("https://snips.sh/f/5yiAwU0Ax"), -5*time.Minute)
+				return url
+			},
+			want: false,
+		},
+		{
+			name: "invalid - expired with query parameters",
+			url: func() url.URL {
+				url, _ := signer.SignURLWithTTL(parseURL("https://snips.sh/f/5yiAwU0Ax?r=1"), -5*time.Minute)
+				return url
+			},
+			want: false,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := signer.VerifyURLAndNotExpired(tc.url())
 
 			if got != tc.want {
 				t.Errorf("got %t, want %t", got, tc.want)
