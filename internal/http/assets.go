@@ -42,7 +42,6 @@ var (
 	}
 )
 
-//go:generate mockery --name Assets --filename assets_mock.go --inpackage --with-expecter
 type Assets interface {
 	Doc(filename string) ([]byte, error)
 	Template() *template.Template
