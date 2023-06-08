@@ -14,7 +14,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/reflow/wordwrap"
+	"github.com/muesli/reflow/wrap"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
@@ -174,7 +174,7 @@ func (p Prompt) renderPrompt() string {
 	}
 
 	if p.feedback != "" {
-		pieces = append(pieces, "", wordwrap.String(p.feedback, p.width), "")
+		pieces = append(pieces, "", wrap.String(p.feedback, p.width), "")
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Top, pieces...)

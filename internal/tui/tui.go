@@ -154,7 +154,13 @@ func (t TUI) titleBar() string {
 	textStyle := lipgloss.NewStyle().Foreground(styles.Colors.Black).Background(styles.Colors.Primary).Padding(0, 1).Bold(true)
 	title := textStyle.Render("snips.sh")
 	user := textStyle.Render(fmt.Sprintf("u:%s", t.UserID))
-	return title + strings.Repeat(styles.BC(styles.Colors.Primary, "╱"), t.width-lipgloss.Width(title)-lipgloss.Width(user)) + user
+
+	count := t.width - lipgloss.Width(title) - lipgloss.Width(user)
+	if count < 0 {
+		count = 0
+	}
+
+	return title + strings.Repeat(styles.BC(styles.Colors.Primary, "╱"), count) + user
 }
 
 func (t TUI) helpBar() string {

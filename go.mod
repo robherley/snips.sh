@@ -14,6 +14,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/jaevor/go-nanoid v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/klauspost/compress v1.16.5
 	github.com/mattn/go-isatty v0.0.17
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/microcosm-cc/bluemonday v1.0.23
@@ -50,7 +51,6 @@ require (
 	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.10.0 // indirect
-	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
