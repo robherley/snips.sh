@@ -49,12 +49,14 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 	ts := httptest.NewServer(suite.service.Router)
 	defer ts.Close()
 
+	signedFileID := "wdHzc62hsn"
+
 	hmacSigner := signer.New(suite.config.HMACKey)
 	validSigned, _ := hmacSigner.SignURLWithTTL(url.URL{
-		Path: "/f/wdHzc62hsn",
+		Path: "/f/" + signedFileID,
 	}, 1*time.Hour)
 	invalidSigned, _ := hmacSigner.SignURLWithTTL(url.URL{
-		Path: "/f/wdHzc62hsn",
+		Path: "/f/" + signedFileID,
 	}, -1*time.Hour)
 
 	cases := []struct {
@@ -121,7 +123,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 			path:     "/f/eLcyRMrrgP",
 			expected: 200,
 			setup: func() {
-				file := testutil.Fixtures.File()
+				file := testutil.Fixtures.File(suite.T())
 				file.ID = "eLcyRMrrgP"
 
 				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
@@ -130,11 +132,11 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 		{
 			name:     "unsigned private file",
 			method:   "GET",
-			path:     "/f/wdHzc62hsn",
+			path:     "/f/" + signedFileID,
 			expected: 404,
 			setup: func() {
-				file := testutil.Fixtures.File()
-				file.ID = "wdHzc62hsn"
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = signedFileID
 				file.Private = true
 
 				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
@@ -146,8 +148,8 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 			path:     validSigned.Path + "?" + validSigned.RawQuery,
 			expected: 200,
 			setup: func() {
-				file := testutil.Fixtures.File()
-				file.ID = "wdHzc62hsn"
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = signedFileID
 				file.Private = true
 
 				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
@@ -159,8 +161,8 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 			path:     invalidSigned.Path + "?" + invalidSigned.RawQuery,
 			expected: 404,
 			setup: func() {
-				file := testutil.Fixtures.File()
-				file.ID = "wdHzc62hsn"
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = signedFileID
 				file.Private = true
 
 				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)

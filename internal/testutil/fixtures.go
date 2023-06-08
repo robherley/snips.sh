@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"testing"
 	"time"
 
 	"github.com/robherley/snips.sh/internal/id"
@@ -11,7 +12,7 @@ type fixtures struct{}
 
 var Fixtures = &fixtures{}
 
-func (f *fixtures) File() snips.File {
+func (f *fixtures) File(t *testing.T) snips.File {
 	file := snips.File{
 		ID:        id.New(),
 		CreatedAt: time.Now().Add(-5 * time.Minute),
@@ -21,7 +22,10 @@ func (f *fixtures) File() snips.File {
 		UserID:    id.New(),
 	}
 
-	file.SetContent([]byte("hello world"), true)
+	err := file.SetContent([]byte("hello world"), true)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	return file
 }
