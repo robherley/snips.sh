@@ -92,7 +92,7 @@ func (app *App) shutdown(ctx context.Context) {
 	wg.Wait()
 }
 
-func New(cfg *config.Config, assets *http.Assets) (*App, error) {
+func New(cfg *config.Config, assets http.Assets) (*App, error) {
 	database, err := db.NewSqlite(cfg.DB.FilePath)
 	if err != nil {
 		return nil, err

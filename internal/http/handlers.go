@@ -5,9 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/go-chi/chi/v5"
@@ -51,9 +49,14 @@ func MetaHandler(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
-func DocHandler(name string, assets *Assets) http.HandlerFunc {
+func DocHandler(assets Assets) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
+
+		name := chi.URLParam(r, "name")
+		if name == "" {
+			name = "README.md"
+		}
 
 		content, err := assets.Doc(name)
 		if err != nil {
@@ -85,8 +88,9 @@ func DocHandler(name string, assets *Assets) http.HandlerFunc {
 	}
 }
 
-func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) http.HandlerFunc {
+func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
 	signer := signer.New(cfg.HMACKey)
+	tmpl := assets.Template()
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
@@ -109,7 +113,7 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 			return
 		}
 
-		isSignedAndNotExpired := IsSignedAndNotExpired(signer, r)
+		isSignedAndNotExpired := signer.VerifyURLAndNotExpired(*r.URL)
 
 		if file.Private && !isSignedAndNotExpired {
 			log.Warn().Msg("attempted to access private file")
@@ -178,33 +182,6 @@ func FileHandler(cfg *config.Config, database db.DB, tmpl *template.Template) ht
 			return
 		}
 	}
-}
-
-func IsSignedAndNotExpired(s *signer.Signer, r *http.Request) bool {
-	if r.URL == nil {
-		return false
-	}
-
-	urlToVerify := url.URL{
-		Path:     r.URL.Path,
-		RawQuery: r.URL.RawQuery,
-	}
-
-	if !s.VerifyURL(urlToVerify) {
-		return false
-	}
-
-	exp := r.URL.Query().Get("exp")
-	if exp == "" {
-		return false
-	}
-
-	expiresUnix, err := strconv.ParseInt(exp, 10, 64)
-	if err != nil {
-		return false
-	}
-
-	return expiresUnix > time.Now().Unix()
 }
 
 func ShouldSendRaw(r *http.Request) bool {

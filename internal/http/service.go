@@ -11,9 +11,10 @@ import (
 
 type Service struct {
 	*http.Server
+	Router *chi.Mux
 }
 
-func New(cfg *config.Config, database db.DB, assets *Assets) (*Service, error) {
+func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	router := chi.NewRouter()
 
 	router.Use(WithRequestID)
@@ -21,12 +22,10 @@ func New(cfg *config.Config, database db.DB, assets *Assets) (*Service, error) {
 	router.Use(WithMetrics)
 	router.Use(WithRecover)
 
-	router.Get("/", DocHandler("README.md", assets))
-	router.Get("/docs/", func(w http.ResponseWriter, r *http.Request) {
-		DocHandler(r.URL.Path[len("/docs/"):], assets)(w, r)
-	})
+	router.Get("/", DocHandler(assets))
+	router.Get("/docs/{name}", DocHandler(assets))
 	router.Get("/health", HealthHandler)
-	router.Get("/f/{fileID}", FileHandler(cfg, database, assets.Template()))
+	router.Get("/f/{fileID}", FileHandler(cfg, database, assets))
 	router.Get("/assets/index.js", assets.ServeJS)
 	router.Get("/assets/index.css", assets.ServeCSS)
 	router.Get("/meta.json", MetaHandler(cfg))
@@ -40,5 +39,5 @@ func New(cfg *config.Config, database db.DB, assets *Assets) (*Service, error) {
 		Handler: router,
 	}
 
-	return &Service{httpServer}, nil
+	return &Service{httpServer, router}, nil
 }
