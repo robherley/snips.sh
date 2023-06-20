@@ -22,7 +22,7 @@ require (
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.1
 	github.com/robherley/guesslang-go v0.1.0
-	github.com/rs/zerolog v1.28.0
+	github.com/rs/zerolog v1.29.1
 	github.com/stretchr/testify v1.8.2
 	github.com/tdewolff/minify/v2 v2.12.5
 	github.com/yuin/goldmark v1.5.3
