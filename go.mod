@@ -12,6 +12,7 @@ require (
 	github.com/charmbracelet/ssh v0.0.0-20221117183211-483d43d97103
 	github.com/charmbracelet/wish v1.0.0
 	github.com/dustin/go-humanize v1.0.1
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/jaevor/go-nanoid v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/compress v1.16.5
@@ -19,7 +20,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/microcosm-cc/bluemonday v1.0.23
 	github.com/muesli/reflow v0.3.0
-	github.com/muesli/termenv v0.13.0
+	github.com/muesli/termenv v0.15.1
 	github.com/robherley/guesslang-go v0.1.0
 	github.com/rs/zerolog v1.28.0
 	github.com/stretchr/testify v1.8.2
@@ -36,7 +37,7 @@ require (
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
-	github.com/aymanbagabas/go-osc52 v1.2.1 // indirect
+	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/caarlos0/sshmarshal v0.1.0 // indirect
 	github.com/charmbracelet/keygen v0.3.0 // indirect
@@ -45,7 +46,6 @@ require (
 	github.com/dlclark/regexp2 v1.8.1 // indirect
 	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20221023090153-6b7fa0680c3e // indirect
 	github.com/galeone/tfgo v0.0.0-20230214145115-56cedbc50978 // indirect
-	github.com/go-chi/chi/v5 v5.0.8 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
