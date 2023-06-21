@@ -28,7 +28,7 @@ require (
 	github.com/yuin/goldmark v1.5.3
 	github.com/yuin/goldmark-emoji v1.0.1
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20220924101305-151362477c87
-	golang.org/x/crypto v0.3.0
+	golang.org/x/crypto v0.10.0
 )
 
 require (
@@ -69,9 +69,9 @@ require (
 	github.com/zclconf/go-cty v1.8.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/term v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/term v0.9.0 // indirect
+	golang.org/x/text v0.10.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
