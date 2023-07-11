@@ -26,7 +26,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/tdewolff/minify/v2 v2.12.5
 	github.com/yuin/goldmark v1.5.3
-	github.com/yuin/goldmark-emoji v1.0.1
+	github.com/yuin/goldmark-emoji v1.0.2
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20220924101305-151362477c87
 	golang.org/x/crypto v0.8.0
 )
