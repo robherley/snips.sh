@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	ariga.io/atlas v0.12.0
-	github.com/alecthomas/chroma/v2 v2.7.0
+	github.com/alecthomas/chroma/v2 v2.8.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/bubbletea v0.24.2
@@ -23,12 +23,12 @@ require (
 	github.com/muesli/termenv v0.15.2
 	github.com/robherley/guesslang-go v0.1.0
 	github.com/rs/zerolog v1.29.1
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 	github.com/tdewolff/minify/v2 v2.12.5
-	github.com/yuin/goldmark v1.5.3
-	github.com/yuin/goldmark-emoji v1.0.1
+	github.com/yuin/goldmark v1.5.5
+	github.com/yuin/goldmark-emoji v1.0.2
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20220924101305-151362477c87
-	golang.org/x/crypto v0.8.0
+	golang.org/x/crypto v0.11.0
 )
 
 require (
