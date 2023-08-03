@@ -63,11 +63,11 @@ func TestUploadFlags(t *testing.T) {
 		},
 		{
 			name: "private and ttl",
-			args: []string{"-private", "-ttl", "30s"},
+			args: []string{"-private", "-ttl", "1w2d3m4s"},
 			want: ssh.UploadFlags{
 				Private:   true,
 				Extension: "",
-				TTL:       time.Duration(30),
+				TTL:       1*7*24*time.Hour + 2*24*time.Hour + 3*time.Minute + 4*time.Second,
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func TestUploadFlags(t *testing.T) {
 			want: ssh.UploadFlags{
 				Private:   false,
 				Extension: "",
-				TTL:       time.Duration(30),
+				TTL:       30 * time.Second,
 			},
 			err: ssh.ErrFlagRequied,
 		},
@@ -111,9 +111,9 @@ func TestSignFlags(t *testing.T) {
 		},
 		{
 			name: "ttl",
-			args: []string{"-ttl", "1h"},
+			args: []string{"-ttl", "1w2d3m4s"},
 			want: ssh.SignFlags{
-				TTL: 1 * time.Hour,
+				TTL: 1*7*24*time.Hour + 2*24*time.Hour + 3*time.Minute + 4*time.Second,
 			},
 		},
 	}
