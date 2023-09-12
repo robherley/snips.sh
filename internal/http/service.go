@@ -7,6 +7,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	api_v1 "github.com/robherley/snips.sh/internal/http/api/v1"
+	"github.com/rs/zerolog/log"
 )
 
 type Service struct {
@@ -22,13 +24,26 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	router.Use(WithMetrics)
 	router.Use(WithRecover)
 
-	router.Get("/", DocHandler(assets))
+	if cfg.ListIndex && cfg.EnableApi {
+		router.Get("/", ListHandler(cfg, database, assets))
+	} else {
+		if cfg.ListIndex && !cfg.EnableApi {
+			log.Warn().Bool("ListIndex", cfg.ListIndex).Bool("EnableApi", cfg.EnableApi).Msg("cannot list index without enabling api")
+		}
+
+		router.Get("/", DocHandler(assets))
+	}
+
 	router.Get("/docs/{name}", DocHandler(assets))
 	router.Get("/health", HealthHandler)
 	router.Get("/f/{fileID}", FileHandler(cfg, database, assets))
 	router.Get("/assets/index.js", assets.ServeJS)
 	router.Get("/assets/index.css", assets.ServeCSS)
 	router.Get("/meta.json", MetaHandler(cfg))
+
+	if cfg.EnableApi {
+		router.Mount("/api/v1", api_v1.ApiHandler(cfg, database))
+	}
 
 	if cfg.Debug {
 		router.Mount("/_debug", middleware.Profiler())

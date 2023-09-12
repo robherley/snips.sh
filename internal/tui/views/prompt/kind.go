@@ -8,4 +8,5 @@ const (
 	ChangeVisibility
 	GenerateSignedURL
 	DeleteFile
+	Rename
 )

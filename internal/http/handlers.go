@@ -1,8 +1,10 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"html/template"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -46,6 +48,36 @@ func MetaHandler(cfg *config.Config) http.HandlerFunc {
 		}
 
 		_, _ = w.Write(metabites)
+	}
+}
+
+func ListHandler(config *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
+		log := logger.From(r.Context())
+
+		buff := bytes.NewBuffer([]byte{})
+		assets.Template().ExecuteTemplate(buff, "list.go.html", nil)
+		html, _ := io.ReadAll(buff)
+
+		vars := map[string]interface{}{
+			"FileID":    "Latest snips",
+			"FileSize":  nil,
+			"CreatedAt": nil,
+			"UpdatedAt": nil,
+			"FileType":  nil,
+			"RawHREF":   "",
+			"HTML":      template.HTML(string(html)),
+			"Private":   false,
+		}
+
+		err = assets.Template().ExecuteTemplate(w, "file.go.html", vars)
+		if err != nil {
+			log.Error().Err(err).Msg("unable to render template")
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 

@@ -19,6 +19,7 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/snips"
@@ -152,8 +153,10 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 		h.DeleteFile(sesh, file)
 	case "sign":
 		h.SignFile(sesh, file)
+	case "rename":
+		h.RenameFile(sesh, file)
 	default:
-		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %q", args[0])
+		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %q. Known commands: rm, sign, rename", args[0])
 	}
 }
 
@@ -263,6 +266,59 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 	noti.Render(sesh)
 }
 
+func (h *SessionHandler) RenameFile(sesh *UserSession, file *snips.File) {
+	log := logger.From(sesh.Context())
+
+	flags := RenameFlags{}
+	args := sesh.Command()[1:]
+
+	if err := flags.Parse(sesh.Stderr(), args); err != nil {
+		if !errors.Is(err, flag.ErrHelp) {
+			log.Warn().Err(err).Msg("invalid user specified flags")
+			flags.PrintDefaults()
+		}
+		return
+	}
+
+	old := file.ID
+	file.ID = flags.Name
+	err := h.DB.RenameFile(sesh.Context(), file, old)
+	if err != nil {
+		log.Warn().Err(err).Msg("could not update file")
+		return
+	}
+
+	log.Info().Str("old_name", old).Str("new_name", file.ID).Msg("updated file name")
+
+	metrics.IncrCounter([]string{"file", "rename"}, 1)
+
+	noti := Notification{
+		Color: styles.Colors.Cyan,
+		Title: "File renamed 📝",
+		WithStyle: func(s *lipgloss.Style) {
+			s.MarginTop(1)
+		},
+	}
+	visibility := styles.C(styles.Colors.White, "public")
+	if file.Private {
+		visibility = styles.C(styles.Colors.Red, "private")
+	}
+
+	attrs := make([]string, 0)
+	kvp := map[string]string{
+		"type":       styles.C(styles.Colors.White, file.Type),
+		"size":       styles.C(styles.Colors.White, humanize.Bytes(file.Size)),
+		"visibility": visibility,
+	}
+	for k, v := range kvp {
+		key := styles.C(styles.Colors.Muted, k+": ")
+		attrs = append(attrs, key+v)
+	}
+	sort.Strings(attrs)
+	noti.Messagef("id: %s\n%s", styles.C(styles.Colors.White, file.ID), strings.Join(attrs, styles.C(styles.Colors.Muted, " • ")))
+	noti.Render(sesh)
+}
+
 func (h *SessionHandler) DownloadFile(sesh *UserSession, file *snips.File) {
 	content, err := file.GetContent()
 	if err != nil {
@@ -318,10 +374,25 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			}
 
 			file := snips.File{
+				ID:      id.New(),
 				Private: flags.Private,
 				Size:    size,
 				UserID:  sesh.UserID(),
 				Type:    renderer.DetectFileType(content, flags.Extension, h.Config.EnableGuesser),
+			}
+
+			if flags.Name != "" {
+				file.ID = flags.Name
+			}
+
+			dupe, err := h.DB.FindFile(sesh.Context(), flags.Name)
+			if err != nil {
+				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
+				return
+			}
+
+			if dupe != nil {
+				file.ID = file.ID + "-" + id.New()
 			}
 
 			if err := file.SetContent(content, h.Config.FileCompression); err != nil {

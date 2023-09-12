@@ -113,7 +113,10 @@ func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount 
 		return ErrFileLimit
 	}
 
-	file.ID = id.New()
+	if file.ID == "" {
+		file.ID = id.New()
+	}
+
 	file.CreatedAt = time.Now().UTC()
 	file.UpdatedAt = time.Now().UTC()
 
@@ -146,12 +149,13 @@ func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount 
 	return nil
 }
 
-func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
+func (s *Sqlite) RenameFile(ctx context.Context, file *snips.File, oldId string) error {
 	file.UpdatedAt = time.Now().UTC()
 
 	const query = `
 		UPDATE files
 		SET
+			id = ?,
 			updated_at = ?,
 			size = ?,
 			content = ?,
@@ -161,6 +165,37 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 	`
 
 	if _, err := s.ExecContext(ctx, query,
+		file.ID,
+		file.UpdatedAt,
+		file.Size,
+		file.RawContent,
+		file.Private,
+		file.Type,
+		oldId,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
+	file.UpdatedAt = time.Now().UTC()
+
+	const query = `
+		UPDATE files
+		SET
+			id = ?,
+			updated_at = ?,
+			size = ?,
+			content = ?,
+			private = ?,
+			type = ?
+		WHERE id = ?
+	`
+
+	if _, err := s.ExecContext(ctx, query,
+		file.ID,
 		file.UpdatedAt,
 		file.Size,
 		file.RawContent,
@@ -185,6 +220,56 @@ func (s *Sqlite) DeleteFile(ctx context.Context, id string) error {
 	}
 
 	return nil
+}
+
+func (s *Sqlite) FindFiles(ctx context.Context, page int) ([]*snips.File, error) {
+	const query = `
+		SELECT
+			id,
+			created_at,
+			updated_at,
+			size,
+			private,
+			type,
+			user_id
+		FROM files
+		WHERE private = 0
+		ORDER BY created_at DESC
+		LIMIT ?, 10
+	`
+
+	if page < 0 {
+		page = 0
+	}
+
+	files := make([]*snips.File, 0)
+	rows, err := s.QueryContext(ctx, query, page)
+	if err != nil {
+		return files, err
+	}
+
+	for rows.Next() {
+		file := &snips.File{}
+		if err := rows.Scan(
+			&file.ID,
+			&file.CreatedAt,
+			&file.UpdatedAt,
+			&file.Size,
+			&file.Private,
+			&file.Type,
+			&file.UserID,
+		); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+
+			return nil, err
+		}
+
+		files = append(files, file)
+	}
+
+	return files, nil
 }
 
 func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error) {

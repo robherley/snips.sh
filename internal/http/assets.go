@@ -39,6 +39,7 @@ var (
 
 	jsFiles = []string{
 		"snips.js",
+		"list.js",
 	}
 )
 

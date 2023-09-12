@@ -22,6 +22,10 @@ type option struct {
 
 var options = []option{
 	{
+		name:   "rename",
+		prompt: prompt.Rename,
+	},
+	{
 		name:   "edit extension",
 		prompt: prompt.ChangeExtension,
 	},

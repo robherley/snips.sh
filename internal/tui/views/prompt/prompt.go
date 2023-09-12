@@ -17,6 +17,7 @@ import (
 	"github.com/muesli/reflow/wrap"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
@@ -96,7 +97,7 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch p.kind {
-	case GenerateSignedURL, DeleteFile, ChangeVisibility:
+	case GenerateSignedURL, DeleteFile, Rename, ChangeVisibility:
 		p.textInput, cmd = p.textInput.Update(msg)
 		commands = append(commands, cmd)
 	case ChangeExtension:
@@ -131,6 +132,8 @@ func (p Prompt) renderPrompt() string {
 	switch p.kind {
 	case ChangeExtension:
 		question = "What extension do you want to change the file to?"
+	case Rename:
+		question = "What would you like to rename your file to?"
 	case ChangeVisibility:
 		question = fmt.Sprintf("Do you want to make the file %q ", p.file.ID)
 		if p.file.Private {
@@ -155,7 +158,7 @@ func (p Prompt) renderPrompt() string {
 
 	var prompt string
 	switch p.kind {
-	case GenerateSignedURL, DeleteFile, ChangeVisibility:
+	case GenerateSignedURL, DeleteFile, Rename, ChangeVisibility:
 		prompt = p.textInput.View()
 	case ChangeExtension:
 		prompt = p.extensionSelector.View()
@@ -234,6 +237,37 @@ func (p Prompt) handleSubmit() tea.Cmd {
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q extension set to %q", p.file.ID, item.name))
 		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
+
+	case Rename:
+		old := p.file.ID
+		p.file.ID = p.textInput.Value()
+
+		// check for duplicates
+		dupe, err := p.db.FindFile(p.ctx, p.file.ID)
+		if err != nil {
+			return SetPromptErrorCmd(err)
+		}
+
+		if dupe != nil {
+			dupeRename := p.file.ID + "-" + id.New()
+			log.Info().Str("name", p.file.ID).Str("dupe_name", dupeRename).Msg("dupe found, appending hash")
+			p.file.ID = dupeRename
+		}
+
+		err = p.db.RenameFile(p.ctx, p.file, old)
+		if err != nil {
+			return SetPromptErrorCmd(err)
+		}
+
+		metrics.IncrCounterWithLabels([]string{"file", "change", "name"}, 1, []metrics.Label{
+			{Name: "old", Value: old},
+			{Name: "new", Value: p.file.ID},
+		})
+		log.Info().Str("file", p.file.ID).Str("old_name", old).Str("new_name", p.file.ID).Msg("updating file name")
+
+		msg := styles.C(styles.Colors.Green, fmt.Sprintf("rename file %q to %q", old, p.file.ID))
+		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
+
 	case GenerateSignedURL:
 		dur, err := time.ParseDuration(p.textInput.Value())
 		if err != nil {
@@ -251,6 +285,7 @@ func (p Prompt) handleSubmit() tea.Cmd {
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("%s\n\nexpires at: %s", url.String(), expires.Format(time.RFC3339)))
 		commands = append(commands, SetPromptFeedbackCmd(msg, true))
+
 	case DeleteFile:
 		if cmd := p.validateInputIsFileID(); cmd != nil {
 			return cmd
@@ -266,6 +301,7 @@ func (p Prompt) handleSubmit() tea.Cmd {
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q deleted", p.file.ID))
 		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
+
 	default:
 		return nil
 	}
