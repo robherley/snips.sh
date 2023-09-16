@@ -22,8 +22,12 @@ type option struct {
 
 var options = []option{
 	{
-		name:   "rename",
-		prompt: prompt.Rename,
+		name:   "change name",
+		prompt: prompt.ChangeName,
+	},
+	{
+		name:   "change description",
+		prompt: prompt.ChangeDescription,
 	},
 	{
 		name:   "edit extension",
@@ -151,6 +155,8 @@ func (bwsr Browser) renderDetails() string {
 
 	values := [][2]string{
 		{"ID", file.ID},
+		{"Name", file.Name},
+		{"Desc", file.Description},
 		{"Size", humanize.Bytes(file.Size)},
 		{"Created", fmt.Sprintf("%s (%s)", file.CreatedAt.Format(time.RFC3339), humanize.Time(file.CreatedAt))},
 		{"Modified", fmt.Sprintf("%s (%s)", file.CreatedAt.Format(time.RFC3339), humanize.Time(file.UpdatedAt))},

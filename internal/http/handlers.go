@@ -1,10 +1,8 @@
 package http
 
 import (
-	"bytes"
 	"encoding/json"
 	"html/template"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -51,28 +49,24 @@ func MetaHandler(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
-func ListHandler(config *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+func FeedHandler(config *config.Config, database db.DB, assets Assets) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 
 		log := logger.From(r.Context())
 
-		buff := bytes.NewBuffer([]byte{})
-		assets.Template().ExecuteTemplate(buff, "list.go.html", nil)
-		html, _ := io.ReadAll(buff)
-
-		vars := map[string]interface{}{
-			"FileID":    "Latest snips",
-			"FileSize":  nil,
-			"CreatedAt": nil,
-			"UpdatedAt": nil,
-			"FileType":  nil,
-			"RawHREF":   "",
-			"HTML":      template.HTML(string(html)),
-			"Private":   false,
+		latestSnips, err := database.LatestPublicFiles(r.Context(), 0)
+		if err != nil {
+			log.Error().Err(err).Msg("unable to get latest snips")
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 
-		err = assets.Template().ExecuteTemplate(w, "file.go.html", vars)
+		vars := map[string]interface{}{
+			"Snips": latestSnips,
+		}
+
+		err = assets.Template().ExecuteTemplate(w, "layout.go.html", vars)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to render template")
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -111,7 +105,7 @@ func DocHandler(assets Assets) http.HandlerFunc {
 			"HTML":     md,
 		}
 
-		err = assets.Template().ExecuteTemplate(w, "file.go.html", vars)
+		err = assets.Template().ExecuteTemplate(w, "layout.go.html", vars)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to render template")
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -204,17 +198,19 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 		}
 
 		vars := map[string]interface{}{
-			"FileID":    file.ID,
-			"FileSize":  humanize.Bytes(file.Size),
-			"CreatedAt": humanize.Time(file.CreatedAt),
-			"UpdatedAt": humanize.Time(file.UpdatedAt),
-			"FileType":  strings.ToLower(file.Type),
-			"RawHREF":   rawHref,
-			"HTML":      html,
-			"Private":   file.Private,
+			"FileID":          file.ID,
+			"FileName":        file.Name,
+			"FileDescription": file.Description,
+			"FileSize":        humanize.Bytes(file.Size),
+			"CreatedAt":       humanize.Time(file.CreatedAt),
+			"UpdatedAt":       humanize.Time(file.UpdatedAt),
+			"FileType":        strings.ToLower(file.Type),
+			"RawHREF":         rawHref,
+			"HTML":            html,
+			"Private":         file.Private,
 		}
 
-		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)
+		err = tmpl.ExecuteTemplate(w, "layout.go.html", vars)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to render template")
 			http.Error(w, "internal error", http.StatusInternalServerError)

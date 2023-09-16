@@ -2,6 +2,7 @@ package snips
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -14,17 +15,21 @@ import (
 const (
 	FileTypeBinary   = "binary"
 	FileTypeMarkdown = "markdown"
+
+	DescriptionCharacterLimit = 120
 )
 
 type File struct {
-	ID         string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Size       uint64
-	RawContent []byte
-	Private    bool
-	Type       string
-	UserID     string
+	ID          string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Name        string
+	Description string
+	Size        uint64
+	RawContent  []byte
+	Private     bool
+	Type        string
+	UserID      string
 }
 
 func (f *File) IsBinary() bool {
@@ -53,6 +58,15 @@ func (f *File) Visibility() string {
 	}
 
 	return "public"
+}
+
+func (f *File) SetDescription(description string) error {
+	if len(description) > DescriptionCharacterLimit {
+		return errors.New("description max length is 120 characters")
+	}
+
+	f.Description = description
+	return nil
 }
 
 func (f *File) GetContent() ([]byte, error) {

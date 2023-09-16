@@ -16,12 +16,10 @@ type DB interface {
 	CreateFile(ctx context.Context, file *snips.File, maxFiles uint64) error
 	// UpdateFile updates a file.
 	UpdateFile(ctx context.Context, file *snips.File) error
-	// RenameFile updates a file od.
-	RenameFile(ctx context.Context, file *snips.File, oldId string) error
 	// DeleteFile deletes a file by its ID.
 	DeleteFile(ctx context.Context, id string) error
-	// FindFiles find files, paginated
-	FindFiles(ctx context.Context, page int) ([]*snips.File, error)
+	// LatestPublicFiles find files, paginated
+	LatestPublicFiles(ctx context.Context, page int) ([]*snips.File, error)
 	// FindFilesByUser returns all files for a user. Does not include file content.
 	FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error)
 	// FindPublicKeyByFingerprint returns a public key by its fingerprint.

@@ -16,7 +16,7 @@ import (
 // default.
 // Ideal utilisation, when trying to view all snips, is to iterate through pages
 // until you reach a payload size of 0.
-func GetSnips(database db.DB) func(http.ResponseWriter, *http.Request) {
+func GetFeed(database db.DB) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
@@ -29,7 +29,7 @@ func GetSnips(database db.DB) func(http.ResponseWriter, *http.Request) {
 			}
 		}
 
-		files, err := database.FindFiles(r.Context(), page)
+		files, err := database.LatestPublicFiles(r.Context(), page)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to render template")
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -50,7 +50,7 @@ func GetSnips(database db.DB) func(http.ResponseWriter, *http.Request) {
 func ApiHandler(cfg *config.Config, database db.DB) *chi.Mux {
 	apiRouter := chi.NewMux()
 
-	apiRouter.Get("/snips", GetSnips(database))
+	apiRouter.Get("/snips", GetFeed(database))
 
 	return apiRouter
 }

@@ -17,7 +17,7 @@
   padding: 0 0.4rem 0 0.8rem;
 }
 
-.code .chroma .ln + .cl {
+.code .chroma .ln+.cl {
   padding-left: 0.75rem
 }
 

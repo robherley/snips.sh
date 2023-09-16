@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"log"
+
 	"github.com/armon/go-metrics"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -148,15 +150,17 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 		return
 	}
 
+	log.Printf("which command: %s", args[0])
+
 	switch args[0] {
 	case "rm":
 		h.DeleteFile(sesh, file)
 	case "sign":
 		h.SignFile(sesh, file)
-	case "rename":
-		h.RenameFile(sesh, file)
+	case "modify":
+		h.ChangeNameOrDesc(sesh, file)
 	default:
-		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %q. Known commands: rm, sign, rename", args[0])
+		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %q. Known commands: rm, sign, modify", args[0])
 	}
 }
 
@@ -266,10 +270,13 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 	noti.Render(sesh)
 }
 
-func (h *SessionHandler) RenameFile(sesh *UserSession, file *snips.File) {
+func (h *SessionHandler) ChangeNameOrDesc(sesh *UserSession, file *snips.File) {
+	var err error
+
 	log := logger.From(sesh.Context())
 
-	flags := RenameFlags{}
+	flags := ChangeField{}
+
 	args := sesh.Command()[1:]
 
 	if err := flags.Parse(sesh.Stderr(), args); err != nil {
@@ -280,21 +287,33 @@ func (h *SessionHandler) RenameFile(sesh *UserSession, file *snips.File) {
 		return
 	}
 
-	old := file.ID
-	file.ID = flags.Name
-	err := h.DB.RenameFile(sesh.Context(), file, old)
+	if flags.Name == "" && flags.Description == "" {
+		// no changes to be made
+		return
+	}
+
+	if flags.Name != "" {
+		file.Name = flags.Name
+	}
+
+	if flags.Description != "" {
+		err = file.SetDescription(flags.Description)
+		if err != nil {
+			log.Warn().Err(err).Msg("description failed validation")
+		}
+	}
+
+	err = h.DB.UpdateFile(sesh.Context(), file)
 	if err != nil {
 		log.Warn().Err(err).Msg("could not update file")
 		return
 	}
 
-	log.Info().Str("old_name", old).Str("new_name", file.ID).Msg("updated file name")
-
-	metrics.IncrCounter([]string{"file", "rename"}, 1)
+	metrics.IncrCounter([]string{"file", "modify file"}, 1)
 
 	noti := Notification{
 		Color: styles.Colors.Cyan,
-		Title: "File renamed 📝",
+		Title: "File updated 📝",
 		WithStyle: func(s *lipgloss.Style) {
 			s.MarginTop(1)
 		},
@@ -306,9 +325,11 @@ func (h *SessionHandler) RenameFile(sesh *UserSession, file *snips.File) {
 
 	attrs := make([]string, 0)
 	kvp := map[string]string{
-		"type":       styles.C(styles.Colors.White, file.Type),
-		"size":       styles.C(styles.Colors.White, humanize.Bytes(file.Size)),
-		"visibility": visibility,
+		"name":        styles.C(styles.Colors.White, file.Name),
+		"description": styles.C(styles.Colors.White, file.Description),
+		"type":        styles.C(styles.Colors.White, file.Type),
+		"size":        styles.C(styles.Colors.White, humanize.Bytes(file.Size)),
+		"visibility":  visibility,
 	}
 	for k, v := range kvp {
 		key := styles.C(styles.Colors.Muted, k+": ")
@@ -381,22 +402,16 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				Type:    renderer.DetectFileType(content, flags.Extension, h.Config.EnableGuesser),
 			}
 
-			if flags.Name != "" {
-				file.ID = flags.Name
-			}
-
-			dupe, err := h.DB.FindFile(sesh.Context(), flags.Name)
-			if err != nil {
-				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
-				return
-			}
-
-			if dupe != nil {
-				file.ID = file.ID + "-" + id.New()
+			if flags.Description != "" {
+				if err := file.SetDescription(flags.Description); err != nil {
+					sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
+					return
+				}
 			}
 
 			if err := file.SetContent(content, h.Config.FileCompression); err != nil {
 				sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
+				return
 			}
 
 			if err := h.DB.CreateFile(sesh.Context(), &file, h.Config.Limits.FilesPerUser); err != nil {

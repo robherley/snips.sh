@@ -66,6 +66,14 @@ table "files" {
   column "size" {
     type = integer
   }
+  column "name" {
+    type = text
+    default = ""
+  }
+  column "description" {
+    type = text
+    default = ""
+  }
   column "content" {
     type = blob
   }

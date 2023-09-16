@@ -8,7 +8,6 @@ import (
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	api_v1 "github.com/robherley/snips.sh/internal/http/api/v1"
-	"github.com/rs/zerolog/log"
 )
 
 type Service struct {
@@ -24,15 +23,8 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	router.Use(WithMetrics)
 	router.Use(WithRecover)
 
-	if cfg.ListIndex && cfg.EnableApi {
-		router.Get("/", ListHandler(cfg, database, assets))
-	} else {
-		if cfg.ListIndex && !cfg.EnableApi {
-			log.Warn().Bool("ListIndex", cfg.ListIndex).Bool("EnableApi", cfg.EnableApi).Msg("cannot list index without enabling api")
-		}
-
-		router.Get("/", DocHandler(assets))
-	}
+	router.Get("/", DocHandler(assets))
+	router.Get("/feed", FeedHandler(cfg, database, assets))
 
 	router.Get("/docs/{name}", DocHandler(assets))
 	router.Get("/health", HealthHandler)

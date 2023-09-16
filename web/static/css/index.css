@@ -189,6 +189,14 @@ a:hover {
   flex: 1;
 }
 
+.file-header .file-details span {
+  width: 100%;
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: var(--border);
+}
+
 .file-header .file-header-link {
   padding: 0.5rem 1rem;
   border-left: var(--border);
@@ -225,7 +233,7 @@ a:hover {
   }
 }
 
-#list-snips {
+#feed {
   background-color: var(--color-black);
   border: var(--border);
   border-radius: var(--border-radius);
@@ -233,7 +241,7 @@ a:hover {
   flex-direction: column;
 }
 
-#list-snips>div {
+#feed>div {
   padding: 1rem;
   color: var(--color-gray-9);
 }
