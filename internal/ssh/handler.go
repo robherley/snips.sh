@@ -228,7 +228,6 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 	if err := flags.Parse(sesh.Stderr(), args); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			log.Warn().Err(err).Msg("invalid user specified flags")
-			flags.PrintDefaults()
 		}
 		return
 	}
