@@ -35,7 +35,8 @@ func (km keyMap) FullHelp() [][]key.Binding {
 }
 
 func newKeyMap(submitted bool) keyMap {
-	km := keyMap{
+	return keyMap{
+		submitted: submitted,
 		Help: key.NewBinding(
 			key.WithKeys("?"),
 			key.WithHelp("?", "help"),
@@ -53,7 +54,4 @@ func newKeyMap(submitted bool) keyMap {
 			key.WithHelp("q", "quit"),
 		),
 	}
-
-	km.submitted = submitted
-	return km
 }
