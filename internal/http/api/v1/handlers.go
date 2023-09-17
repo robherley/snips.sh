@@ -11,7 +11,7 @@ import (
 	"github.com/robherley/snips.sh/internal/logger"
 )
 
-// GetSnips
+// GetFeed
 // Retrieve a list of snips on the server, paginated, in date created DESC by
 // default.
 // Ideal utilisation, when trying to view all snips, is to iterate through pages
