@@ -1,0 +1,21 @@
+{{ define "title" }}Snips Feed{{ end }}
+{{ define "description" }}Latest Snips{{ end }}
+
+{{ define "content" }}
+<div id="feed">
+  {{ range .Snips }}
+  <div>
+    <span>
+      <a href="f/{{ .ID }}">{{ .ID }}</a>
+      {{ if .Type }} ({{ .Type}}){{ end }}
+    </span>
+    {{ if .Size }}<span>{{ humanizeFileSize .Size }}</span>{{ end }}
+    {{ if .UpdatedAt }}<span>modified: {{ humanizeTimestamp .UpdatedAt }}</span>{{ end }}
+  </div>
+  {{ else }}
+  <div>
+    <span>No Snips</span>
+  </div>
+  {{ end }}
+</div>
+{{ end }}

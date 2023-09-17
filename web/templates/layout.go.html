@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta property="og:title" content="{{ template "title" . }} - snips.sh" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="snips.sh" />
+  <meta property="og:description" content="{{ template "description" . }}snips.sh is a free, anonymous, open source,
+    snippet hosting service" />
+  <meta property="description" content="{{ template "description" . }}snips.sh is a free, anonymous, open source,
+    snippet hosting service" />
+  <meta name="theme-color" content="#0ac5b2" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>">
+  <title>{{ template "title" .}} - snips.sh</title>
+  <link rel="stylesheet" href="/assets/index.css">
+  <script type="module" src="/assets/index.js"></script>
+  {{ ExtendedHeadContent }}
+</head>
+
+<body>
+  <div class="stripes"></div>
+  <div class="container">
+    <h1 class="title"><a href="/">snips<span class="sh">.sh</span></a></h1>
+    {{ template "content" . }}
+  </div>
+  <footer class="file-footer muted">
+    <div style="margin-bottom:0.75rem;">
+      snips.sh is a free, anonymous, open source, snippet hosting service
+    </div>
+    <div>
+      <a href="/">about</a> | <a href="https://github.com/robherley/snips.sh">source code</a> | <a
+        href="/docs/terms-of-service.md">terms of service</a> | <a href="/docs/acceptable-use-policy.md">use
+        policy</a>
+    </div>
+  </footer>
+</body>
+
+</html>

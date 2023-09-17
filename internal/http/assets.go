@@ -10,7 +10,9 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/rs/zerolog/log"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
@@ -18,7 +20,7 @@ import (
 )
 
 const (
-	tmplPattern = "web/templates/*"
+	tmplPath = "web/templates/"
 
 	docsPath = "docs/"
 
@@ -27,6 +29,9 @@ const (
 
 	jsPath = "web/static/js"
 	jsMime = "application/javascript"
+
+	FileTemplate = iota
+	FeedTemplate = iota
 )
 
 var (
@@ -44,7 +49,7 @@ var (
 
 type Assets interface {
 	Doc(filename string) ([]byte, error)
-	Template() *template.Template
+	Template(which int) *template.Template
 	ServeJS(w http.ResponseWriter, r *http.Request)
 	ServeCSS(w http.ResponseWriter, r *http.Request)
 }
@@ -55,7 +60,7 @@ type StaticAssets struct {
 	readme []byte
 	css    []byte
 	js     []byte
-	tmpl   *template.Template
+	tmpl   map[int]*template.Template
 	mini   *minify.M
 }
 
@@ -96,14 +101,29 @@ func NewAssets(webFS fs.FS, docsFS fs.FS, readme []byte, extendHeadFile string) 
 		}
 	}
 
-	tmpl := template.New("file")
-	tmpl.Funcs(template.FuncMap{
+	templateFuncs := template.FuncMap{
 		"ExtendedHeadContent": func() template.HTML {
 			return template.HTML(extendHeadContent)
 		},
-	})
+		"humanizeFileSize": func(size uint64) string {
+			return humanize.Bytes(uint64(size))
+		},
+		"humanizeTimestamp": func(t time.Time) string {
+			return humanize.Time(t)
+		},
+	}
 
-	if assets.tmpl, err = tmpl.ParseFS(webFS, tmplPattern); err != nil {
+	assets.tmpl = make(map[int]*template.Template, 2)
+
+	fileTmpl := template.New("file")
+	fileTmpl.Funcs(templateFuncs)
+	if assets.tmpl[FileTemplate], err = fileTmpl.ParseFS(webFS, tmplPath+"layout.go.html", tmplPath+"file.go.html"); err != nil {
+		return nil, err
+	}
+
+	feedTmpl := template.New("feed")
+	feedTmpl.Funcs(templateFuncs)
+	if assets.tmpl[FeedTemplate], err = feedTmpl.ParseFS(webFS, tmplPath+"layout.go.html", tmplPath+"feed.go.html"); err != nil {
 		return nil, err
 	}
 
@@ -133,8 +153,8 @@ func (a *StaticAssets) Doc(filename string) ([]byte, error) {
 	return io.ReadAll(file)
 }
 
-func (a *StaticAssets) Template() *template.Template {
-	return a.tmpl
+func (a *StaticAssets) Template(which int) *template.Template {
+	return a.tmpl[which]
 }
 
 func (a *StaticAssets) ServeJS(w http.ResponseWriter, r *http.Request) {

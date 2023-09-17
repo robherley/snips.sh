@@ -232,3 +232,29 @@ a:hover {
     padding: 0 0.5rem;
   }
 }
+
+#feed {
+  background-color: var(--color-black);
+  border: var(--border);
+  border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: column;
+}
+
+#feed > div {
+  padding: 1rem;
+  color: var(--color-gray-9);
+  display: flex;
+}
+
+#feed > div span {
+  margin-left: 1rem;
+}
+
+#feed > div span:first-child {
+  margin-left: 0;
+}
+
+#feed > div span:last-child {
+  margin-left: auto;
+}

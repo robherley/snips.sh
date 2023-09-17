@@ -384,6 +384,61 @@ func (_c *MockDB_FindUser_Call) RunAndReturn(run func(context.Context, string) (
 	return _c
 }
 
+// LatestPublicFiles provides a mock function with given fields: ctx, page
+func (_m *MockDB) LatestPublicFiles(ctx context.Context, page int) ([]*snips.File, error) {
+	ret := _m.Called(ctx, page)
+
+	var r0 []*snips.File
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]*snips.File, error)); ok {
+		return rf(ctx, page)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []*snips.File); ok {
+		r0 = rf(ctx, page)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*snips.File)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, page)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockDB_LatestPublicFiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LatestPublicFiles'
+type MockDB_LatestPublicFiles_Call struct {
+	*mock.Call
+}
+
+// LatestPublicFiles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - page int
+func (_e *MockDB_Expecter) LatestPublicFiles(ctx interface{}, page interface{}) *MockDB_LatestPublicFiles_Call {
+	return &MockDB_LatestPublicFiles_Call{Call: _e.mock.On("LatestPublicFiles", ctx, page)}
+}
+
+func (_c *MockDB_LatestPublicFiles_Call) Run(run func(ctx context.Context, page int)) *MockDB_LatestPublicFiles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int))
+	})
+	return _c
+}
+
+func (_c *MockDB_LatestPublicFiles_Call) Return(_a0 []*snips.File, _a1 error) *MockDB_LatestPublicFiles_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockDB_LatestPublicFiles_Call) RunAndReturn(run func(context.Context, int) ([]*snips.File, error)) *MockDB_LatestPublicFiles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Migrate provides a mock function with given fields: ctx
 func (_m *MockDB) Migrate(ctx context.Context) error {
 	ret := _m.Called(ctx)
