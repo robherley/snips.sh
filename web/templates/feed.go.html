@@ -4,14 +4,7 @@
 {{ define "content" }}
 <div id="feed">
   {{ range .Snips }}
-  <div>
-    <span>
-      <a href="f/{{ .ID }}">{{ .ID }}</a>
-      {{ if .Type }} ({{ .Type}}){{ end }}
-    </span>
-    {{ if .Size }}<span>{{ humanizeFileSize .Size }}</span>{{ end }}
-    {{ if .UpdatedAt }}<span>modified: {{ humanizeTimestamp .UpdatedAt }}</span>{{ end }}
-  </div>
+  {{ template "file-details" . }}
   {{ else }}
   <div>
     <span>No Snips</span>

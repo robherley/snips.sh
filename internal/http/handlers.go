@@ -99,10 +99,12 @@ func DocHandler(assets Assets) http.HandlerFunc {
 		}
 
 		vars := map[string]interface{}{
-			"FileID":        name,
-			"ContentLength": len(content),
-			"FileType":      "markdown",
-			"HTML":          md,
+			"Snip": &snips.File{
+				ID:   name,
+				Size: uint64(len(content)),
+				Type: "markdown",
+			},
+			"HTML": md,
 		}
 
 		err = assets.Template(FileTemplate).ExecuteTemplate(w, "layout.go.html", vars)
@@ -198,16 +200,9 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 		}
 
 		vars := map[string]interface{}{
-			"FileID":          file.ID,
-			"FileName":        file.Name,
-			"FileDescription": file.Description,
-			"FileSize":        file.Size,
-			"CreatedAt":       file.CreatedAt,
-			"UpdatedAt":       file.UpdatedAt,
-			"FileType":        strings.ToLower(file.Type),
-			"RawHREF":         rawHref,
-			"HTML":            html,
-			"Private":         file.Private,
+			"Snip":    file,
+			"RawHREF": rawHref,
+			"HTML":    html,
 		}
 
 		err = tmpl.ExecuteTemplate(w, "layout.go.html", vars)

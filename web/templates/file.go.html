@@ -3,16 +3,12 @@
 
 {{ define "content" }}
 <nav class="file-header">
-  <div class="file-details">
-    file: <a href="#">{{ .FileID }}</a>
-    {{ if .FileType }}({{ .FileType }}){{ end }}{{ if .FileSize }} &middot; {{ humanizeFileSize .FileSize }}{{ end }}
-    {{ if .UpdatedAt }} &middot; modified: {{ humanizeTimestamp .UpdatedAt }} {{ end }}
-    {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}
-  </div>
+  {{ template "file-details" .Snip }}
   <a class="file-header-link" id="to-top" href="#" data-hide aria-label="go to top">&#8593; top</a>
   {{ if .RawHREF }}
   <a class="file-header-link" href="{{ .RawHREF }}" aria-label="view raw file">view raw</a>
   {{ end }}
+  {{ if .Snip.Description }}<span class="description">{{ .Snip.Description }}</span>{{ end }}
 </nav>
 <article class="file-content">
   {{ .HTML }}

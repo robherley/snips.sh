@@ -117,13 +117,13 @@ func NewAssets(webFS fs.FS, docsFS fs.FS, readme []byte, extendHeadFile string) 
 
 	fileTmpl := template.New("file")
 	fileTmpl.Funcs(templateFuncs)
-	if assets.tmpl[FileTemplate], err = fileTmpl.ParseFS(webFS, tmplPath+"layout.go.html", tmplPath+"file.go.html"); err != nil {
+	if assets.tmpl[FileTemplate], err = fileTmpl.ParseFS(webFS, tmplPath+"layout.go.html", tmplPath+"components/*.go.html", tmplPath+"file.go.html"); err != nil {
 		return nil, err
 	}
 
 	feedTmpl := template.New("feed")
 	feedTmpl.Funcs(templateFuncs)
-	if assets.tmpl[FeedTemplate], err = feedTmpl.ParseFS(webFS, tmplPath+"layout.go.html", tmplPath+"feed.go.html"); err != nil {
+	if assets.tmpl[FeedTemplate], err = feedTmpl.ParseFS(webFS, tmplPath+"layout.go.html", tmplPath+"components/*.go.html", tmplPath+"feed.go.html"); err != nil {
 		return nil, err
 	}
 

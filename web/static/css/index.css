@@ -173,6 +173,7 @@ a:hover {
   position: sticky;
   top: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   font-family: var(--font-mono);
@@ -183,23 +184,37 @@ a:hover {
   background-color: var(--color-black);
 }
 
-.file-header .file-details {
-  padding: 1rem;
-  color: var(--color-gray-9);
-  flex: 1;
-}
-
 .file-header .file-header-link {
   padding: 0.5rem 1rem;
   border-left: var(--border);
 }
 
-.file-header .file-details span {
+.file-header span.description {
   width: 100%;
   display: inline-block;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
+  padding: 1rem;
   border-top: var(--border);
+  color: var(--color-gray-9);
+}
+
+.file-header span.description:after {
+  content: "";
+}
+
+.file-details {
+  padding: 1rem;
+  color: var(--color-gray-9);
+  flex: 1;
+}
+
+.file-details span:after {
+  display: inline-block;
+  margin: 0 .5rem;
+  content: "·";
+}
+
+.file-details span:last-child:after {
+  content: "";
 }
 
 .file-content {
@@ -245,16 +260,4 @@ a:hover {
   padding: 1rem;
   color: var(--color-gray-9);
   display: flex;
-}
-
-#feed > div span {
-  margin-left: 1rem;
-}
-
-#feed > div span:first-child {
-  margin-left: 0;
-}
-
-#feed > div span:last-child {
-  margin-left: auto;
 }
