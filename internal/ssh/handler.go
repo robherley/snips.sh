@@ -21,7 +21,6 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/snips"
@@ -395,7 +394,6 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 			}
 
 			file := snips.File{
-				ID:      id.New(),
 				Private: flags.Private,
 				Size:    size,
 				UserID:  sesh.UserID(),

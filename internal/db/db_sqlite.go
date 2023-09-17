@@ -160,7 +160,6 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 	const query = `
 		UPDATE files
 		SET
-			id = ?,
 			updated_at = ?,
 			name = ?,
 			description = ?,
@@ -172,7 +171,6 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 	`
 
 	if _, err := s.ExecContext(ctx, query,
-		file.ID,
 		file.UpdatedAt,
 		file.Name,
 		file.Description,
