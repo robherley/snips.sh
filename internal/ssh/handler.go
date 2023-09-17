@@ -284,6 +284,7 @@ func (h *SessionHandler) ChangeNameOrDesc(sesh *UserSession, file *snips.File) {
 
 	if flags.Name == "" && flags.Description == "" {
 		// no changes to be made
+		sesh.Error(ErrEmptyNameDescFields, "Unable to modify file", "You need to provide either a name or desc flag")
 		return
 	}
 
