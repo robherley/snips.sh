@@ -402,6 +402,10 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				Type:    renderer.DetectFileType(content, flags.Extension, h.Config.EnableGuesser),
 			}
 
+			if flags.Name != "" {
+				file.Name = flags.Name
+			}
+
 			if flags.Description != "" {
 				if err := file.SetDescription(flags.Description); err != nil {
 					sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
