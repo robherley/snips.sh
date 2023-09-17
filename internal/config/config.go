@@ -30,6 +30,10 @@ type Config struct {
 	// https://github.com/robherley/snips.sh/issues/39
 	EnableGuesser bool `default:"True" desc:"enable guesslang model to detect file types"`
 
+	// Generally more geared towards self-hosted instances, or public instances
+	// with modifications to snips.sh.
+	EnableApi bool `default:"False" desc:"enable the snips.sh api"`
+
 	HMACKey string `default:"hmac-and-cheese" desc:"symmetric key used to sign URLs"`
 
 	FileCompression bool `default:"True" desc:"enable compression of file contents"`

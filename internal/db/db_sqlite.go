@@ -372,3 +372,53 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 
 	return user, nil
 }
+
+func (s *Sqlite) LatestPublicFiles(ctx context.Context, page int) ([]*snips.File, error) {
+	const query = `
+		SELECT
+			id,
+			created_at,
+			updated_at,
+			size,
+			private,
+			type,
+			user_id
+		FROM files
+		WHERE private = 0
+		ORDER BY created_at DESC
+		LIMIT ?, 10
+	`
+
+	if page < 0 {
+		page = 0
+	}
+
+	files := make([]*snips.File, 0)
+	rows, err := s.QueryContext(ctx, query, page)
+	if err != nil {
+		return files, err
+	}
+
+	for rows.Next() {
+		file := &snips.File{}
+		if err := rows.Scan(
+			&file.ID,
+			&file.CreatedAt,
+			&file.UpdatedAt,
+			&file.Size,
+			&file.Private,
+			&file.Type,
+			&file.UserID,
+		); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+
+			return nil, err
+		}
+
+		files = append(files, file)
+	}
+
+	return files, nil
+}
