@@ -19,15 +19,19 @@ var (
 type UploadFlags struct {
 	*flag.FlagSet
 
-	Private   bool
-	Extension string
-	TTL       time.Duration
+	Name        string
+	Description string
+	Private     bool
+	Extension   string
+	TTL         time.Duration
 }
 
 func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
 	uf.FlagSet = flag.NewFlagSet("", flag.ContinueOnError)
 	uf.SetOutput(out)
 
+	uf.StringVar(&uf.Name, "name", "", "set a description for your file")
+	uf.StringVar(&uf.Description, "desc", "", "set a description for your file")
 	uf.BoolVar(&uf.Private, "private", false, "only accessible via creator or signed urls (optional)")
 	uf.StringVar(&uf.Extension, "ext", "", "set the file extension (optional)")
 	addDurationFlag(uf.FlagSet, &uf.TTL, "ttl", 0, "lifetime of the signed url (optional)")
@@ -41,6 +45,29 @@ func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
 	}
 
 	uf.Extension = strings.TrimPrefix(strings.ToLower(uf.Extension), ".")
+	uf.Name = strings.Trim(uf.Name, " ")
+	uf.Description = strings.Trim(uf.Description, " ")
+
+	return nil
+}
+
+type ChangeField struct {
+	*flag.FlagSet
+
+	Name        string
+	Description string
+}
+
+func (sf *ChangeField) Parse(out io.Writer, args []string) error {
+	sf.FlagSet = flag.NewFlagSet("", flag.ContinueOnError)
+	sf.SetOutput(out)
+
+	sf.FlagSet.StringVar(&sf.Name, "name", "", "provide a name for your snippet")
+	sf.FlagSet.StringVar(&sf.Description, "desc", "", "provide a description for your snippet")
+
+	if err := sf.FlagSet.Parse(args); err != nil {
+		return err
+	}
 
 	return nil
 }

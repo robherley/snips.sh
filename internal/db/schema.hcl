@@ -63,6 +63,14 @@ table "files" {
   column "updated_at" {
     type = datetime
   }
+  column "name" {
+    type = text
+    default = ""
+  }
+  column "description" {
+    type = text
+    default = ""
+  }
   column "size" {
     type = integer
   }

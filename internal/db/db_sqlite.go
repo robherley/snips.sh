@@ -64,6 +64,8 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 			id,
 			created_at,
 			updated_at,
+			name,
+			description,
 			size,
 			content,
 			private,
@@ -80,6 +82,8 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 		&file.ID,
 		&file.CreatedAt,
 		&file.UpdatedAt,
+		&file.Name,
+		&file.Description,
 		&file.Size,
 		&file.RawContent,
 		&file.Private,
@@ -122,18 +126,22 @@ func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount 
 			id,
 			created_at,
 			updated_at,
+			name,
+			description,
 			size,
 			content,
 			private,
 			type,
 			user_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	if _, err := s.ExecContext(ctx, insertQuery,
 		file.ID,
 		file.CreatedAt,
 		file.UpdatedAt,
+		file.Name,
+		file.Description,
 		file.Size,
 		file.RawContent,
 		file.Private,
@@ -153,6 +161,8 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 		UPDATE files
 		SET
 			updated_at = ?,
+			name = ?,
+			description = ?,
 			size = ?,
 			content = ?,
 			private = ?,
@@ -162,6 +172,8 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 
 	if _, err := s.ExecContext(ctx, query,
 		file.UpdatedAt,
+		file.Name,
+		file.Description,
 		file.Size,
 		file.RawContent,
 		file.Private,
@@ -194,6 +206,8 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 			id,
 			created_at,
 			updated_at,
+			name,
+			description,
 			size,
 			private,
 			type,
@@ -216,6 +230,8 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 			&file.ID,
 			&file.CreatedAt,
 			&file.UpdatedAt,
+			&file.Name,
+			&file.Description,
 			&file.Size,
 			&file.Private,
 			&file.Type,

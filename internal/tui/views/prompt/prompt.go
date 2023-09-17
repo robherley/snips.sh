@@ -96,7 +96,7 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch p.kind {
-	case GenerateSignedURL, DeleteFile, ChangeVisibility:
+	case GenerateSignedURL, DeleteFile, ChangeName, ChangeDescription, ChangeVisibility:
 		p.textInput, cmd = p.textInput.Update(msg)
 		commands = append(commands, cmd)
 	case ChangeExtension:
@@ -131,6 +131,10 @@ func (p Prompt) renderPrompt() string {
 	switch p.kind {
 	case ChangeExtension:
 		question = "What extension do you want to change the file to?"
+	case ChangeName:
+		question = "What would you like to set the name to?"
+	case ChangeDescription:
+		question = "What would you like to set the description to?"
 	case ChangeVisibility:
 		question = fmt.Sprintf("Do you want to make the file %q ", p.file.ID)
 		if p.file.Private {
@@ -155,7 +159,7 @@ func (p Prompt) renderPrompt() string {
 
 	var prompt string
 	switch p.kind {
-	case GenerateSignedURL, DeleteFile, ChangeVisibility:
+	case GenerateSignedURL, DeleteFile, ChangeName, ChangeDescription, ChangeVisibility:
 		prompt = p.textInput.View()
 	case ChangeExtension:
 		prompt = p.extensionSelector.View()
@@ -234,6 +238,43 @@ func (p Prompt) handleSubmit() tea.Cmd {
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q extension set to %q", p.file.ID, item.name))
 		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
+
+	// the only difference between change name and description is which field is
+	// being updated.
+	case ChangeName, ChangeDescription:
+		log.Info().Msg("changing name or description")
+
+		var err error
+		var which string
+		var old string
+
+		val := p.textInput.Value()
+
+		switch p.kind {
+		case ChangeName:
+			which = "name"
+			old = p.file.Name
+			p.file.Name = val
+		case ChangeDescription:
+			which = "description"
+			old = p.file.Description
+			err = p.file.SetDescription(val)
+			if err != nil {
+				return SetPromptErrorCmd(err)
+			}
+		}
+
+		log.Info().Str("which", which).Msg("updating file")
+		err = p.db.UpdateFile(p.ctx, p.file)
+		if err != nil {
+			return SetPromptErrorCmd(err)
+		}
+
+		metrics.IncrCounterWithLabels([]string{"file", "change"}, 1, []metrics.Label{{Name: "which", Value: which}})
+
+		msg := styles.C(styles.Colors.Green, fmt.Sprintf("update %s from %q to %q", which, old, val))
+		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
+
 	case GenerateSignedURL:
 		dur, err := time.ParseDuration(p.textInput.Value())
 		if err != nil {
@@ -251,6 +292,7 @@ func (p Prompt) handleSubmit() tea.Cmd {
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("%s\n\nexpires at: %s", url.String(), expires.Format(time.RFC3339)))
 		commands = append(commands, SetPromptFeedbackCmd(msg, true))
+
 	case DeleteFile:
 		if cmd := p.validateInputIsFileID(); cmd != nil {
 			return cmd
@@ -266,7 +308,9 @@ func (p Prompt) handleSubmit() tea.Cmd {
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q deleted", p.file.ID))
 		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
+
 	default:
+		log.Warn().Str("kind", fmt.Sprintf("%v", p.kind)).Msg("kind unexpected")
 		return nil
 	}
 

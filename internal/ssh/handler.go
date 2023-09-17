@@ -152,8 +152,10 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 		h.DeleteFile(sesh, file)
 	case "sign":
 		h.SignFile(sesh, file)
+	case "modify":
+		h.ChangeNameOrDesc(sesh, file)
 	default:
-		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %q", args[0])
+		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %q. Known commands: rm, sign, modify", args[0])
 	}
 }
 
@@ -260,6 +262,77 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 			s.MarginTop(1)
 		},
 	}
+	noti.Render(sesh)
+}
+
+func (h *SessionHandler) ChangeNameOrDesc(sesh *UserSession, file *snips.File) {
+	var err error
+
+	log := logger.From(sesh.Context())
+
+	flags := ChangeField{}
+
+	args := sesh.Command()[1:]
+
+	if err := flags.Parse(sesh.Stderr(), args); err != nil {
+		if !errors.Is(err, flag.ErrHelp) {
+			log.Warn().Err(err).Msg("invalid user specified flags")
+			flags.PrintDefaults()
+		}
+		return
+	}
+
+	if flags.Name == "" && flags.Description == "" {
+		// no changes to be made
+		return
+	}
+
+	if flags.Name != "" {
+		file.Name = flags.Name
+	}
+
+	if flags.Description != "" {
+		err = file.SetDescription(flags.Description)
+		if err != nil {
+			log.Warn().Err(err).Msg("description failed validation")
+			return
+		}
+	}
+
+	err = h.DB.UpdateFile(sesh.Context(), file)
+	if err != nil {
+		log.Warn().Err(err).Msg("could not update file")
+		return
+	}
+
+	metrics.IncrCounter([]string{"file", "modify file"}, 1)
+
+	noti := Notification{
+		Color: styles.Colors.Cyan,
+		Title: "File updated 📝",
+		WithStyle: func(s *lipgloss.Style) {
+			s.MarginTop(1)
+		},
+	}
+	visibility := styles.C(styles.Colors.White, "public")
+	if file.Private {
+		visibility = styles.C(styles.Colors.Red, "private")
+	}
+
+	attrs := make([]string, 0)
+	kvp := map[string]string{
+		"name":        styles.C(styles.Colors.White, file.Name),
+		"description": styles.C(styles.Colors.White, file.Description),
+		"type":        styles.C(styles.Colors.White, file.Type),
+		"size":        styles.C(styles.Colors.White, humanize.Bytes(file.Size)),
+		"visibility":  visibility,
+	}
+	for k, v := range kvp {
+		key := styles.C(styles.Colors.Muted, k+": ")
+		attrs = append(attrs, key+v)
+	}
+	sort.Strings(attrs)
+	noti.Messagef("id: %s\n%s", styles.C(styles.Colors.White, file.ID), strings.Join(attrs, styles.C(styles.Colors.Muted, " • ")))
 	noti.Render(sesh)
 }
 
