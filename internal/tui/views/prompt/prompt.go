@@ -115,7 +115,7 @@ func (p Prompt) View() string {
 }
 
 func (p Prompt) Keys() help.KeyMap {
-	return keys
+	return newKeyMap(p.finished)
 }
 
 func (p *Prompt) reset() {
