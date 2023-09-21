@@ -49,6 +49,32 @@ func MetaHandler(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
+func FeedHandler(config *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
+		log := logger.From(r.Context())
+
+		latestSnips, err := database.LatestPublicFiles(r.Context(), 0, 10)
+		if err != nil {
+			log.Error().Err(err).Msg("unable to get latest snips")
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		vars := map[string]interface{}{
+			"Snips": latestSnips,
+		}
+
+		err = assets.Template().ExecuteTemplate(w, "layout.go.html", vars)
+		if err != nil {
+			log.Error().Err(err).Msg("unable to render template")
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
 func DocHandler(assets Assets) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())

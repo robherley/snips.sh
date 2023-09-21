@@ -17,14 +17,16 @@ const (
 )
 
 type File struct {
-	ID         string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Size       uint64
-	RawContent []byte
-	Private    bool
-	Type       string
-	UserID     string
+	ID          string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Name        string
+	Description string
+	Size        uint64
+	RawContent  []byte `json:"-"`
+	Private     bool
+	Type        string
+	UserID      string
 }
 
 func (f *File) IsBinary() bool {

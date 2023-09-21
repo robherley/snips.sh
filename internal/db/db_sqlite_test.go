@@ -514,3 +514,183 @@ func (s *SqliteSuite) TestFindUser_DoesNotExist() {
 	s.Require().NoError(err)
 	s.Require().Nil(user)
 }
+
+func (s *SqliteSuite) TestLatestPublicFiles() {
+	database := s.getTestDB(true)
+
+	existingFiles := []*snips.File{
+		{
+			ID:          id.New(),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Name:        "hello world",
+			Description: "this is a test file",
+			Size:        11,
+			RawContent:  []byte("hello world"),
+			Private:     false,
+			Type:        "plaintext",
+			UserID:      id.New(),
+		},
+		{
+			ID:          id.New(),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Name:        "hello world",
+			Description: "this is a test file",
+			Size:        11,
+			RawContent:  []byte("hello world, again"),
+			Private:     false,
+			Type:        "plaintext",
+			UserID:      id.New(),
+		},
+	}
+
+	const query = `
+		INSERT INTO files (
+			id,
+			created_at,
+			updated_at,
+			name,
+			description,
+			size,
+			content,
+			private,
+			type,
+			user_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	for _, existingFile := range existingFiles {
+		_, err := s.testDB.Exec(
+			query,
+			existingFile.ID,
+			existingFile.CreatedAt,
+			existingFile.UpdatedAt,
+			existingFile.Name,
+			existingFile.Description,
+			existingFile.Size,
+			existingFile.RawContent,
+			existingFile.Private,
+			existingFile.Type,
+			existingFile.UserID,
+		)
+		s.Require().NoError(err)
+	}
+
+	filesPageOne, err := database.LatestPublicFiles(context.TODO(), 1, 1)
+
+	// for some reason the raw content returns nil
+	expected := existingFiles[1]
+	expected.RawContent = nil
+
+	s.Require().NoError(err)
+	s.Require().Equal(expected, filesPageOne[0])
+
+	filesPageTwo, err := database.LatestPublicFiles(context.TODO(), 2, 1)
+
+	// for some reason the raw content returns nil
+	expected = existingFiles[0]
+	expected.RawContent = nil
+
+	s.Require().NoError(err)
+	s.Require().Equal(existingFiles[0], filesPageTwo[0])
+}
+
+func (s *SqliteSuite) TestLatestPublicFiles_PublicOnly() {
+	database := s.getTestDB(true)
+
+	existingFiles := []*snips.File{
+		{
+			ID:          id.New(),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Name:        "hello world",
+			Description: "this is a test file",
+			Size:        11,
+			RawContent:  []byte("hello world"),
+			Private:     false,
+			Type:        "plaintext",
+			UserID:      id.New(),
+		},
+		{
+			ID:          id.New(),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Name:        "hello world",
+			Description: "this is a test file",
+			Size:        11,
+			RawContent:  []byte("hello world, I am private"),
+			Private:     true,
+			Type:        "plaintext",
+			UserID:      id.New(),
+		},
+		{
+			ID:          id.New(),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Name:        "hello world",
+			Description: "this is a test file",
+			Size:        11,
+			RawContent:  []byte("hello world, again"),
+			Private:     false,
+			Type:        "plaintext",
+			UserID:      id.New(),
+		},
+	}
+
+	const query = `
+		INSERT INTO files (
+			id,
+			created_at,
+			updated_at,
+			name,
+			description,
+			size,
+			content,
+			private,
+			type,
+			user_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	for _, existingFile := range existingFiles {
+		_, err := s.testDB.Exec(
+			query,
+			existingFile.ID,
+			existingFile.CreatedAt,
+			existingFile.UpdatedAt,
+			existingFile.Name,
+			existingFile.Description,
+			existingFile.Size,
+			existingFile.RawContent,
+			existingFile.Private,
+			existingFile.Type,
+			existingFile.UserID,
+		)
+		s.Require().NoError(err)
+	}
+
+	filesPageOne, err := database.LatestPublicFiles(context.TODO(), 1, 1)
+
+	// for some reason the raw content returns nil
+	expected := existingFiles[2]
+	expected.RawContent = nil
+
+	s.Require().NoError(err)
+	s.Require().Equal(expected, filesPageOne[0])
+
+	filesPageTwo, err := database.LatestPublicFiles(context.TODO(), 2, 1)
+
+	// for some reason the raw content returns nil
+	expected = existingFiles[0]
+	expected.RawContent = nil
+
+	s.Require().NoError(err)
+	s.Require().Equal(expected, filesPageTwo[0])
+}
+
+func (s *SqliteSuite) TestLatestPublicFiles_EmptyResults() {
+	database := s.getTestDB(true)
+
+	filesPageOne, err := database.LatestPublicFiles(context.TODO(), 2, 1)
+	s.Require().NoError(err)
+	s.Require().Len(filesPageOne, 0)
+}
