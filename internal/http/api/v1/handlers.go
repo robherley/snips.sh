@@ -91,7 +91,7 @@ func GetFile(database db.DB) func(http.ResponseWriter, *http.Request) {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-
+		w.Header().Set("Content-Type", "application/json")
 		w.Write(filesMarshalled)
 	}
 }
