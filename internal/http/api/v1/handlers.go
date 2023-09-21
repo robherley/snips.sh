@@ -31,7 +31,7 @@ func GetFeed(database db.DB) func(http.ResponseWriter, *http.Request) {
 
 		files, err := database.LatestPublicFiles(r.Context(), page, 10)
 		if err != nil {
-			log.Error().Err(err).Msg("unable to render template")
+			log.Error().Err(err).Msg("unable to get latest files")
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
