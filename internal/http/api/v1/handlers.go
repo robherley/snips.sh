@@ -31,18 +31,18 @@ func GetFeed(database db.DB) func(http.ResponseWriter, *http.Request) {
 
 		files, err := database.LatestPublicFiles(r.Context(), page, 10)
 		if err != nil {
-			log.Error().Err(err).Msg("unable to render template")
+			log.Error().Err(err).Msg("unable to get latest files")
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 
 		filesMarshalled, err := json.Marshal(files)
 		if err != nil {
-			log.Error().Err(err).Msg("unable to render template")
+			log.Error().Err(err).Msg("unable to encode json")
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-
+		w.Header().Set("Content-Type", "application/json")
 		w.Write(filesMarshalled)
 	}
 }
@@ -69,7 +69,7 @@ func GetFile(database db.DB) func(http.ResponseWriter, *http.Request) {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-
+		w.Header().Set("Content-Type", "application/json")
 		w.Write(filesMarshalled)
 	}
 }
