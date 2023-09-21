@@ -373,7 +373,7 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 	return user, nil
 }
 
-func (s *Sqlite) LatestPublicFiles(ctx context.Context, page int) ([]*snips.File, error) {
+func (s *Sqlite) LatestPublicFiles(ctx context.Context, page int, limit int) ([]*snips.File, error) {
 	const query = `
 		SELECT
 			id,
@@ -388,15 +388,21 @@ func (s *Sqlite) LatestPublicFiles(ctx context.Context, page int) ([]*snips.File
 		FROM files
 		WHERE private = 0
 		ORDER BY created_at DESC
-		LIMIT ?, 10
+		LIMIT ?, ?
 	`
 
+	// just a precaution
+	if limit < 0 {
+		limit = 0
+	}
+
+	page -= 1
 	if page < 0 {
 		page = 0
 	}
 
 	files := make([]*snips.File, 0)
-	rows, err := s.QueryContext(ctx, query, page)
+	rows, err := s.QueryContext(ctx, query, page*limit, limit)
 	if err != nil {
 		return files, err
 	}

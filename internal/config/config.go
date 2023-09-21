@@ -32,7 +32,7 @@ type Config struct {
 
 	// Generally more geared towards self-hosted instances, or public instances
 	// with modifications to snips.sh.
-	EnableApi bool `default:"False" desc:"enable the snips.sh api"`
+	EnableAPI bool `default:"False" desc:"enable the snips.sh api"`
 
 	HMACKey string `default:"hmac-and-cheese" desc:"symmetric key used to sign URLs"`
 

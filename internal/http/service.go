@@ -32,7 +32,7 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	router.Get("/assets/index.css", assets.ServeCSS)
 	router.Get("/meta.json", MetaHandler(cfg))
 
-	if cfg.EnableApi {
+	if cfg.EnableAPI {
 		router.Mount("/api/v1", api_v1.ApiHandler(cfg, database))
 	}
 

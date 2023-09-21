@@ -55,7 +55,7 @@ func FeedHandler(config *config.Config, database db.DB, assets Assets) http.Hand
 
 		log := logger.From(r.Context())
 
-		latestSnips, err := database.LatestPublicFiles(r.Context(), 0)
+		latestSnips, err := database.LatestPublicFiles(r.Context(), 0, 10)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to get latest snips")
 			http.Error(w, "internal error", http.StatusInternalServerError)
