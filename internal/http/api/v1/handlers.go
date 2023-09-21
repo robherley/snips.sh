@@ -51,7 +51,7 @@ func GetFeed(database db.DB) func(http.ResponseWriter, *http.Request) {
 
 		filesMarshalled, err := json.Marshal(filesReformatted)
 		if err != nil {
-			log.Error().Err(err).Msg("unable to render template")
+			log.Error().Err(err).Msg("unable to encode json")
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
