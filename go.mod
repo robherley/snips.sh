@@ -3,7 +3,7 @@ module github.com/robherley/snips.sh
 go 1.20
 
 require (
-	ariga.io/atlas v0.14.0
+	ariga.io/atlas v0.14.1
 	github.com/alecthomas/chroma/v2 v2.8.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/charmbracelet/bubbles v0.16.1
