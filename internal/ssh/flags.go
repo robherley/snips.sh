@@ -65,11 +65,7 @@ func (sf *ChangeField) Parse(out io.Writer, args []string) error {
 	sf.FlagSet.StringVar(&sf.Name, "name", "", "provide a name for your snippet")
 	sf.FlagSet.StringVar(&sf.Description, "desc", "", "provide a description for your snippet")
 
-	if err := sf.FlagSet.Parse(args); err != nil {
-		return err
-	}
-
-	return nil
+	return sf.FlagSet.Parse(args)
 }
 
 type SignFlags struct {
