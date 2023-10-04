@@ -570,7 +570,7 @@ func (s *SqliteSuite) TestLatestPublicFiles() {
 
 	filesPageOne, err := database.LatestPublicFiles(context.TODO(), 1, 1)
 
-	// for some reason the raw content returns nil
+	// raw content is expected to be nil when retrieving LatestPublicFiles
 	expected := existingFiles[1]
 	expected.RawContent = nil
 
@@ -579,7 +579,7 @@ func (s *SqliteSuite) TestLatestPublicFiles() {
 
 	filesPageTwo, err := database.LatestPublicFiles(context.TODO(), 2, 1)
 
-	// for some reason the raw content returns nil
+	// raw content is expected to be nil when retrieving LatestPublicFiles
 	expected = existingFiles[0]
 	expected.RawContent = nil
 

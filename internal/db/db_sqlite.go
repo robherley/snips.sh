@@ -396,7 +396,7 @@ func (s *Sqlite) LatestPublicFiles(ctx context.Context, page int, limit int) ([]
 		limit = 0
 	}
 
-	page -= 1
+	page--
 	if page < 0 {
 		page = 0
 	}

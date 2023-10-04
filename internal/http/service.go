@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	api_v1 "github.com/robherley/snips.sh/internal/http/api/v1"
+	apiv1 "github.com/robherley/snips.sh/internal/http/api/v1"
 )
 
 type Service struct {
@@ -24,7 +24,6 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	router.Use(WithRecover)
 
 	router.Get("/", DocHandler(assets))
-	router.Get("/feed", FeedHandler(cfg, database, assets))
 	router.Get("/docs/{name}", DocHandler(assets))
 	router.Get("/health", HealthHandler)
 	router.Get("/f/{fileID}", FileHandler(cfg, database, assets))
@@ -33,7 +32,7 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	router.Get("/meta.json", MetaHandler(cfg))
 
 	if cfg.EnableAPI {
-		router.Mount("/api/v1", api_v1.ApiHandler(cfg, database))
+		router.Mount("/api/v1", apiv1.APIHandler(database))
 	}
 
 	if cfg.Debug {

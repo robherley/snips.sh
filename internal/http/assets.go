@@ -10,7 +10,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/rs/zerolog/log"
@@ -105,12 +104,8 @@ func NewAssets(webFS fs.FS, docsFS fs.FS, readme []byte, extendHeadFile string) 
 		"ExtendedHeadContent": func() template.HTML {
 			return template.HTML(extendHeadContent)
 		},
-		"humanizeFileSize": func(size uint64) string {
-			return humanize.Bytes(uint64(size))
-		},
-		"humanizeTimestamp": func(t time.Time) string {
-			return humanize.Time(t)
-		},
+		"humanizeFileSize":  humanize.Bytes,
+		"humanizeTimestamp": humanize.Time,
 	}
 
 	assets.tmpl = make(map[int]*template.Template, 2)

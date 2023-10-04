@@ -1,4 +1,4 @@
-package api_v1
+package apiv1
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
 )
@@ -43,7 +42,7 @@ func GetFeed(database db.DB) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(filesMarshalled)
+		_, _ = w.Write(filesMarshalled)
 	}
 }
 
@@ -69,12 +68,13 @@ func GetFile(database db.DB) func(http.ResponseWriter, *http.Request) {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(filesMarshalled)
+		_, _ = w.Write(filesMarshalled)
 	}
 }
 
-func ApiHandler(cfg *config.Config, database db.DB) *chi.Mux {
+func APIHandler(database db.DB) *chi.Mux {
 	apiRouter := chi.NewMux()
 
 	apiRouter.Get("/feed", GetFeed(database))
