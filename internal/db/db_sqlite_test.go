@@ -568,7 +568,7 @@ func (s *SqliteSuite) TestLatestPublicFiles() {
 		s.Require().NoError(err)
 	}
 
-	filesPageOne, err := database.LatestPublicFiles(context.TODO(), 1, 1)
+	filesPageOne, err := database.LatestPublicFiles(context.TODO(), 0, 1)
 
 	// raw content is expected to be nil when retrieving LatestPublicFiles
 	expected := existingFiles[1]
@@ -577,7 +577,7 @@ func (s *SqliteSuite) TestLatestPublicFiles() {
 	s.Require().NoError(err)
 	s.Require().Equal(expected, filesPageOne[0])
 
-	filesPageTwo, err := database.LatestPublicFiles(context.TODO(), 2, 1)
+	filesPageTwo, err := database.LatestPublicFiles(context.TODO(), 1, 1)
 
 	// raw content is expected to be nil when retrieving LatestPublicFiles
 	expected = existingFiles[0]
@@ -650,18 +650,18 @@ func (s *SqliteSuite) TestLatestPublicFiles_PublicOnly() {
 		s.Require().NoError(err)
 	}
 
-	filesPageOne, err := database.LatestPublicFiles(context.TODO(), 1, 1)
+	filesPageOne, err := database.LatestPublicFiles(context.TODO(), 0, 1)
 
-	// for some reason the raw content returns nil
+	// raw content is expected to be nil when retrieving LatestPublicFiles
 	expected := existingFiles[2]
 	expected.RawContent = nil
 
 	s.Require().NoError(err)
 	s.Require().Equal(expected, filesPageOne[0])
 
-	filesPageTwo, err := database.LatestPublicFiles(context.TODO(), 2, 1)
+	filesPageTwo, err := database.LatestPublicFiles(context.TODO(), 1, 1)
 
-	// for some reason the raw content returns nil
+	// raw content is expected to be nil when retrieving LatestPublicFiles
 	expected = existingFiles[0]
 	expected.RawContent = nil
 
@@ -672,7 +672,7 @@ func (s *SqliteSuite) TestLatestPublicFiles_PublicOnly() {
 func (s *SqliteSuite) TestLatestPublicFiles_EmptyResults() {
 	database := s.getTestDB(true)
 
-	filesPageOne, err := database.LatestPublicFiles(context.TODO(), 2, 1)
+	filesPageOne, err := database.LatestPublicFiles(context.TODO(), 1, 1)
 	s.Require().NoError(err)
 	s.Require().Len(filesPageOne, 0)
 }
