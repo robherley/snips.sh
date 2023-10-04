@@ -405,6 +405,7 @@ func (s *Sqlite) LatestPublicFiles(ctx context.Context, page int, limit int) ([]
 	if err != nil {
 		return files, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		file := &snips.File{}
