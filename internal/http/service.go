@@ -24,6 +24,7 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	router.Use(WithRecover)
 
 	router.Get("/", DocHandler(assets))
+	router.Get("/feed", FeedHandler(cfg, database, assets))
 	router.Get("/docs/{name}", DocHandler(assets))
 	router.Get("/health", HealthHandler)
 	router.Get("/f/{fileID}", FileHandler(cfg, database, assets))
