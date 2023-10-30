@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	ariga.io/atlas v0.14.0
-	github.com/alecthomas/chroma/v2 v2.8.0
+	github.com/alecthomas/chroma/v2 v2.10.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/bubbletea v0.24.2
@@ -44,7 +44,7 @@ require (
 	github.com/charmbracelet/log v0.2.1 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dlclark/regexp2 v1.8.1 // indirect
+	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20221023090153-6b7fa0680c3e // indirect
 	github.com/galeone/tfgo v0.0.0-20230214145115-56cedbc50978 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
