@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	FallbackLexer = lexers.Plaintext
+	FallbackLexer = lexers.Fallback
 )
 
 func Analyze(content string) chroma.Lexer {
