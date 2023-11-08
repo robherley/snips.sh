@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
 )
@@ -74,7 +73,7 @@ func GetFile(database db.DB) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func APIHandler(cfg *config.Config, database db.DB) *chi.Mux {
+func APIHandler(database db.DB) *chi.Mux {
 	apiRouter := chi.NewMux()
 
 	apiRouter.Get("/feed", GetFeed(database))

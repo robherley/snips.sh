@@ -32,7 +32,7 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	router.Get("/meta.json", MetaHandler(cfg))
 
 	if cfg.EnableAPI {
-		router.Mount("/api/v1", apiv1.APIHandler(cfg, database))
+		router.Mount("/api/v1", apiv1.APIHandler(database))
 	}
 
 	if cfg.Debug {
