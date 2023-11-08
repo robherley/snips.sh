@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	api_v1 "github.com/robherley/snips.sh/internal/http/api/v1"
+	apiv1 "github.com/robherley/snips.sh/internal/http/api/v1"
 )
 
 type Service struct {
@@ -32,7 +32,7 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	router.Get("/meta.json", MetaHandler(cfg))
 
 	if cfg.EnableAPI {
-		router.Mount("/api/v1", api_v1.ApiHandler(cfg, database))
+		router.Mount("/api/v1", apiv1.APIHandler(cfg, database))
 	}
 
 	if cfg.Debug {

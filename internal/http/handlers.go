@@ -49,7 +49,7 @@ func MetaHandler(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
-func FeedHandler(config *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+func FeedHandler(_ *config.Config, database db.DB, assets Assets) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 

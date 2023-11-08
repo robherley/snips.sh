@@ -1,4 +1,4 @@
-package api_v1
+package apiv1
 
 import (
 	"encoding/json"
@@ -43,7 +43,7 @@ func GetFeed(database db.DB) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(filesMarshalled)
+		_, _ = w.Write(filesMarshalled)
 	}
 }
 
@@ -70,11 +70,11 @@ func GetFile(database db.DB) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(filesMarshalled)
+		_, _ = w.Write(filesMarshalled)
 	}
 }
 
-func ApiHandler(cfg *config.Config, database db.DB) *chi.Mux {
+func APIHandler(cfg *config.Config, database db.DB) *chi.Mux {
 	apiRouter := chi.NewMux()
 
 	apiRouter.Get("/feed", GetFeed(database))
