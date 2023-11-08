@@ -41,6 +41,7 @@ docker run ghcr.io/robherley/snips.sh -usage
 KEY                           TYPE              DEFAULT                DESCRIPTION
 SNIPS_DEBUG                   True or False     False                  enable debug logging and pprof
 SNIPS_ENABLEGUESSER           True or False     True                   enable guesslang model to detect file types
+SNIPS_ENABLEAPI               True or False     False                  enable public read only API
 SNIPS_HMACKEY                 String            hmac-and-cheese        symmetric key used to sign URLs
 SNIPS_FILECOMPRESSION         True or False     True                   enable compression of file contents
 SNIPS_LIMITS_FILESIZE         Unsigned Integer  1048576                maximum file size in bytes
