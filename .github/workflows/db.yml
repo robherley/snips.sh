@@ -27,7 +27,7 @@ jobs:
         script/schema-diff >> diff-output.md
         echo '```' >> diff-output.md
     - name: Add comment and label
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
