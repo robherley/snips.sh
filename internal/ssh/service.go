@@ -25,10 +25,10 @@ func New(cfg *config.Config, db db.DB) (*Service, error) {
 	sshServer, err := wish.NewServer(
 		wish.WithAddress(cfg.SSH.Internal.Host),
 		wish.WithHostKeyPath(cfg.SSH.HostKeyPath),
-		wish.WithPublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+		wish.WithPublicKeyAuth(func(_ ssh.Context, _ ssh.PublicKey) bool {
 			return true
 		}),
-		wish.WithPasswordAuth(func(ctx ssh.Context, password string) bool {
+		wish.WithPasswordAuth(func(_ ssh.Context, _ string) bool {
 			// accept pw auth so we can display a helpful message
 			return true
 		}),

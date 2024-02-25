@@ -58,7 +58,7 @@ func TestAssignUser(t *testing.T) {
 
 		session := testsession.New(t, &cssh.Server{
 			Handler: ssh.AssignUser(database, *testHost)(nextFunc),
-			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+			PublicKeyHandler: func(_ cssh.Context, _ cssh.PublicKey) bool {
 				return true
 			},
 		}, &gossh.ClientConfig{
@@ -91,7 +91,7 @@ func TestAssignUser(t *testing.T) {
 
 		session := testsession.New(t, &cssh.Server{
 			Handler: ssh.AssignUser(database, *testHost)(nextFunc),
-			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+			PublicKeyHandler: func(_ cssh.Context, _ cssh.PublicKey) bool {
 				return true
 			},
 		}, &gossh.ClientConfig{
@@ -107,16 +107,16 @@ func TestAssignUser(t *testing.T) {
 
 func TestBlockIfNoPublicKey(t *testing.T) {
 	t.Run("password", func(t *testing.T) {
-		nextFunc := func(sesh cssh.Session) {
+		nextFunc := func(_ cssh.Session) {
 			panic("this should not be called")
 		}
 
 		session := testsession.New(t, &cssh.Server{
 			Handler: ssh.BlockIfNoPublicKey(nextFunc),
-			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+			PublicKeyHandler: func(_ cssh.Context, _ cssh.PublicKey) bool {
 				return true
 			},
-			PasswordHandler: func(ctx cssh.Context, password string) bool {
+			PasswordHandler: func(_ cssh.Context, _ string) bool {
 				return true
 			},
 		}, &gossh.ClientConfig{
@@ -132,11 +132,11 @@ func TestBlockIfNoPublicKey(t *testing.T) {
 
 	t.Run("publickey", func(t *testing.T) {
 		session := testsession.New(t, &cssh.Server{
-			Handler: ssh.BlockIfNoPublicKey(func(sesh cssh.Session) {}),
-			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+			Handler: ssh.BlockIfNoPublicKey(func(_ cssh.Session) {}),
+			PublicKeyHandler: func(_ cssh.Context, _ cssh.PublicKey) bool {
 				return true
 			},
-			PasswordHandler: func(ctx cssh.Context, password string) bool {
+			PasswordHandler: func(_ cssh.Context, _ string) bool {
 				return true
 			},
 		}, &gossh.ClientConfig{
@@ -182,8 +182,8 @@ func TestWithLogger(t *testing.T) {
 func TestWithAuthorizedKeys(t *testing.T) {
 	t.Run("no authorized keys", func(t *testing.T) {
 		session := testsession.New(t, &cssh.Server{
-			Handler: ssh.WithAuthorizedKeys(nil)(func(sesh cssh.Session) {}),
-			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+			Handler: ssh.WithAuthorizedKeys(nil)(func(_ cssh.Session) {}),
+			PublicKeyHandler: func(_ cssh.Context, _ cssh.PublicKey) bool {
 				return true
 			},
 		}, &gossh.ClientConfig{
@@ -198,7 +198,7 @@ func TestWithAuthorizedKeys(t *testing.T) {
 	})
 
 	t.Run("pubkey not in authorized keys", func(t *testing.T) {
-		nextFunc := func(sesh cssh.Session) {
+		nextFunc := func(_ cssh.Session) {
 			panic("this should not be called")
 		}
 
@@ -206,7 +206,7 @@ func TestWithAuthorizedKeys(t *testing.T) {
 			Handler: ssh.WithAuthorizedKeys(
 				[]cssh.PublicKey{authorizedKey},
 			)(nextFunc),
-			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+			PublicKeyHandler: func(_ cssh.Context, _ cssh.PublicKey) bool {
 				return true
 			},
 		}, &gossh.ClientConfig{
@@ -224,8 +224,8 @@ func TestWithAuthorizedKeys(t *testing.T) {
 		session := testsession.New(t, &cssh.Server{
 			Handler: ssh.WithAuthorizedKeys(
 				[]cssh.PublicKey{authorizedKey},
-			)(func(sesh cssh.Session) {}),
-			PublicKeyHandler: func(ctx cssh.Context, key cssh.PublicKey) bool {
+			)(func(_ cssh.Session) {}),
+			PublicKeyHandler: func(_ cssh.Context, _ cssh.PublicKey) bool {
 				return true
 			},
 		}, &gossh.ClientConfig{

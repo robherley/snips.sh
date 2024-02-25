@@ -62,7 +62,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
 
-	application.OnShutdown = func(ctx context.Context) {
+	application.OnShutdown = func(_ context.Context) {
 		statsd.Shutdown()
 	}
 

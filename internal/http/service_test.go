@@ -1,3 +1,4 @@
+//nolint:goconst
 package http_test
 
 import (
