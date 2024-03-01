@@ -43,7 +43,7 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/keygen v0.5.0 // indirect
 	github.com/charmbracelet/log v0.2.5 // indirect
-	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
+	github.com/containerd/console v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20221023090153-6b7fa0680c3e // indirect
@@ -64,16 +64,16 @@ require (
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rivo/uniseg v0.4.6 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sahilm/fuzzy v0.1.1-0.20230530133925-c48e322e2a8f // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tdewolff/parse/v2 v2.7.10 // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
