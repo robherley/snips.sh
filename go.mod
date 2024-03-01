@@ -17,7 +17,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/jaevor/go-nanoid v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/klauspost/compress v1.17.2
+	github.com/klauspost/compress v1.17.7
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mattn/go-sqlite3 v1.14.20
 	github.com/microcosm-cc/bluemonday v1.0.26
