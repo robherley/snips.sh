@@ -1,4 +1,4 @@
-//go:build arm64
+//go:build arm64 || noguesser
 
 package renderer
 
