@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"runtime"
 	"text/tabwriter"
 	"time"
 
@@ -127,7 +126,7 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	cfg.EnableGuesser = cfg.EnableGuesser && runtime.GOARCH == "amd64"
+	cfg.EnableGuesser = cfg.EnableGuesser && GuessingSupported
 
 	return cfg, nil
 }
