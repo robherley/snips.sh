@@ -8,8 +8,8 @@ require (
 	ariga.io/atlas v0.15.0
 	github.com/alecthomas/chroma/v2 v2.10.0
 	github.com/armon/go-metrics v0.4.1
-	github.com/charmbracelet/bubbles v0.16.1
-	github.com/charmbracelet/bubbletea v0.24.2
+	github.com/charmbracelet/bubbles v0.18.0
+	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/charmbracelet/ssh v0.0.0-20221117183211-483d43d97103
 	github.com/charmbracelet/wish v1.2.0
@@ -64,8 +64,8 @@ require (
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/sahilm/fuzzy v0.1.0 // indirect
+	github.com/rivo/uniseg v0.4.6 // indirect
+	github.com/sahilm/fuzzy v0.1.1-0.20230530133925-c48e322e2a8f // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tdewolff/parse/v2 v2.7.10 // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
