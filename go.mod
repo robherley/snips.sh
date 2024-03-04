@@ -6,7 +6,7 @@ toolchain go1.21.7
 
 require (
 	ariga.io/atlas v0.15.0
-	github.com/alecthomas/chroma/v2 v2.10.0
+	github.com/alecthomas/chroma/v2 v2.12.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.25.0
