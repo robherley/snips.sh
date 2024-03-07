@@ -10,6 +10,7 @@ The architecture of snips.sh was designed with self-hosting in mind, it's very s
     - [Host Keys](#host-keys)
     - [Limiting SSH Access](#limiting-ssh-access)
     - [Statsd Metrics](#statsd-metrics)
+    - [Build without Tensorflow](#build-without-tensorflow)
   - [Examples](#examples)
     - [Docker Compose](#docker-compose)
 
@@ -143,6 +144,17 @@ ssh-import-id gh:robherley -o snips_authorized_keys
 
 At runtime, snips.sh will emit various metrics if the `SNIPS_METRICS_STATSD` is defined. This should be the full udp address with the protocol, e.g. `udp://localhost:8125`.
 
+### Build without Tensorflow
+
+In order to "guess" what language a snippet is, snips.sh will use [guesslang](https://github.com/yoeo/guesslang) (specifically [guesslang-go](https://github.com/robherley/guesslang-go)). This requires the [`libtensorflow`](https://www.tensorflow.org/install/lang_c) C API.
+
+If you do not want tensorflow as a runtime dependency (or if your environment does not support it) you can build without the guesser activated with the `noguesser` build tag:
+
+```
+go build -tags noguesser
+```
+
+For `arm64` systems, this is automatic and will default to not compiling with the guesslang dependency.
 
 ## Examples
 

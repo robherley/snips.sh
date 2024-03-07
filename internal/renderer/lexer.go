@@ -5,9 +5,11 @@ import (
 	"github.com/alecthomas/chroma/v2/lexers"
 )
 
-var (
-	FallbackLexer = lexers.Fallback
-)
+var FallbackLexer chroma.Lexer = chroma.MustNewLexer(&chroma.Config{
+	Name:      "plaintext",
+	Filenames: []string{"*"},
+	Priority:  -1,
+}, lexers.PlaintextRules)
 
 func Analyze(content string) chroma.Lexer {
 	lexer := lexers.Analyse(content)
