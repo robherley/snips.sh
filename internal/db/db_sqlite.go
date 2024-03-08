@@ -64,6 +64,8 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 			id,
 			created_at,
 			updated_at,
+			name,
+			description,
 			size,
 			content,
 			private,
@@ -80,6 +82,8 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 		&file.ID,
 		&file.CreatedAt,
 		&file.UpdatedAt,
+		&file.Name,
+		&file.Description,
 		&file.Size,
 		&file.RawContent,
 		&file.Private,
@@ -122,18 +126,22 @@ func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount 
 			id,
 			created_at,
 			updated_at,
+			name,
+			description,
 			size,
 			content,
 			private,
 			type,
 			user_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	if _, err := s.ExecContext(ctx, insertQuery,
 		file.ID,
 		file.CreatedAt,
 		file.UpdatedAt,
+		file.Name,
+		file.Description,
 		file.Size,
 		file.RawContent,
 		file.Private,
@@ -153,6 +161,8 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 		UPDATE files
 		SET
 			updated_at = ?,
+			name = ?,
+			description = ?,
 			size = ?,
 			content = ?,
 			private = ?,
@@ -162,6 +172,8 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 
 	if _, err := s.ExecContext(ctx, query,
 		file.UpdatedAt,
+		file.Name,
+		file.Description,
 		file.Size,
 		file.RawContent,
 		file.Private,
@@ -194,6 +206,8 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 			id,
 			created_at,
 			updated_at,
+			name,
+			description,
 			size,
 			private,
 			type,
@@ -216,6 +230,8 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 			&file.ID,
 			&file.CreatedAt,
 			&file.UpdatedAt,
+			&file.Name,
+			&file.Description,
 			&file.Size,
 			&file.Private,
 			&file.Type,
@@ -355,4 +371,64 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *Sqlite) LatestPublicFiles(ctx context.Context, page int, limit int) ([]*snips.File, error) {
+	const query = `
+		SELECT
+			id,
+			created_at,
+			updated_at,
+			name,
+			description,
+			size,
+			private,
+			type,
+			user_id
+		FROM files
+		WHERE private = 0
+		ORDER BY created_at DESC
+		LIMIT ?, ?
+	`
+
+	// just a precaution
+	if limit < 0 {
+		limit = 0
+	}
+
+	if page < 0 {
+		page = 0
+	}
+
+	files := make([]*snips.File, 0)
+	rows, err := s.QueryContext(ctx, query, page*limit, limit)
+	if err != nil {
+		return files, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		file := &snips.File{}
+		if err := rows.Scan(
+			&file.ID,
+			&file.CreatedAt,
+			&file.UpdatedAt,
+			&file.Name,
+			&file.Description,
+			&file.Size,
+			&file.Private,
+			&file.Type,
+			&file.UserID,
+		); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+
+			return nil, err
+		}
+
+		files = append(files, file)
+	}
+
+	return files, nil
 }

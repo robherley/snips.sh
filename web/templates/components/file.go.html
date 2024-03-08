@@ -1,0 +1,11 @@
+{{ define "file-details" }}
+<div class="file-details">
+  <span>
+    <a href="f/{{ .ID }}">{{ if .Name }}{{ .Name }}{{ else }}{{ .ID }}{{ end }}</a>
+    {{ if .Type }} ({{ .Type}}){{ end }}
+  </span>
+  {{ if .Size }}<span>{{ humanizeFileSize .Size }}</span>{{ end }}
+  {{ if .UpdatedAt }}<span>modified: {{ humanizeTimestamp .UpdatedAt }}</span>{{ end }}
+  {{ if .Private }}<span class="danger">private</span>{{ end }}
+</div>
+{{ end }}

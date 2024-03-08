@@ -1,0 +1,14 @@
+{
+    "[css]": {
+        "editor.indentSize": 2,
+        "editor.wordWrap": "off"
+    },
+    "[html]": {
+        "editor.indentSize": 2
+    },
+    "css.format.spaceAroundSelectorSeparator": true,
+    "css.format.braceStyle": "collapse",
+    "cSpell.words": [
+        "Tmpl"
+    ]
+}
