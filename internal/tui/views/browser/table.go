@@ -20,8 +20,12 @@ type column struct {
 
 var columns = []column{
 	{
-		name: "ID",
+		name: "Name",
 		render: func(file *snips.File) string {
+			if file.Name != "" {
+				return file.Name
+			}
+
 			return file.ID
 		},
 	},

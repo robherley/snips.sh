@@ -172,14 +172,16 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 		}
 
 		vars := map[string]interface{}{
-			"FileID":    file.ID,
-			"FileSize":  humanize.Bytes(file.Size),
-			"CreatedAt": humanize.Time(file.CreatedAt),
-			"UpdatedAt": humanize.Time(file.UpdatedAt),
-			"FileType":  strings.ToLower(file.Type),
-			"RawHREF":   rawHref,
-			"HTML":      html,
-			"Private":   file.Private,
+			"FileID":          file.ID,
+			"FileName":        file.Name,
+			"FileDescription": file.Description,
+			"FileSize":        humanize.Bytes(file.Size),
+			"CreatedAt":       humanize.Time(file.CreatedAt),
+			"UpdatedAt":       humanize.Time(file.UpdatedAt),
+			"FileType":        strings.ToLower(file.Type),
+			"RawHREF":         rawHref,
+			"HTML":            html,
+			"Private":         file.Private,
 		}
 
 		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)
