@@ -27,7 +27,7 @@ type Config struct {
 	// NOTE: always false on arm64 arch.
 	// currently not shipping libtensorflow for arm
 	// https://github.com/robherley/snips.sh/issues/39
-	EnableGuesser bool `default:"True" desc:"enable guesslang model to detect file types"`
+	EnableGuesser bool `default:"True" desc:"enable Guesslang model to detect file types"`
 
 	HMACKey string `default:"hmac-and-cheese" desc:"symmetric key used to sign URLs"`
 

@@ -78,7 +78,7 @@ func TestUploadFlags(t *testing.T) {
 				Extension: "",
 				TTL:       30 * time.Second,
 			},
-			err: ssh.ErrFlagRequied,
+			err: ssh.ErrFlagRequired,
 		},
 	}
 
@@ -107,7 +107,7 @@ func TestSignFlags(t *testing.T) {
 		{
 			name: "no flags",
 			args: []string{},
-			err:  ssh.ErrFlagRequied,
+			err:  ssh.ErrFlagRequired,
 		},
 		{
 			name: "ttl",

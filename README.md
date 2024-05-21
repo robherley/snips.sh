@@ -19,7 +19,7 @@
 ### Features
 
   - ⚡ **Zero-install**: use from any machine with SSH client installed
-  - 🌐 **Web UI**: syntax-highlighted code with short links and markdown rendering
+  - 🌐 **Web UI**: syntax-highlighted code with short links and Markdown rendering
   - 💻 **TUI**: never leave your terminal for snippet management/viewing
   - 🔑 **No passwords**: all you need is an SSH key
   - 🕵️ **Anonymous**: no sign ups, no logins, no email required
@@ -97,7 +97,7 @@ The technology behind snips.sh is powered by these amazing projects:
   - [`charmbracelet/wish`](https://github.com/charmbracelet/wish): SSH server
   - [`charmbracelet/bubbletea`](https://github.com/charmbracelet/bubbletea): TUI framework
 - [`yoeo/guesslang`](https://github.com/yoeo/guesslang): Guesslang model to detect programming language source code
-  - [`robherley/guesslang-go`](https://github.com/robherley/guesslang-go): Go port of tensorflow guesslang model
+  - [`robherley/guesslang-go`](https://github.com/robherley/guesslang-go): Go port of tensorflow Guesslang model
 - [`alecthomas/chroma`](https://github.com/alecthomas/chroma): Syntax Highlighter
 - [`yuin/goldmark`](https://github.com/yuin/goldmark): Markdown Parser
 - [`microcosm-cc/bluemonday`](https://github.com/microcosm-cc/bluemonday): HTML Sanitizer
