@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
+
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 

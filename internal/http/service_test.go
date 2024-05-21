@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/http"
 	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/robherley/snips.sh/internal/testutil"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
 )
 
 type HTTPServiceSuite struct {

@@ -8,11 +8,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/http"
 	"github.com/robherley/snips.sh/internal/ssh"
-	"github.com/rs/zerolog/log"
 )
 
 type App struct {

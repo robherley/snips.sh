@@ -16,6 +16,7 @@ linters:
     - typecheck
     - unused
     # additional
+    - gci
     - goconst
     - gocritic
     - gocyclo
@@ -24,3 +25,14 @@ linters:
     - revive
     - tenv
     - unconvert
+
+linters-settings:
+  # define the import orders
+  gci:
+    sections:
+      # Standard section: captures all standard packages.
+      - standard
+      # Default section: catchall that is not standard or custom
+      - default
+      # linters that related to local tool, so they should be separated
+      - localmodule

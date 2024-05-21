@@ -7,13 +7,13 @@ import (
 	"errors"
 	"time"
 
-	"github.com/robherley/snips.sh/internal/id"
-	"github.com/robherley/snips.sh/internal/snips"
-
 	"ariga.io/atlas/sql/migrate"
 	aschema "ariga.io/atlas/sql/schema"
 	asqlite "ariga.io/atlas/sql/sqlite"
 	_ "github.com/mattn/go-sqlite3" // sqlite driver
+
+	"github.com/robherley/snips.sh/internal/id"
+	"github.com/robherley/snips.sh/internal/snips"
 )
 
 var (

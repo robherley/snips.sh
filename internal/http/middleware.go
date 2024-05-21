@@ -7,9 +7,10 @@ import (
 
 	"github.com/armon/go-metrics"
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
+
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
-	"github.com/rs/zerolog/log"
 )
 
 // WithRequestID adds a unique request ID to the request context.

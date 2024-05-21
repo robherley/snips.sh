@@ -7,15 +7,16 @@ import (
 
 	cssh "github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish/testsession"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	gossh "golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/testdata"
+
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/ssh"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	gossh "golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/testdata"
 )
 
 var (

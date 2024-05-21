@@ -2,6 +2,7 @@ package prompt
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 

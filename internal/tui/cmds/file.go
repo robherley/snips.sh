@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 )

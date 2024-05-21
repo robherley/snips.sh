@@ -15,6 +15,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wrap"
+
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"

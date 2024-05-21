@@ -17,6 +17,7 @@ import (
 	"github.com/charmbracelet/wish"
 	"github.com/dustin/go-humanize"
 	"github.com/muesli/termenv"
+
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"

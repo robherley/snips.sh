@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/klauspost/compress/zstd"
+
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/signer"
 )

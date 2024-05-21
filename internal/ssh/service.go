@@ -3,6 +3,7 @@ package ssh
 import (
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
+
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 )

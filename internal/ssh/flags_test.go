@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robherley/snips.sh/internal/ssh"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/robherley/snips.sh/internal/ssh"
 )
 
 func TestUploadFlags(t *testing.T) {

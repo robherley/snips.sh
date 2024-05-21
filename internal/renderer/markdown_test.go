@@ -3,8 +3,9 @@ package renderer_test
 import (
 	"testing"
 
-	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/robherley/snips.sh/internal/renderer"
 )
 
 func TestToMarkdownSantization(t *testing.T) {

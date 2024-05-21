@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
+
 	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/robherley/snips.sh/internal/tui/views"

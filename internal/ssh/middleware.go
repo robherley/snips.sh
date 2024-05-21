@@ -7,13 +7,14 @@ import (
 	"github.com/armon/go-metrics"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	gossh "golang.org/x/crypto/ssh"
+
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	gossh "golang.org/x/crypto/ssh"
 )
 
 // AssignUser will attempt to match a user with a public key fingerprint.

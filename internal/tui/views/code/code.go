@@ -8,11 +8,12 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/rs/zerolog/log"
+
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
-	"github.com/rs/zerolog/log"
 )
 
 type Code struct {

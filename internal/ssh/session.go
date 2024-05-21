@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
+
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )

@@ -7,10 +7,11 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/snips"
-	"github.com/stretchr/testify/suite"
 )
 
 type SqliteSuite struct {
