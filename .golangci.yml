@@ -24,6 +24,7 @@ linters:
     - goimports
     - revive
     - tenv
+    - thelper
     - unconvert
 
 linters-settings:

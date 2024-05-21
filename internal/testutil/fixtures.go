@@ -13,6 +13,8 @@ type fixtures struct{}
 var Fixtures = &fixtures{}
 
 func (f *fixtures) File(t *testing.T) snips.File {
+	t.Helper()
+
 	file := snips.File{
 		ID:        id.New(),
 		CreatedAt: time.Now().Add(-5 * time.Minute),
