@@ -80,11 +80,7 @@ const initHeaderObserver = () => {
 
   const observer = new IntersectionObserver(
     ([entry]) => {
-      if (!entry.isIntersecting) {
-        element.removeAttribute("data-hide");
-      } else {
-        element.setAttribute("data-hide", "");
-      }
+      element.toggleAttribute("data-hide", entry.isIntersecting);
     },
     // https://stackoverflow.com/a/61115077
     { rootMargin: "-1px 0px 0px 0px", threshold: [1] }
