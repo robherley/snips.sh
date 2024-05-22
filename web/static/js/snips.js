@@ -90,13 +90,11 @@ const initHeaderObserver = () => {
 };
 
 window.addEventListener("hashchange", highlightLines);
-window.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener("DOMContentLoaded", () => {
   initHeaderObserver();
   watchForShiftClick();
   highlightLines();
 
   mermaid.initialize({ startOnLoad: false, theme: "dark" });
-  await mermaid.run({
-    querySelector: "code.language-mermaid",
-  });
+  mermaid.run({ querySelector: "code.language-mermaid" });
 });
