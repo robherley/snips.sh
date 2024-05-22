@@ -27,6 +27,17 @@ const highlightLines = () => {
   }
 };
 
+// scrollToLine will scroll to the selected lines on hash #L2
+const scrollToLine = () => {
+  const [start] = getSelectedLines();
+  if (!start) return;
+
+  // needs to defer the execution to be able to scroll even when page gets refresh
+  setTimeout(() => {
+    document.querySelector(`#L${start}`).scrollIntoView({ behavior: "smooth" });
+  }, 100);
+};
+
 // watchForShiftClick watches for shift-clicks on line numbers, and will set the anchor appropriately.
 const watchForShiftClick = () => {
   const chroma = document.querySelector(".chroma");
@@ -100,6 +111,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initHeaderObserver();
   watchForShiftClick();
   highlightLines();
+  scrollToLine();
 
   mermaid.initialize({ startOnLoad: false, theme: "dark" });
   mermaid.run({ querySelector: "code.language-mermaid" });
