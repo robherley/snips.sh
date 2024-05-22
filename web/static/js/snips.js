@@ -87,6 +87,12 @@ const initHeaderObserver = () => {
   );
 
   observer.observe(nav);
+
+  // do not remove the hightlighted lines when scroll to the top
+  element.addEventListener("click", (event) => {
+    event.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 };
 
 window.addEventListener("hashchange", highlightLines);
