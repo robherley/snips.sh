@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/alecthomas/chroma/v2"
 	"github.com/robherley/snips.sh/internal/snips"
 )
 
@@ -22,7 +23,7 @@ func DetectFileType(content []byte, hint string, useGuesser bool) string {
 		return snips.FileTypeBinary
 	}
 
-	lexer := FallbackLexer
+	var lexer chroma.Lexer
 	switch {
 	case hint != "":
 		lexer = GetLexer(hint)
