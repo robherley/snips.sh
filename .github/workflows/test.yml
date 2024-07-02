@@ -19,6 +19,6 @@ jobs:
         go-version: '1.21'
     - run: script/install-libtensorflow
     - name: Test
-      uses: robherley/go-test-action@v0.2.0
+      uses: robherley/go-test-action@v0.4.1
       with:
         omitUntestedPackages: true
