@@ -96,12 +96,9 @@ func (m *Code) renderContent(file *snips.File) string {
 
 	renderedLines := make([]string, 0, len(lines))
 
+	lineStyle := borderStyle.BorderRight(true).MarginRight(1)
 	for i, line := range lines {
-		lineNumber := borderStyle.
-			Copy().
-			BorderRight(true).
-			MarginRight(1).
-			Render(fmt.Sprintf("%*d", maxDigits, i+1))
+		lineNumber := lineStyle.Render(fmt.Sprintf("%*d", maxDigits, i+1))
 
 		scrubbed := strings.ReplaceAll(line, "\t", "    ")
 		renderedLines = append(renderedLines, lineNumber+scrubbed)
