@@ -13,7 +13,7 @@ import (
 
 var (
 	ErrFlagRequired = errors.New("flag required")
-	ErrFlagParse   = errors.New("parse error")
+	ErrFlagParse    = errors.New("parse error")
 )
 
 type UploadFlags struct {
