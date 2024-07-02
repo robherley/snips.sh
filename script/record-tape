@@ -8,7 +8,7 @@ if ! command -v vhs >/dev/null 2>&1; then
   exit 1
 fi
 
-# if there's parametes passed to the script, use those as the tape names
+# if there's parameters passed to the script, use those as the tape names
 if [ $# -gt 0 ]; then
   for tape in "$@"; do
     vhs "$TAPEDIR/$tape".tape -o "$TAPEDIR"/"$tape".gif

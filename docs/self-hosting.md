@@ -41,7 +41,7 @@ docker run ghcr.io/robherley/snips.sh -usage
 ```
 KEY                           TYPE              DEFAULT                DESCRIPTION
 SNIPS_DEBUG                   True or False     False                  enable debug logging and pprof
-SNIPS_ENABLEGUESSER           True or False     True                   enable guesslang model to detect file types
+SNIPS_ENABLEGUESSER           True or False     True                   enable Guesslang model to detect file types
 SNIPS_HMACKEY                 String            hmac-and-cheese        symmetric key used to sign URLs
 SNIPS_FILECOMPRESSION         True or False     True                   enable compression of file contents
 SNIPS_LIMITS_FILESIZE         Unsigned Integer  1048576                maximum file size in bytes
@@ -61,7 +61,7 @@ SNIPS_METRICS_USEDOGSTATSD    True or False     False                  use dogst
 
 ### Addresses/Ports
 
-For the HTTP and SSH services, the container images exposes ports `8080` and `2222` respectively, listening on all interfaces so they can be bound properly.
+For the HTTP and SSH services, the container image exposes ports `8080` and `2222` respectively, listening on all interfaces so they can be bound properly.
 
 For convenience, the relevant environment variables are set in the Dockerfile already:
 
@@ -83,15 +83,15 @@ SNIPS_SSH_EXTERNAL=ssh://snips.example.com:22
 
 ### Database
 
-The file specified at `SNIPS_DB_FILEPATH` is the sqlite database that holds all user data. For more infomation managing the database, see [`database.md`](/docs/database.md).
+The file specified at `SNIPS_DB_FILEPATH` is the SQLite database that holds all user data. For more information managing the database, see [`database.md`](/docs/database.md).
 
 Setting `SNIPS_FILECOMPRESSION` to `false` will disable compression when storing file content to disk. If this option was disabled at any point (or files were created before this option existed), it will not retroactively compress existing files.
 
 ### Host Keys
 
-The directory holding the key files should be persistant and not change. If the host keys are not found, snips will automatically generate them when started.
+The directory holding the key files should be persistent and not change. If the host keys are not found, snips will automatically generate them when started.
 
-For instance, if the `SNIPS_SSH_HOSTKEYPATH` is `/data/keys/snips`, the the `keys` directory will look like so:
+For instance, if the `SNIPS_SSH_HOSTKEYPATH` is `/data/keys/snips`, the `keys` directory will look like so:
 
 ```
 keys
@@ -112,11 +112,11 @@ Someone could be eavesdropping on you right now (man-in-the-middle attack)!
 It is also possible that a host key has just been changed.
 ```
 
-Be sure to securely backup any host keys in the event they might be lost.
+Be sure to securely back up any host keys in the event they might be lost.
 
 ### Limiting SSH Access
 
-By default, any user with an public key can connect to a snips.sh instance via SSH.
+By default, any user with a public key can connect to a snips.sh instance via SSH.
 
 If you want to limit access to who can SSH (and upload) snippets, you can use the `SNIPS_SSH_AUTHORIZEDKEYSPATH` environment variable. If specified, this will limit the SSH server to the public keys defined there.
 
@@ -142,11 +142,11 @@ ssh-import-id gh:robherley -o snips_authorized_keys
 
 ### Statsd Metrics
 
-At runtime, snips.sh will emit various metrics if the `SNIPS_METRICS_STATSD` is defined. This should be the full udp address with the protocol, e.g. `udp://localhost:8125`.
+At runtime, snips.sh will emit various metrics if the `SNIPS_METRICS_STATSD` is defined. This should be the full UDP address with the protocol, e.g. `udp://localhost:8125`.
 
 ### Build without Tensorflow
 
-In order to "guess" what language a snippet is, snips.sh will use [guesslang](https://github.com/yoeo/guesslang) (specifically [guesslang-go](https://github.com/robherley/guesslang-go)). This requires the [`libtensorflow`](https://www.tensorflow.org/install/lang_c) C API.
+In order to "guess" what language a snippet is, snips.sh will use [Guesslang](https://github.com/yoeo/guesslang) (specifically [guesslang-go](https://github.com/robherley/guesslang-go)). This requires the [`libtensorflow`](https://www.tensorflow.org/install/lang_c) C API.
 
 If you do not want tensorflow as a runtime dependency (or if your environment does not support it) you can build without the guesser activated with the `noguesser` build tag:
 
@@ -154,7 +154,7 @@ If you do not want tensorflow as a runtime dependency (or if your environment do
 go build -tags noguesser
 ```
 
-For `arm64` systems, this is automatic and will default to not compiling with the guesslang dependency.
+For `arm64` systems, this is automatic and will default to not compiling with the Guesslang dependency.
 
 ## Examples
 
@@ -168,7 +168,7 @@ SNIPS_SSH_EXTERNAL=ssh://snips.example.com:22
 SNIPS_HMACKEY=correct-horse-battery-staple
 ```
 
-Then setup a `docker-compose.yml`:
+Then set up a `docker-compose.yml`:
 
 ```yaml
 version: "3"

@@ -34,10 +34,10 @@ func Initialize(statsdURL *url.URL, useDogStatsd bool) (*metrics.Metrics, error)
 
 	if statsdURL != nil && statsdURL.String() != "" {
 		if useDogStatsd {
-			log.Info().Str("url", statsdURL.String()).Msg("intializing dogstatsd metrics sink")
+			log.Info().Str("url", statsdURL.String()).Msg("initializing dogstatsd metrics sink")
 			sink, err = datadog.NewDogStatsdSink(statsdURL.Host, cfg.HostName)
 		} else {
-			log.Info().Str("url", statsdURL.String()).Msg("intializing statsd metrics sink")
+			log.Info().Str("url", statsdURL.String()).Msg("initializing statsd metrics sink")
 			sink, err = metrics.NewStatsdSinkFromURL(statsdURL)
 		}
 	}

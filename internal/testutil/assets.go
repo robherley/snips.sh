@@ -11,7 +11,7 @@ import (
 )
 
 // Assets returns the _real_ assets used to render the web server.
-// Instead of being embeded normally, this will hacky load the assets at runtime.
+// Instead of being embedded normally, this will hacky load the assets at runtime.
 func Assets(t *testing.T) http.Assets {
 	t.Helper()
 

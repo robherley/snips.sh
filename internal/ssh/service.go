@@ -32,7 +32,7 @@ func New(cfg *config.Config, db db.DB) (*Service, error) {
 			// accept pw auth so we can display a helpful message
 			return true
 		}),
-		// note: middleware is evaulated in reverse order
+		// note: middleware is evaluated in reverse order
 		wish.WithMiddleware(
 			sessionHandler.HandleFunc,
 			AssignUser(db, cfg.HTTP.External),
