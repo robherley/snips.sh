@@ -2,7 +2,7 @@ import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.1.0/+esm";
 
 // getSelectedLines will return the lines specified in the hash.
 const getSelectedLines = () => {
-  if (!location.hash?.startsWith("#L")) return [];
+  if (!location.hash.startsWith("#L")) return [];
   return location.hash
     .slice(1)
     .split("-")
@@ -17,20 +17,25 @@ const highlightLines = () => {
     el.classList.remove("hl");
   });
 
-  const hash = location.hash;
-  if (!hash) return;
-
-  const lines = getSelectedLines();
-  if (!lines.length) return;
-
-  const start = lines[0];
-  const end = lines[1] || start;
+  const [start, end = start] = getSelectedLines();
+  if (!start) return;
 
   for (let i = start; i <= end; i++) {
     const el = document.querySelector(`#L${i}`);
     if (!el) return;
     el.parentElement.classList.add("hl");
   }
+};
+
+// scrollToLine will scroll to the selected lines on hash #L2
+const scrollToLine = () => {
+  const [start] = getSelectedLines();
+  if (!start) return;
+
+  // needs to defer the execution to be able to scroll even when page gets refresh
+  setTimeout(() => {
+    document.querySelector(`#L${start}`).scrollIntoView({ behavior: "smooth" });
+  }, 100);
 };
 
 // watchForShiftClick watches for shift-clicks on line numbers, and will set the anchor appropriately.
@@ -86,27 +91,28 @@ const initHeaderObserver = () => {
 
   const observer = new IntersectionObserver(
     ([entry]) => {
-      if (!entry.isIntersecting) {
-        element.removeAttribute("data-hide");
-      } else {
-        element.setAttribute("data-hide", "");
-      }
+      element.toggleAttribute("data-hide", entry.isIntersecting);
     },
     // https://stackoverflow.com/a/61115077
     { rootMargin: "-1px 0px 0px 0px", threshold: [1] }
   );
 
   observer.observe(nav);
+
+  // do not remove the hightlighted lines when scroll to the top
+  element.addEventListener("click", (event) => {
+    event.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 };
 
 window.addEventListener("hashchange", highlightLines);
-window.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener("DOMContentLoaded", () => {
   initHeaderObserver();
   watchForShiftClick();
   highlightLines();
+  scrollToLine();
 
   mermaid.initialize({ startOnLoad: false, theme: "dark" });
-  await mermaid.run({
-    querySelector: "code.language-mermaid",
-  });
+  mermaid.run({ querySelector: "code.language-mermaid" });
 });
