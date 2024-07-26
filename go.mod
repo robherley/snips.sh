@@ -1,6 +1,7 @@
 module github.com/robherley/snips.sh
 
-go 1.22.3
+go 1.22.5
+
 require (
 	ariga.io/atlas v0.25.0
 	github.com/alecthomas/chroma/v2 v2.14.0
