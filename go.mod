@@ -1,6 +1,6 @@
 module github.com/robherley/snips.sh
 
-go 1.22.5
+go 1.23
 
 require (
 	ariga.io/atlas v0.25.0
