@@ -278,7 +278,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 	if err := flags.Parse(sesh.Stderr(), sesh.Command()); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			log.Warn().Err(err).Msg("invalid user specified flags")
-			sesh.Error(err, "Error parsing flag", err.Error())
+			sesh.Error(err, "Error parsing flag", "Error: %q", err.Error())
 		}
 		return
 	}
