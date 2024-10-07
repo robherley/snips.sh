@@ -3,7 +3,7 @@ module github.com/robherley/snips.sh
 go 1.23
 
 require (
-	ariga.io/atlas v0.27.0
+	ariga.io/atlas v0.28.0
 	github.com/alecthomas/chroma/v2 v2.14.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/charmbracelet/bubbles v0.20.0
@@ -17,7 +17,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/compress v1.17.10
 	github.com/mattn/go-isatty v0.0.20
-	github.com/mattn/go-sqlite3 v1.14.23
+	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.3-0.20240509142007-81b8f94111d5
@@ -28,7 +28,7 @@ require (
 	github.com/yuin/goldmark v1.7.4
 	github.com/yuin/goldmark-emoji v1.0.3
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20220924101305-151362477c87
-	golang.org/x/crypto v0.27.0
+	golang.org/x/crypto v0.28.0
 )
 
 require (
@@ -40,6 +40,7 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/charmbracelet/keygen v0.5.1 // indirect
 	github.com/charmbracelet/log v0.4.0 // indirect
 	github.com/charmbracelet/x/ansi v0.2.3 // indirect
@@ -77,8 +78,8 @@ require (
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
-	golang.org/x/text v0.18.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
