@@ -3,7 +3,7 @@ module github.com/robherley/snips.sh
 go 1.23
 
 require (
-	ariga.io/atlas v0.28.0
+	ariga.io/atlas v0.28.1
 	github.com/alecthomas/chroma/v2 v2.14.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/charmbracelet/bubbles v0.20.0
