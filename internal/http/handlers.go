@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"net/http/pprof"
 	"net/url"
 	"strings"
 
 	"github.com/dustin/go-humanize"
-	"github.com/go-chi/chi/v5"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
@@ -20,6 +20,24 @@ import (
 func HealthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("💚\n"))
+}
+
+func ProfileHandler(w http.ResponseWriter, r *http.Request) {
+	profiler := r.PathValue("profile")
+	switch profiler {
+	case "cmdline":
+		pprof.Cmdline(w, r)
+	case "profile":
+		pprof.Profile(w, r)
+	case "symbol":
+		pprof.Symbol(w, r)
+	case "trace":
+		pprof.Trace(w, r)
+	default:
+		// Available profiles can be found in [runtime/pprof.Profile].
+		// https://pkg.go.dev/runtime/pprof#Profile
+		pprof.Handler(profiler).ServeHTTP(w, r)
+	}
 }
 
 func MetaHandler(cfg *config.Config) http.HandlerFunc {
@@ -53,7 +71,7 @@ func DocHandler(assets Assets) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
-		name := chi.URLParam(r, "name")
+		name := r.PathValue("name")
 		if name == "" {
 			name = "README.md"
 		}
@@ -94,8 +112,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
-		fileID := chi.URLParam(r, "fileID")
-
+		fileID := r.PathValue("fileID")
 		if fileID == "" {
 			http.NotFound(w, r)
 			return

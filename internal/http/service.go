@@ -3,41 +3,32 @@ package http
 import (
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 )
 
 type Service struct {
 	*http.Server
-	Router *chi.Mux
 }
 
 func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
-	router := chi.NewRouter()
+	mux := http.NewServeMux()
 
-	router.Use(WithRequestID)
-	router.Use(WithLogger)
-	router.Use(WithMetrics)
-	router.Use(WithRecover)
-
-	router.Get("/", DocHandler(assets))
-	router.Get("/docs/{name}", DocHandler(assets))
-	router.Get("/health", HealthHandler)
-	router.Get("/f/{fileID}", FileHandler(cfg, database, assets))
-	router.Get("/assets/index.js", assets.ServeJS)
-	router.Get("/assets/index.css", assets.ServeCSS)
-	router.Get("/meta.json", MetaHandler(cfg))
+	mux.HandleFunc("GET /{$}", DocHandler(assets))
+	mux.HandleFunc("GET /docs/{name}", DocHandler(assets))
+	mux.HandleFunc("GET /health", HealthHandler)
+	mux.HandleFunc("GET /f/{fileID}", FileHandler(cfg, database, assets))
+	mux.HandleFunc("GET /assets/{asset}", assets.Serve)
+	mux.HandleFunc("GET /meta.json", MetaHandler(cfg))
 
 	if cfg.Debug {
-		router.Mount("/_debug", middleware.Profiler())
+		mux.HandleFunc("/_debug/pprof/{profile}", ProfileHandler)
 	}
 
-	httpServer := &http.Server{
-		Addr:    cfg.HTTP.Internal.Host,
-		Handler: router,
-	}
-
-	return &Service{httpServer, router}, nil
+	return &Service{
+		&http.Server{
+			Addr:    cfg.HTTP.Internal.Host,
+			Handler: WithMiddleware(mux),
+		},
+	}, nil
 }

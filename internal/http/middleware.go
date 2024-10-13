@@ -3,14 +3,33 @@ package http
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/armon/go-metrics"
-	"github.com/go-chi/chi/v5"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/rs/zerolog/log"
 )
+
+type Middleware func(next http.Handler) http.Handler
+
+var DefaultMiddleware = []Middleware{
+	WithRecover,
+	WithMetrics,
+	WithLogger,
+	WithRequestID,
+}
+
+func WithMiddleware(handler http.Handler, middlewares ...Middleware) http.Handler {
+	middlewares = append(DefaultMiddleware, middlewares...)
+
+	withMiddleware := handler
+	for i := range middlewares {
+		withMiddleware = middlewares[i](withMiddleware)
+	}
+	return withMiddleware
+}
 
 // WithRequestID adds a unique request ID to the request context.
 func WithRequestID(next http.Handler) http.Handler {
@@ -40,9 +59,10 @@ func WithLogger(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), logger.ContextKey, &reqLog)
 		reqLog.Info().Msg("connected")
 
-		next.ServeHTTP(w, r.WithContext(ctx))
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
 
-		reqLog.Info().Dur("dur", time.Since(start)).Msg("disconnected")
+		reqLog.Info().Dur("dur", time.Since(start)).Str("pattern", Pattern(r)).Msg("disconnected")
 	})
 }
 
@@ -65,19 +85,21 @@ func WithMetrics(next http.Handler) http.Handler {
 		start := time.Now()
 		next.ServeHTTP(w, r)
 
-		rctx := chi.RouteContext(r.Context())
-		pattern := rctx.RoutePattern()
-		if pattern == "" {
-			// empty pattern, didn't match router e.g. 404
-			pattern = "*"
-		}
-
 		labels := []metrics.Label{
-			{Name: "path", Value: pattern},
+			{Name: "pattern", Value: Pattern(r)},
 			{Name: "method", Value: r.Method},
 		}
 
 		metrics.IncrCounterWithLabels([]string{"http", "request"}, 1, labels)
 		metrics.MeasureSinceWithLabels([]string{"http", "request", "duration"}, start, labels)
 	})
+}
+
+func Pattern(r *http.Request) string {
+	pattern := strings.TrimPrefix(r.Pattern, r.Method+" ")
+	if pattern == "" {
+		// empty pattern, didn't match router e.g. 404
+		pattern = "*"
+	}
+	return pattern
 }
