@@ -12,7 +12,6 @@ require (
 	github.com/charmbracelet/ssh v0.0.0-20240725163421-eb71b85b27aa
 	github.com/charmbracelet/wish v1.4.3
 	github.com/dustin/go-humanize v1.0.1
-	github.com/go-chi/chi/v5 v5.1.0
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/compress v1.17.10

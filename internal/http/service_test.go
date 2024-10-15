@@ -47,7 +47,7 @@ func (suite *HTTPServiceSuite) SetupTest() {
 }
 
 func (suite *HTTPServiceSuite) TestHTTPServer() {
-	ts := httptest.NewServer(suite.service.Router)
+	ts := httptest.NewServer(suite.service.Handler)
 	defer ts.Close()
 
 	signedFileID := "wdHzc62hsn"

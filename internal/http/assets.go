@@ -45,8 +45,7 @@ var (
 type Assets interface {
 	Doc(filename string) ([]byte, error)
 	Template() *template.Template
-	ServeJS(w http.ResponseWriter, r *http.Request)
-	ServeCSS(w http.ResponseWriter, r *http.Request)
+	Serve(w http.ResponseWriter, r *http.Request)
 }
 
 type StaticAssets struct {
@@ -137,12 +136,15 @@ func (a *StaticAssets) Template() *template.Template {
 	return a.tmpl
 }
 
-func (a *StaticAssets) ServeJS(w http.ResponseWriter, r *http.Request) {
-	serve(w, r, a.js, jsMime)
-}
-
-func (a *StaticAssets) ServeCSS(w http.ResponseWriter, r *http.Request) {
-	serve(w, r, a.css, cssMime)
+func (a *StaticAssets) Serve(w http.ResponseWriter, r *http.Request) {
+	switch r.PathValue("asset") {
+	case "index.js":
+		serve(w, r, a.js, jsMime)
+	case "index.css":
+		serve(w, r, a.css, cssMime)
+	default:
+		http.NotFound(w, r)
+	}
 }
 
 // serve serves the content, gzipped if the client accepts it.
