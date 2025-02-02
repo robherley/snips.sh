@@ -2,6 +2,8 @@ module github.com/robherley/snips.sh
 
 go 1.23
 
+toolchain go1.23.1
+
 require (
 	ariga.io/atlas v0.30.0
 	github.com/alecthomas/chroma/v2 v2.15.0
