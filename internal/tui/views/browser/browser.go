@@ -94,7 +94,7 @@ func (bwsr Browser) View() string {
 			PaddingTop(1).
 			PaddingBottom(1).
 			Foreground(styles.Colors.Primary).
-			Render(fmt.Sprintf("No files found!\nLearn how to started at: %s", bwsr.cfg.HTTP.External.String()))
+			Render(fmt.Sprintf("No files found!\nLearn how to get started at: %s", bwsr.cfg.HTTP.External.String()))
 	}
 
 	if bwsr.width < BreakPoint {
