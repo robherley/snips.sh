@@ -1,35 +1,34 @@
 module github.com/robherley/snips.sh
 
 go 1.23
-
 toolchain go1.23.1
 
 require (
-	ariga.io/atlas v0.30.0
+	ariga.io/atlas v0.31.0
 	github.com/alecthomas/chroma/v2 v2.15.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/charmbracelet/bubbles v0.20.0
-	github.com/charmbracelet/bubbletea v1.2.4
+	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/charmbracelet/ssh v0.0.0-20250128164007-98fd5ae11894
 	github.com/charmbracelet/wish v1.4.6
 	github.com/dustin/go-humanize v1.0.1
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/klauspost/compress v1.17.11
+	github.com/klauspost/compress v1.18.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/muesli/reflow v0.3.0
-	github.com/muesli/termenv v0.15.3-0.20240509142007-81b8f94111d5
+	github.com/muesli/termenv v0.16.0
 	github.com/robherley/guesslang-go v0.1.0
 	github.com/rs/zerolog v1.33.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tdewolff/minify/v2 v2.21.3
 	github.com/yuin/goldmark v1.7.8
-	github.com/yuin/goldmark-emoji v1.0.4
+	github.com/yuin/goldmark-emoji v1.0.5
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20220924101305-151362477c87
-	golang.org/x/crypto v0.32.0
+	golang.org/x/crypto v0.35.0
 )
 
 require (
@@ -76,11 +75,12 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tdewolff/parse/v2 v2.7.19 // indirect
 	github.com/zclconf/go-cty v1.14.4 // indirect
+	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	google.golang.org/protobuf v1.36.4 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
