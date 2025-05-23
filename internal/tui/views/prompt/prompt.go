@@ -304,8 +304,10 @@ func (p Prompt) handleSubmit() tea.Cmd {
 	case EditContent:
 		content := p.textarea.Value()
 		
-		// Update the file content
-		p.file.RawContent = []byte(content)
+		// Update the file content using SetContent to handle compression properly
+		if err := p.file.SetContent([]byte(content), p.cfg.FileCompression); err != nil {
+			return SetPromptErrorCmd(err)
+		}
 		p.file.Size = uint64(len(content))
 
 		err := p.db.UpdateFile(p.ctx, p.file)
