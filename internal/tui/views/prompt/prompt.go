@@ -11,6 +11,7 @@ import (
 	"github.com/armon/go-metrics"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -34,6 +35,7 @@ type Prompt struct {
 	file              *snips.File
 	kind              Kind
 	textInput         textinput.Model
+	textarea          textarea.Model
 	extensionSelector list.Model
 	feedback          string
 }
@@ -45,11 +47,19 @@ func New(ctx context.Context, cfg *config.Config, db db.DB, width int) Prompt {
 	ti.Width = 20
 	ti.Prompt = styles.BC(styles.Colors.Yellow, "> ")
 
+	ta := textarea.New()
+	ta.SetWidth(width - 4) // Leave some margin
+	ta.SetHeight(10)
+	ta.CharLimit = 0 // No character limit for content editing
+	ta.Prompt = ""
+	ta.ShowLineNumbers = true
+
 	return Prompt{
 		ctx:               ctx,
 		cfg:               cfg,
 		db:                db,
 		textInput:         ti,
+		textarea:          ta,
 		extensionSelector: NewExtensionSelector(width),
 		width:             width,
 	}
@@ -67,8 +77,16 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.Type == tea.KeyEnter {
-			return p, p.handleSubmit()
+		if p.kind == EditContent {
+			// For content editing, use Ctrl+S to save
+			if msg.Type == tea.KeyCtrlS {
+				return p, p.handleSubmit()
+			}
+		} else {
+			// For other prompts, use Enter to submit
+			if msg.Type == tea.KeyEnter {
+				return p, p.handleSubmit()
+			}
 		}
 	case FeedbackMsg:
 		p.feedback = msg.Feedback
@@ -78,6 +96,14 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Kind == ChangeExtension {
 			commands = append(commands, SelectorInitCmd)
 		}
+		if msg.Kind == EditContent && p.file != nil {
+			// Load file content into textarea
+			content, err := p.file.GetContent()
+			if err == nil {
+				p.textarea.SetValue(string(content))
+				p.textarea.Focus()
+			}
+		}
 	case msgs.FileLoaded:
 		p.file = msg.File
 	case msgs.PopView:
@@ -86,6 +112,7 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		p.width = msg.Width
 		p.extensionSelector.SetWidth(msg.Width)
+		p.textarea.SetWidth(msg.Width - 4) // Leave some margin
 	case SelectorInitMsg:
 		// bit of a hack to get the extension selector to filter on init
 		p.extensionSelector, cmd = p.extensionSelector.Update(tea.KeyMsg{
@@ -101,6 +128,9 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		commands = append(commands, cmd)
 	case ChangeExtension:
 		p.extensionSelector, cmd = p.extensionSelector.Update(msg)
+		commands = append(commands, cmd)
+	case EditContent:
+		p.textarea, cmd = p.textarea.Update(msg)
 		commands = append(commands, cmd)
 	}
 	return p, tea.Batch(commands...)
@@ -120,6 +150,7 @@ func (p Prompt) Keys() help.KeyMap {
 
 func (p *Prompt) reset() {
 	p.textInput.Reset()
+	p.textarea.Reset()
 	p.extensionSelector.ResetFilter()
 	p.extensionSelector.ResetSelected()
 	p.feedback = ""
@@ -143,6 +174,8 @@ func (p Prompt) renderPrompt() string {
 		question = fmt.Sprintf("How long do you want the signed url for %q to last for?\n%s", p.file.ID, styles.C(styles.Colors.Muted, "(e.g. 30s, 5m, 3h)"))
 	case DeleteFile:
 		question = fmt.Sprintf("Are you sure you want to delete %q?\nType the file ID to confirm.", p.file.ID)
+	case EditContent:
+		question = fmt.Sprintf("Edit content for %q:\n%s", p.file.ID, styles.C(styles.Colors.Muted, "(Press Ctrl+S to save, Esc to cancel)"))
 	}
 
 	question = lipgloss.NewStyle().
@@ -159,6 +192,8 @@ func (p Prompt) renderPrompt() string {
 		prompt = p.textInput.View()
 	case ChangeExtension:
 		prompt = p.extensionSelector.View()
+	case EditContent:
+		prompt = p.textarea.View()
 	}
 
 	pieces := []string{}
@@ -265,6 +300,23 @@ func (p Prompt) handleSubmit() tea.Cmd {
 		log.Info().Str("file_id", p.file.ID).Msg("file deleted")
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q deleted", p.file.ID))
+		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
+	case EditContent:
+		content := p.textarea.Value()
+		
+		// Update the file content
+		p.file.RawContent = []byte(content)
+		p.file.Size = uint64(len(content))
+
+		err := p.db.UpdateFile(p.ctx, p.file)
+		if err != nil {
+			return SetPromptErrorCmd(err)
+		}
+
+		metrics.IncrCounter([]string{"file", "edit"}, 1)
+		log.Info().Str("file_id", p.file.ID).Int("new_size", len(content)).Msg("file content updated")
+
+		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q content updated", p.file.ID))
 		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
 	default:
 		return nil

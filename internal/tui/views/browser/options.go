@@ -22,6 +22,10 @@ type option struct {
 
 var options = []option{
 	{
+		name:   "edit content",
+		prompt: prompt.EditContent,
+	},
+	{
 		name:   "edit extension",
 		prompt: prompt.ChangeExtension,
 	},
@@ -81,8 +85,8 @@ func (bwsr Browser) getOptions() []option {
 
 	var opts []option
 	for _, o := range options {
-		if file.IsBinary() && o.prompt == prompt.ChangeExtension {
-			// don't allow changing extension for binary files
+		if file.IsBinary() && (o.prompt == prompt.ChangeExtension || o.prompt == prompt.EditContent) {
+			// don't allow changing extension or editing content for binary files
 			continue
 		}
 
