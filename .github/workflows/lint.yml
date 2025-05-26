@@ -19,7 +19,6 @@ jobs:
       with:
         go-version-file: go.mod
     - run: script/install-libtensorflow
-    - uses: golangci/golangci-lint-action@v6
+    - uses: golangci/golangci-lint-action@v8
       with:
-        version: v1.61.0
-        args: --timeout 3m0s
+        version: v2.1.6
