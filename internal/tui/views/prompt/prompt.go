@@ -49,7 +49,7 @@ func New(ctx context.Context, cfg *config.Config, db db.DB, width int) Prompt {
 
 	ta := textarea.New()
 	ta.SetWidth(width - 4) // Leave some margin
-	ta.SetHeight(10)
+	ta.SetHeight(width / 3) // Reasonable default height based on window width
 	ta.CharLimit = 0 // No character limit for content editing
 	ta.Prompt = ""
 	ta.ShowLineNumbers = true
@@ -97,15 +97,13 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			commands = append(commands, SelectorInitCmd)
 		}
 		if msg.Kind == EditContent && p.file != nil {
-			// Load file content into textarea
-			content, err := p.file.GetContent()
-			if err == nil {
-				p.textarea.SetValue(string(content))
-				p.textarea.Focus()
-			}
+			commands = append(commands, p.loadFileContentCmd())
 		}
 	case msgs.FileLoaded:
 		p.file = msg.File
+		if p.kind == EditContent {
+			commands = append(commands, p.loadFileContentCmd())
+		}
 	case msgs.PopView:
 		p.reset()
 		return p, nil
@@ -113,6 +111,10 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		p.width = msg.Width
 		p.extensionSelector.SetWidth(msg.Width)
 		p.textarea.SetWidth(msg.Width - 4) // Leave some margin
+		// Update textarea height to use most of the window height
+		if p.kind == EditContent {
+			p.textarea.SetHeight(msg.Height - 10) // Leave space for header and other elements
+		}
 	case SelectorInitMsg:
 		// bit of a hack to get the extension selector to filter on init
 		p.extensionSelector, cmd = p.extensionSelector.Update(tea.KeyMsg{
@@ -120,6 +122,12 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			Runes: []rune{'/'},
 		})
 		return p, cmd
+	case loadContentMsg:
+		p.textarea.SetValue(msg.content)
+		p.textarea.Focus()
+		// Set cursor to the beginning of the file
+		p.textarea.CursorStart()
+		return p, nil
 	}
 
 	switch p.kind {
@@ -145,6 +153,9 @@ func (p Prompt) View() string {
 }
 
 func (p Prompt) Keys() help.KeyMap {
+	if p.kind == EditContent {
+		return newEditContentKeyMap()
+	}
 	return newKeyMap(p.finished)
 }
 
@@ -357,4 +368,23 @@ func (p Prompt) textInputYN() YNResult {
 	default:
 		return Undecided
 	}
+}
+
+func (p Prompt) loadFileContentCmd() tea.Cmd {
+	return func() tea.Msg {
+		if p.file == nil {
+			return nil
+		}
+		
+		content, err := p.file.GetContent()
+		if err != nil {
+			return nil
+		}
+		
+		return loadContentMsg{content: string(content)}
+	}
+}
+
+type loadContentMsg struct {
+	content string
 }
