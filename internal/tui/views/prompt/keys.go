@@ -55,3 +55,31 @@ func newKeyMap(submitted bool) keyMap {
 		),
 	}
 }
+
+type editContentKeyMap struct {
+	CtrlS  key.Binding
+	Escape key.Binding
+}
+
+func (km editContentKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{km.CtrlS, km.Escape}
+}
+
+func (km editContentKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{km.CtrlS, km.Escape},
+	}
+}
+
+func newEditContentKeyMap() editContentKeyMap {
+	return editContentKeyMap{
+		CtrlS: key.NewBinding(
+			key.WithKeys("ctrl+s"),
+			key.WithHelp("ctrl+s", "save"),
+		),
+		Escape: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "cancel"),
+		),
+	}
+}
