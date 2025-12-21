@@ -1,13 +1,13 @@
 package stats
 
 import (
+	"log/slog"
 	"net/url"
 	"os"
 	"time"
 
 	"github.com/armon/go-metrics"
 	"github.com/armon/go-metrics/datadog"
-	"github.com/rs/zerolog/log"
 )
 
 var cfg = func() *metrics.Config {
@@ -34,10 +34,10 @@ func Initialize(statsdURL *url.URL, useDogStatsd bool) (*metrics.Metrics, error)
 
 	if statsdURL != nil && statsdURL.String() != "" {
 		if useDogStatsd {
-			log.Info().Str("url", statsdURL.String()).Msg("initializing dogstatsd metrics sink")
+			slog.Info("initializing dogstatsd metrics sink", "url", statsdURL.String())
 			sink, err = datadog.NewDogStatsdSink(statsdURL.Host, cfg.HostName)
 		} else {
-			log.Info().Str("url", statsdURL.String()).Msg("initializing statsd metrics sink")
+			slog.Info("initializing statsd metrics sink", "url", statsdURL.String())
 			sink, err = metrics.NewStatsdSinkFromURL(statsdURL)
 		}
 	}

@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -18,7 +19,6 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/views/browser"
 	"github.com/robherley/snips.sh/internal/tui/views/code"
 	"github.com/robherley/snips.sh/internal/tui/views/prompt"
-	"github.com/rs/zerolog/log"
 )
 
 type TUI struct {
@@ -82,7 +82,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case msgs.Error:
-		log.Error().Err(msg).Msg("encountered error")
+		slog.Error("encountered error", "err", msg)
 		return t, tea.Quit
 	case tea.KeyMsg:
 		switch msg.String() {

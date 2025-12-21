@@ -2,6 +2,7 @@ package code
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -12,7 +13,6 @@ import (
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
-	"github.com/rs/zerolog/log"
 )
 
 type Code struct {
@@ -71,13 +71,13 @@ func (m *Code) renderContent(file *snips.File) string {
 
 	fileContent, err := file.GetContent()
 	if err != nil {
-		log.Error().Err(err).Msg("unable to get file content")
+		slog.Error("unable to get file content", "err", err)
 		return "error getting file content"
 	}
 
 	content, err := renderer.ToSyntaxHighlightedTerm(file.Type, fileContent)
 	if err != nil {
-		log.Warn().Err(err).Msg("failed to render file as syntax highlighted")
+		slog.Warn("failed to render file as syntax highlighted", "err", err)
 		content = string(fileContent)
 	}
 

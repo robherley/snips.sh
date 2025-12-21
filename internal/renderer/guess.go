@@ -3,12 +3,13 @@
 package renderer
 
 import (
+	"log/slog"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/armon/go-metrics"
 	"github.com/robherley/guesslang-go/pkg/guesser"
-	"github.com/rs/zerolog/log"
 )
 
 var guesslang *guesser.Guesser
@@ -17,7 +18,8 @@ func init() {
 	var err error
 	guesslang, err = guesser.New()
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to initialize guesslang")
+		slog.Error("failed to initialize guesslang", "err", err)
+		os.Exit(1)
 	}
 }
 
@@ -26,7 +28,7 @@ func Guess(content string) string {
 	answer, err := guesslang.Guess(content)
 	metrics.MeasureSince([]string{"guess", "duration"}, guessStart)
 	if err != nil {
-		log.Warn().Err(err).Msg("failed to guess the file type")
+		slog.Warn("failed to guess the file type", "err", err)
 		return ""
 	}
 

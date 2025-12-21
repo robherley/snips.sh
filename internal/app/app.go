@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
@@ -12,7 +13,6 @@ import (
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/http"
 	"github.com/robherley/snips.sh/internal/ssh"
-	"github.com/rs/zerolog/log"
 )
 
 type App struct {
@@ -29,7 +29,7 @@ func (app *App) Boot() error {
 	app.listen()
 
 	sig := <-done
-	log.Warn().Str("signal", sig.String()).Msg("received signal, shutting down services")
+	slog.Warn("received signal, shutting down services", "signal", sig.String())
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer func() {
 		cancel()
@@ -53,7 +53,7 @@ func (app *App) listen() {
 	for i := range services {
 		go func(svc listenable) {
 			if err := svc.ListenAndServe(); err != nil {
-				log.Warn().Err(err)
+				slog.Warn("service stopped", "err", err)
 			}
 		}(services[i])
 	}
@@ -84,7 +84,7 @@ func (app *App) shutdown(ctx context.Context) {
 		go func(svc shutdownable) {
 			defer wg.Done()
 			if err := svc.Shutdown(ctx); err != nil {
-				log.Warn().Err(err)
+				slog.Warn("shutdown error", "err", err)
 			}
 		}(services[i])
 	}

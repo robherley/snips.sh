@@ -15,13 +15,13 @@ require (
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/compress v1.18.0
+	github.com/lmittmann/tint v1.1.2
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.16.0
 	github.com/robherley/guesslang-go v0.1.0
-	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/minify/v2 v2.24.2
 	github.com/yuin/goldmark v1.7.13
@@ -64,7 +64,6 @@ require (
 	github.com/hashicorp/hcl/v2 v2.13.0 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect

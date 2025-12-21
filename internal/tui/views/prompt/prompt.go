@@ -211,7 +211,7 @@ func (p Prompt) handleSubmit() tea.Cmd {
 		metrics.IncrCounterWithLabels([]string{"file", "change", "private"}, 1, []metrics.Label{
 			{Name: "new", Value: strconv.FormatBool(p.file.Private)},
 		})
-		log.Info().Str("file", p.file.ID).Bool("private", p.file.Private).Msg("updated file visibility")
+		log.Info("updated file visibility", "file", p.file.ID, "private", p.file.Private)
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q is now %s", p.file.ID, p.file.Visibility()))
 		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
@@ -230,7 +230,7 @@ func (p Prompt) handleSubmit() tea.Cmd {
 			{Name: "old", Value: old},
 			{Name: "new", Value: p.file.Type},
 		})
-		log.Info().Str("file", p.file.ID).Str("old_type", old).Str("new_type", p.file.Type).Msg("updated file type")
+		log.Info("updated file type", "file", p.file.ID, "old_type", old, "new_type", p.file.Type)
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q extension set to %q", p.file.ID, item.name))
 		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
@@ -247,7 +247,7 @@ func (p Prompt) handleSubmit() tea.Cmd {
 		url, expires := p.file.GetSignedURL(p.cfg, dur)
 
 		metrics.IncrCounter([]string{"file", "sign"}, 1)
-		log.Info().Str("file_id", p.file.ID).Time("expires_at", expires).Msg("private file signed")
+		log.Info("private file signed", "file_id", p.file.ID, "expires_at", expires)
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("%s\n\nexpires at: %s", url.String(), expires.Format(time.RFC3339)))
 		commands = append(commands, SetPromptFeedbackCmd(msg, true))
@@ -262,7 +262,7 @@ func (p Prompt) handleSubmit() tea.Cmd {
 		}
 
 		metrics.IncrCounter([]string{"file", "delete"}, 1)
-		log.Info().Str("file_id", p.file.ID).Msg("file deleted")
+		log.Info("file deleted", "file_id", p.file.ID)
 
 		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q deleted", p.file.ID))
 		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))

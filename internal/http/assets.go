@@ -5,13 +5,13 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/rs/zerolog/log"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/js"
@@ -91,7 +91,7 @@ func NewAssets(webFS fs.FS, docsFS fs.FS, readme []byte, extendHeadFile string) 
 		if headContent, err := os.ReadFile(extendHeadFile); err == nil {
 			extendHeadContent = string(headContent)
 		} else {
-			log.Warn().Err(err).Msg("unable to extend head content")
+			slog.Warn("unable to extend head content", "err", err)
 		}
 	}
 

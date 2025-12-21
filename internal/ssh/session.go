@@ -35,7 +35,7 @@ func (sesh *UserSession) RequestedFileID() string {
 
 func (sesh *UserSession) Error(err error, title string, f string, v ...interface{}) {
 	log := logger.From(sesh.Context())
-	log.Error().Err(err).Msg(title)
+	log.Error(title, "err", err)
 
 	noti := Notification{
 		Color: styles.Colors.Red,

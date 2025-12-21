@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"log/slog"
 	"net/url"
 	"time"
 
@@ -11,8 +12,6 @@ import (
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	gossh "golang.org/x/crypto/ssh"
 )
 
@@ -33,7 +32,7 @@ func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) 
 			// try to find a public key
 			pubkey, err = database.FindPublicKeyByFingerprint(sesh.Context(), fingerprint)
 			if err != nil {
-				log.Err(err).Msg("unable to find publickey")
+				slog.Error("unable to find publickey", "err", err)
 				wish.Fatalln(sesh, "❌ Unable to authenticate")
 				return
 			}
@@ -52,7 +51,7 @@ func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) 
 
 				user, err = database.CreateUserWithPublicKey(sesh.Context(), pubkey)
 				if err != nil {
-					log.Err(err).Msg("unable to create user")
+					slog.Error("unable to create user", "err", err)
 					wish.Fatalln(sesh, "❌ Unable to authenticate")
 					return
 				}
@@ -61,7 +60,7 @@ func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) 
 				// find user
 				user, err = database.FindUser(sesh.Context(), pubkey.UserID)
 				if err != nil || user == nil {
-					log.Err(err).Msg("unable to find user")
+					slog.Error("unable to find user", "err", err)
 					wish.Fatalln(sesh, "❌ Unable to authenticate")
 					return
 				}
@@ -69,10 +68,10 @@ func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) 
 
 			sesh.Context().SetValue(UserIDContextKey, user.ID)
 
-			logger.From(sesh.Context()).UpdateContext(func(c zerolog.Context) zerolog.Context {
-				return c.Str("user_id", user.ID)
-			})
-			logger.From(sesh.Context()).Info().Msg("user authenticated")
+			log := logger.From(sesh.Context()).With("user_id", user.ID)
+			sesh.Context().SetValue(logger.ContextKey, log)
+
+			log.Info("user authenticated")
 			metrics.IncrCounter([]string{"ssh", "session", "authenticated"}, 1)
 
 			next(sesh)
@@ -111,12 +110,12 @@ func WithLogger(next ssh.Handler) ssh.Handler {
 		start := time.Now()
 		requestID := sesh.Context().Value(RequestIDContextKey).(string)
 
-		reqLog := log.With().Str("svc", "ssh").Str("addr", addr).Str("request_id", requestID).Logger()
-		sesh.Context().SetValue(logger.ContextKey, &reqLog)
+		reqLog := slog.With("svc", "ssh", "addr", addr, "request_id", requestID)
+		sesh.Context().SetValue(logger.ContextKey, reqLog)
 
-		reqLog.Info().Msg("connected")
+		reqLog.Info("connected")
 		next(sesh)
-		reqLog.Info().Dur("dur", time.Since(start)).Msg("disconnected")
+		reqLog.Info("disconnected", "dur", time.Since(start))
 	}
 }
 
@@ -139,7 +138,7 @@ func WithAuthorizedKeys(authorizedKeys []ssh.PublicKey) func(next ssh.Handler) s
 		}
 	}
 
-	log.Debug().Int("allowed_keys", len(authorizedKeys)).Msgf("using SSH allowlist")
+	slog.Debug("using SSH allowlist", "allowed_keys", len(authorizedKeys))
 
 	return func(next ssh.Handler) ssh.Handler {
 		return func(sesh ssh.Session) {
