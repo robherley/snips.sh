@@ -26,6 +26,11 @@ linters:
       - builtin$
       - examples$
       - internal/timeutil/duration.go
+    rules:
+      - linters:
+          - revive
+        text: "var-naming"
+        path: internal/http/ # TODO(robherley): think of a better package name
 formatters:
   enable:
     - gofmt
