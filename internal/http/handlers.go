@@ -78,14 +78,14 @@ func DocHandler(assets Assets) http.HandlerFunc {
 
 		content, err := assets.Doc(name)
 		if err != nil {
-			log.Error().Err(err).Msg("unable to load file")
+			log.Error("unable to load file", "err", err)
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
 
 		md, err := renderer.ToMarkdown(content)
 		if err != nil {
-			log.Error().Err(err).Msg("unable to parse file")
+			log.Error("unable to parse file", "err", err)
 			http.Error(w, "unable to parse file", http.StatusInternalServerError)
 			return
 		}
@@ -99,7 +99,7 @@ func DocHandler(assets Assets) http.HandlerFunc {
 
 		err = assets.Template().ExecuteTemplate(w, "file.go.html", vars)
 		if err != nil {
-			log.Error().Err(err).Msg("unable to render template")
+			log.Error("unable to render template", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -120,7 +120,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 
 		file, err := database.FindFile(r.Context(), fileID)
 		if err != nil {
-			log.Error().Err(err).Msg("unable to lookup file")
+			log.Error("unable to lookup file", "err", err)
 			http.NotFound(w, r)
 			return
 		}
@@ -133,14 +133,14 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 		isSignedAndNotExpired := signer.VerifyURLAndNotExpired(*r.URL)
 
 		if file.Private && !isSignedAndNotExpired {
-			log.Warn().Msg("attempted to access private file")
+			log.Warn("attempted to access private file")
 			http.NotFound(w, r)
 			return
 		}
 
 		content, err := file.GetContent()
 		if err != nil {
-			log.Error().Err(err).Msg("unable to get file content")
+			log.Error("unable to get file content", "err", err)
 			http.Error(w, "unable to get file content", http.StatusInternalServerError)
 			return
 		}
@@ -175,14 +175,14 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 		case snips.FileTypeMarkdown:
 			html, err = renderer.ToMarkdown(content)
 			if err != nil {
-				log.Error().Err(err).Msg("unable to parse file")
+				log.Error("unable to parse file", "err", err)
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)
 				return
 			}
 		default:
 			html, err = renderer.ToSyntaxHighlightedHTML(file.Type, content)
 			if err != nil {
-				log.Error().Err(err).Msg("unable to parse file")
+				log.Error("unable to parse file", "err", err)
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)
 				return
 			}
@@ -201,7 +201,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 
 		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)
 		if err != nil {
-			log.Error().Err(err).Msg("unable to render template")
+			log.Error("unable to render template", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}

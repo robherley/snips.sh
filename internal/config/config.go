@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"os"
 	"text/tabwriter"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/charmbracelet/ssh"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -109,7 +109,7 @@ func (cfg *Config) SSHAuthorizedKeys() ([]ssh.PublicKey, error) {
 
 		out, _, _, _, err := ssh.ParseAuthorizedKey(keyBites)
 		if err != nil {
-			log.Warn().Err(err).Msgf("unable to parse authorized key at line %d", i)
+			slog.Warn("unable to parse authorized key", "line", i, "err", err)
 			continue
 		}
 

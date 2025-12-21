@@ -1,19 +1,34 @@
 package logger
 
 import (
+	"log/slog"
 	"os"
+	"time"
 
+	"github.com/lmittmann/tint"
 	"github.com/mattn/go-isatty"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
-func Initialize() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+const DefaultLevel = slog.LevelInfo
 
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+func Initialize(lvls ...slog.Level) {
+	lvl := DefaultLevel
+	if len(lvls) > 0 {
+		lvl = lvls[len(lvls)-1]
 	}
 
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	var handler slog.Handler
+
+	if isatty.IsTerminal(os.Stderr.Fd()) {
+		handler = tint.NewHandler(os.Stderr, &tint.Options{
+			Level:      lvl,
+			TimeFormat: time.TimeOnly,
+		})
+	} else {
+		handler = slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+			Level: lvl,
+		})
+	}
+
+	slog.SetDefault(slog.New(handler))
 }

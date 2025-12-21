@@ -4,14 +4,14 @@ import (
 	"context"
 	"embed"
 	"flag"
+	"log/slog"
+	"os"
 
 	"github.com/robherley/snips.sh/internal/app"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/http"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/stats"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -28,16 +28,18 @@ func main() {
 
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal().Err(err).Msg("unable to load config")
+		slog.Error("unable to load config", "err", err)
+		os.Exit(1)
+	}
+
+	if cfg.Debug {
+		logger.Initialize(slog.LevelDebug)
 	}
 
 	statsd, err := stats.Initialize(cfg.Metrics.Statsd, cfg.Metrics.UseDogStatsd)
 	if err != nil {
-		log.Fatal().Err(err).Msg("unable to initialize metrics")
-	}
-
-	if cfg.Debug {
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		slog.Error("unable to initialize metrics", "err", err)
+		os.Exit(1)
 	}
 
 	usage := flag.Bool("usage", false, "print environment variable usage")
@@ -54,12 +56,14 @@ func main() {
 		cfg.HTML.ExtendHeadFile,
 	)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to load assets")
+		slog.Error("failed to load assets", "err", err)
+		os.Exit(1)
 	}
 
 	application, err := app.New(cfg, assets)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to load config")
+		slog.Error("failed to load config", "err", err)
+		os.Exit(1)
 	}
 
 	application.OnShutdown = func(_ context.Context) {
@@ -67,11 +71,17 @@ func main() {
 	}
 
 	if err := application.DB.Migrate(context.Background()); err != nil {
-		log.Fatal().Err(err).Msg("failed to migrate database")
+		slog.Error("failed to migrate database", "err", err)
+		os.Exit(1)
 	}
 
-	log.Info().Str("ssh_addr", cfg.SSH.Internal.String()).Str("http_addr", cfg.HTTP.Internal.String()).Msg("starting snips.sh")
+	slog.Info("starting snips.sh",
+		"ssh_addr", cfg.SSH.Internal.String(),
+		"http_addr", cfg.HTTP.Internal.String(),
+	)
+
 	if err := application.Boot(); err != nil {
-		log.Fatal().Err(err).Msg("failed to load config")
+		slog.Error("failed to load config", "err", err)
+		os.Exit(1)
 	}
 }

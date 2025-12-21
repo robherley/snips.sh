@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -9,7 +10,6 @@ import (
 	"github.com/armon/go-metrics"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
-	"github.com/rs/zerolog/log"
 )
 
 type Middleware func(next http.Handler) http.Handler
@@ -49,20 +49,15 @@ func WithLogger(next http.Handler) http.Handler {
 		start := time.Now()
 		requestID := r.Header.Get(RequestIDHeader)
 
-		reqLog := log.With().Fields(map[string]interface{}{
-			"svc":        "http",
-			"addr":       addr,
-			"request_id": requestID,
-			"path":       r.URL.Path,
-		}).Logger()
+		reqLog := slog.With("svc", "http", "addr", addr, "request_id", requestID, "path", r.URL.Path)
 
-		ctx := context.WithValue(r.Context(), logger.ContextKey, &reqLog)
-		reqLog.Info().Msg("connected")
+		ctx := context.WithValue(r.Context(), logger.ContextKey, reqLog)
+		reqLog.Info("connected")
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 
-		reqLog.Info().Dur("dur", time.Since(start)).Str("pattern", Pattern(r)).Msg("disconnected")
+		reqLog.Info("disconnected", "dur", time.Since(start), "pattern", Pattern(r))
 	})
 }
 
@@ -71,7 +66,7 @@ func WithRecover(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				logger.From(r.Context()).Error().Msgf("panic: %v", err)
+				logger.From(r.Context()).Error("panic", "err", err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			}
 		}()

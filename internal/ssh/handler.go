@@ -97,7 +97,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 				program.Quit()
 				return
 			case <-timer.C:
-				log.Warn().Msg("max session duration reached")
+				log.Warn("max session duration reached")
 				metrics.IncrCounter([]string{"ssh", "session", "max_duration_reached"}, 1)
 				program.Kill()
 				return
@@ -111,7 +111,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 
 	if _, err := program.Run(); err != nil {
 		if !errors.Is(err, tea.ErrProgramKilled) { // don't log if we killed the program (e.g. session duration reached)
-			log.Error().Err(err).Msg("app exited with error")
+			log.Error("app exited with error", "err", err)
 		}
 	}
 }
@@ -164,7 +164,7 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *snips.File) {
 	args := sesh.Command()[1:]
 	if err := flags.Parse(sesh.Stderr(), args); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
-			log.Warn().Err(err).Msg("invalid user specified flags")
+			log.Warn("invalid user specified flags", "err", err)
 		}
 		return
 	}
@@ -201,7 +201,7 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *snips.File) {
 
 	metrics.IncrCounter([]string{"file", "delete"}, 1)
 
-	log.Info().Str("file_id", file.ID).Msg("file deleted")
+	log.Info("file deleted", "file_id", file.ID)
 
 	noti := Notification{
 		Color: styles.Colors.Green,
@@ -227,13 +227,13 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 	args := sesh.Command()[1:]
 	if err := flags.Parse(sesh.Stderr(), args); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
-			log.Warn().Err(err).Msg("invalid user specified flags")
+			log.Warn("invalid user specified flags", "err", err)
 		}
 		return
 	}
 
 	signedFileURL, expires := file.GetSignedURL(h.Config, flags.TTL)
-	log.Info().Str("file_id", file.ID).Time("expires_at", expires).Msg("private file signed")
+	log.Info("private file signed", "file_id", file.ID, "expires_at", expires)
 
 	metrics.IncrCounter([]string{"file", "sign"}, 1)
 
@@ -277,7 +277,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 	flags := UploadFlags{}
 	if err := flags.Parse(sesh.Stderr(), sesh.Command()); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
-			log.Warn().Err(err).Msg("invalid user specified flags")
+			log.Warn("invalid user specified flags", "err", err)
 			sesh.Error(err, "Error parsing flag", "Error: %q", err.Error())
 		}
 		return
@@ -337,13 +337,13 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 				{Name: "type", Value: file.Type},
 			})
 
-			log.Info().Fields(map[string]interface{}{
-				"file_id":   file.ID,
-				"user_id":   file.UserID,
-				"size":      file.Size,
-				"private":   file.Private,
-				"file_type": file.Type,
-			}).Msg("file uploaded")
+			log.Info("file uploaded",
+				"file_id", file.ID,
+				"user_id", file.UserID,
+				"size", file.Size,
+				"private", file.Private,
+				"file_type", file.Type,
+			)
 
 			visibility := styles.C(styles.Colors.White, "public")
 			if file.Private {
@@ -387,7 +387,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 
 			if file.Private && flags.TTL.Seconds() > 0 {
 				signedURL, expires = file.GetSignedURL(h.Config, flags.TTL)
-				log.Info().Str("file_id", file.ID).Time("expires_at", expires).Msg("private file signed")
+				log.Info("private file signed", "file_id", file.ID, "expires_at", expires)
 				targetURL = signedURL.String()
 			} else {
 				targetURL = h.Config.HTTPAddressForFile(file.ID)
