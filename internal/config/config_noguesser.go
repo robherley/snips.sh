@@ -1,6 +1,5 @@
-//go:build arm64 || noguesser
+//go:build noguesser
 
 package config
 
-// https://github.com/robherley/snips.sh/issues/39
 const GuessingSupported = false

@@ -17,7 +17,10 @@ jobs:
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
-    - run: script/install-libtensorflow
+    - name: Install magika
+      run: |
+        curl -LsSf https://github.com/google/magika/releases/latest/download/magika-installer.sh | sh
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
     - name: Test
       uses: robherley/go-test-action@v0.7.1
       with:

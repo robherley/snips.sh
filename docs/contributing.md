@@ -10,7 +10,15 @@ Please use [Issues](https://github.com/robherley/snips.sh/issues) to report bugs
 
 To get started, you'll need to have [Go installed](https://go.dev/doc/install).
 
-In addition, the [libtensorflow](https://www.tensorflow.org/install/lang_c) shared objects for the C API need to be present on your system in order to use [Guesslang](https://github.com/robherley/guesslang-go). Otherwise, you'll see a bunch of "cannot open shared object file" errors. There's a utility script (`script/install-libtensorflow`) that will install it via `brew` for macOS or download from source for Linux.
+In addition, [magika](https://github.com/google/magika) needs to be installed on your system for AI-powered file type detection. You can install it with:
+
+```bash
+# Using Cargo (Rust)
+cargo install magika
+
+# Or using the installer script
+curl -LsSf https://github.com/google/magika/releases/latest/download/magika-installer.sh | sh
+```
 
 Once those dependencies are installed, you just need to:
 
@@ -33,8 +41,6 @@ If you are working on the web UI, I recommend installing [air](https://github.co
 This repository follows [scripts-to-rule-them-all](https://github.com/github/scripts-to-rule-them-all), here's a brief description of each:
 
 `script/atlas`: locally installs [atlas](https://atlasgo.io/) CLI
-
-`script/install-libtensorflow`: installs [libtensorflow](https://www.tensorflow.org/install/lang_c) shared objects for the C API (required for Guesslang)
 
 `script/lint`: locally installs [golangci-lint](https://github.com/golangci/golangci-lint) and runs the linter
 

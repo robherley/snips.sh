@@ -1,9 +1,8 @@
-//go:build arm64 || noguesser
+//go:build noguesser
 
 package renderer
 
 func Guess(_ string) string {
-	// currently not supporting guessing in arm64 bc of libtensorflow requirements
-	// https://github.com/robherley/snips.sh/issues/39
+	// guesser disabled via build tag
 	panic("not implemented")
 }
