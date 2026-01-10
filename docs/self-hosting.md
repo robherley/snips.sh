@@ -154,6 +154,13 @@ For local development, you can build as so:
 script/build
 ```
 
+When running, be sure to setup the environment so everything is linked properly:
+
+```bash
+source script/env
+bin/snips.sh
+```
+
 If you do not want file type detection, you can build without the guesser (and avoid extra linking/env vars):
 
 ```bash
