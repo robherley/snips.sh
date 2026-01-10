@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 ONNX_VERSION="1.23.2"
 VENDOR_DIR="${VENDOR_DIR:-third_party}"
 
-# Allow overriding OS and ARCH for cross-compilation
 if [ -n "${TARGETOS:-}" ]; then
     case "${TARGETOS}" in
         darwin) OS="osx" ;;

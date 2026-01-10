@@ -4,4 +4,4 @@ set -euo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 source "${REPO_ROOT}/script/env"
 
-go run -tags onnxruntime -ldflags "-extldflags '${GO_EXTLDFLAGS}'" "${REPO_ROOT}" "$@"
+go run -ldflags "-extldflags '${GO_EXTLDFLAGS}'" . "$@"

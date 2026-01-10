@@ -1,22 +1,15 @@
 #!/usr/bin/env bash
-# Source this file to set CGO/linker flags for ONNX runtime and Magika
+# Source this file to set CGO/linker flags for ONNX runtime
 # Usage: source script/env
 #
 # Environment variables:
-#   ONNX_DIR         - Override the ONNX runtime directory (default: third_party/onnxruntime)
-#   MAGIKA_ASSETS_DIR - Override the Magika assets directory (default: third_party/magika/assets)
+#   ONNX_DIR - Override the ONNX runtime directory (default: third_party/onnxruntime)
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo ".")"
 
 if [ -z "${ONNX_DIR:-}" ]; then
     ONNX_DIR="${REPO_ROOT}/third_party/onnxruntime"
 fi
-
-if [ -z "${MAGIKA_ASSETS_DIR:-}" ]; then
-    MAGIKA_ASSETS_DIR="${REPO_ROOT}/third_party/magika/assets"
-fi
-
-export MAGIKA_ASSETS_DIR
 
 if [ ! -d "${ONNX_DIR}" ]; then
     echo "Error: ONNX runtime not found at ${ONNX_DIR}" >&2
@@ -44,13 +37,26 @@ case "$(uname -s)" in
         ;;
 esac
 
+# Write to GITHUB_ENV for use by subsequent steps in GitHub Actions
+if [ -n "${GITHUB_ENV:-}" ]; then
+    {
+        echo "CGO_ENABLED=${CGO_ENABLED}"
+        echo "CGO_CFLAGS=${CGO_CFLAGS}"
+        echo "CGO_LDFLAGS=${CGO_LDFLAGS}"
+        echo "GO_EXTLDFLAGS=${GO_EXTLDFLAGS}"
+        case "$(uname -s)" in
+            Darwin) echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}" ;;
+            Linux)  echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" ;;
+        esac
+    } >> "${GITHUB_ENV}"
+fi
+
 if [ -n "${VERBOSE:-}" ]; then
     echo "Environment configured:"
     echo "  CGO_ENABLED=${CGO_ENABLED}"
     echo "  CGO_CFLAGS=${CGO_CFLAGS}"
     echo "  CGO_LDFLAGS=${CGO_LDFLAGS}"
     echo "  GO_EXTLDFLAGS=${GO_EXTLDFLAGS}"
-    echo "  MAGIKA_ASSETS_DIR=${MAGIKA_ASSETS_DIR}"
     case "$(uname -s)" in
         Darwin) echo "  DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}" ;;
         Linux)  echo "  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" ;;

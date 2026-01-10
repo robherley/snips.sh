@@ -19,9 +19,6 @@ ENV VENDOR_DIR=/opt
 ENV TARGETOS=linux
 RUN script/vendor-onnxruntime
 
-ENV MAGIKA_MODEL=standard_v3_3
-RUN script/vendor-magika
-
 ENV ONNX_DIR=/opt/onnxruntime
 ENV OUTPUT=/build/snips.sh
 RUN if [ "${TARGETARCH}" = "arm64" ]; then \
@@ -32,12 +29,9 @@ RUN if [ "${TARGETARCH}" = "arm64" ]; then \
 FROM ubuntu:22.04
 
 COPY --from=build /opt/onnxruntime/lib /opt/onnxruntime/lib
-COPY --from=build /opt/magika/assets /opt/magika/assets
 COPY --from=build /build/snips.sh /usr/bin/snips.sh
 
 ENV LD_LIBRARY_PATH=/opt/onnxruntime/lib
-ENV MAGIKA_ASSETS_DIR=/opt/magika/assets
-ENV MAGIKA_MODEL=standard_v3_3
 ENV SNIPS_HTTP_INTERNAL=http://0.0.0.0:8080
 ENV SNIPS_SSH_INTERNAL=ssh://0.0.0.0:2222
 

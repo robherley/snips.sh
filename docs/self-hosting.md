@@ -146,35 +146,18 @@ At runtime, snips.sh will emit various metrics if the `SNIPS_METRICS_STATSD` is 
 
 ### Build without File Type Detection
 
-In order to "guess" what language a snippet is, snips.sh uses [Magika](https://github.com/google/magika), Google's AI-powered file type detection system. This uses the ONNX Runtime for inference and requires CGO.
+In order to "guess" what language a snippet is, snips.sh uses [magika-go](https://github.com/robherley/magika-go), a Go port of Google's Magika AI-powered file type detection system. The model and ONNX runtime are embedded at build time, so no external dependencies are required beyond CGO (for SQLite).
 
-For local development, you can use the setup script to install ONNX Runtime and Magika assets:
-
-```bash
-# Install to /opt (requires sudo)
-./scripts/setup-onnxruntime.sh
-
-# Or install to a custom directory
-./scripts/setup-onnxruntime.sh ~/magika
-```
-
-Then source the environment script and build with the `onnxruntime` tag:
+For local development, you can build as so:
 
 ```bash
-source scripts/env-onnxruntime.sh
-go build -tags onnxruntime .
+script/build
 ```
 
-If you do not want to install the ONNX Runtime dependency, you can build without the guesser:
+If you do not want file type detection, you can build without the guesser (and avoid extra linking/env vars):
 
 ```bash
 go build -tags noguesser .
-```
-
-Or simply build without the `onnxruntime` tag (CGO will still be needed for SQLite):
-
-```bash
-go build .
 ```
 
 ## Examples

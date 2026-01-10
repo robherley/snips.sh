@@ -12,7 +12,6 @@ require (
 	github.com/charmbracelet/ssh v0.0.0-20250128164007-98fd5ae11894
 	github.com/charmbracelet/wish v1.4.7
 	github.com/dustin/go-humanize v1.0.1
-	github.com/google/magika/go v1.0.0
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/compress v1.18.0
@@ -22,6 +21,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.16.0
+	github.com/robherley/magika-go v0.1.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/minify/v2 v2.24.2
 	github.com/yuin/goldmark v1.7.13
