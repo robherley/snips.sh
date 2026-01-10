@@ -17,7 +17,7 @@ jobs:
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
-    - run: script/vendor-onnxruntime && script/env
+    - run: script/vendor-onnxruntime && source script/env
     - name: Test
       uses: robherley/go-test-action@v0.7.1
       with:
