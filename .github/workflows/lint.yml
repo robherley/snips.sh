@@ -18,10 +18,6 @@ jobs:
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
-    - name: Install magika
-      run: |
-        curl -LsSf https://github.com/google/magika/releases/latest/download/magika-installer.sh | sh
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
     - uses: golangci/golangci-lint-action@v9
       with:
         version: v2.7.2
