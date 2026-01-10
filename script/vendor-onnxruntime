@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ONNX_VERSION="1.23.2"
+VENDOR_DIR="${VENDOR_DIR:-third_party}"
+
+if [ -n "${TARGETOS:-}" ]; then
+    case "${TARGETOS}" in
+        darwin) OS="osx" ;;
+        linux)  OS="linux" ;;
+        *)
+            echo "Unsupported OS: ${TARGETOS}"
+            exit 1
+            ;;
+    esac
+else
+    case "$(uname -s)" in
+        Darwin) OS="osx" ;;
+        Linux)  OS="linux" ;;
+        *)
+            echo "Unsupported OS: $(uname -s)"
+            exit 1
+            ;;
+    esac
+fi
+
+if [ -n "${TARGETARCH:-}" ]; then
+    case "${TARGETARCH}" in
+        amd64)
+            if [ "$OS" = "osx" ]; then
+                ARCH="x86_64"
+            else
+                ARCH="x64"
+            fi
+            ;;
+        arm64)
+            if [ "$OS" = "osx" ]; then
+                ARCH="arm64"
+            else
+                ARCH="aarch64"
+            fi
+            ;;
+        *)
+            echo "Unsupported architecture: ${TARGETARCH}"
+            exit 1
+            ;;
+    esac
+else
+    case "$(uname -m)" in
+        x86_64)
+            if [ "$OS" = "osx" ]; then
+                ARCH="x86_64"
+            else
+                ARCH="x64"
+            fi
+            ;;
+        arm64|aarch64)
+            if [ "$OS" = "osx" ]; then
+                ARCH="arm64"
+            else
+                ARCH="aarch64"
+            fi
+            ;;
+        *)
+            echo "Unsupported architecture: $(uname -m)"
+            exit 1
+            ;;
+    esac
+fi
+
+PLATFORM="${OS}-${ARCH}"
+FILENAME="onnxruntime-${PLATFORM}-${ONNX_VERSION}.tgz"
+URL="https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/${FILENAME}"
+API_URL="https://api.github.com/repos/microsoft/onnxruntime/releases/tags/v${ONNX_VERSION}"
+
+echo "Fetching checksum from GitHub API..."
+EXPECTED_CHECKSUM=$(curl -fsSL "${API_URL}" | jq -r --arg filename "${FILENAME}" '.assets[] | select(.name == $filename) | .digest' | sed 's/sha256://')
+
+if [ -z "${EXPECTED_CHECKSUM}" ] || [ "${EXPECTED_CHECKSUM}" = "null" ]; then
+    echo "Failed to fetch checksum for ${FILENAME}"
+    exit 1
+fi
+
+echo "Downloading onnxruntime ${ONNX_VERSION} for ${PLATFORM}..."
+mkdir -p "${VENDOR_DIR}"
+curl -fSL "${URL}" -o "${VENDOR_DIR}/${FILENAME}"
+
+echo "Verifying checksum..."
+if command -v sha256sum &> /dev/null; then
+    ACTUAL_CHECKSUM=$(sha256sum "${VENDOR_DIR}/${FILENAME}" | awk '{print $1}')
+else
+    ACTUAL_CHECKSUM=$(shasum -a 256 "${VENDOR_DIR}/${FILENAME}" | awk '{print $1}')
+fi
+
+if [ "${ACTUAL_CHECKSUM}" != "${EXPECTED_CHECKSUM}" ]; then
+    echo "Checksum verification failed!"
+    echo "Expected: ${EXPECTED_CHECKSUM}"
+    echo "Actual:   ${ACTUAL_CHECKSUM}"
+    rm "${VENDOR_DIR}/${FILENAME}"
+    exit 1
+fi
+echo "Checksum verified."
+
+tar -xzf "${VENDOR_DIR}/${FILENAME}" -C "${VENDOR_DIR}"
+rm "${VENDOR_DIR}/${FILENAME}"
+
+rm -rf "${VENDOR_DIR}/onnxruntime"
+mv "${VENDOR_DIR}/onnxruntime-${PLATFORM}-${ONNX_VERSION}" "${VENDOR_DIR}/onnxruntime"
+
+echo "onnxruntime ${ONNX_VERSION} installed to ${VENDOR_DIR}/onnxruntime"

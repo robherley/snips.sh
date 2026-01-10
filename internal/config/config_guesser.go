@@ -1,4 +1,4 @@
-//go:build amd64 && !noguesser
+//go:build cgo && !noguesser
 
 package config
 

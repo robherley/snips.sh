@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+OUTPUT="${OUTPUT:-${REPO_ROOT}/bin/snips.sh}"
+
+source "${REPO_ROOT}/script/env"
+
+# Support cross-compilation
+CC_FLAG=""
+if [ -n "${CC:-}" ]; then
+    CC_FLAG="CC=${CC}"
+fi
+
+GOARCH_FLAG=""
+if [ -n "${TARGETARCH:-}" ]; then
+    GOARCH_FLAG="GOARCH=${TARGETARCH}"
+fi
+
+echo "Building snips.sh..."
+env ${CC_FLAG} ${GOARCH_FLAG} CGO_ENABLED=1 go build -o "${OUTPUT}" "${REPO_ROOT}"
+
+echo "Built: ${OUTPUT}"

@@ -10,7 +10,7 @@ The architecture of snips.sh was designed with self-hosting in mind, it's very s
     - [Host Keys](#host-keys)
     - [Limiting SSH Access](#limiting-ssh-access)
     - [Statsd Metrics](#statsd-metrics)
-    - [Build without Tensorflow](#build-without-tensorflow)
+    - [Build without File Type Detection](#build-without-file-type-detection)
   - [Examples](#examples)
     - [Docker Compose](#docker-compose)
 
@@ -41,7 +41,7 @@ docker run ghcr.io/robherley/snips.sh -usage
 ```
 KEY                           TYPE              DEFAULT                DESCRIPTION
 SNIPS_DEBUG                   True or False     False                  enable debug logging and pprof
-SNIPS_ENABLEGUESSER           True or False     True                   enable Guesslang model to detect file types
+SNIPS_ENABLEGUESSER           True or False     True                   enable AI model to detect file types
 SNIPS_HMACKEY                 String            hmac-and-cheese        symmetric key used to sign URLs
 SNIPS_FILECOMPRESSION         True or False     True                   enable compression of file contents
 SNIPS_LIMITS_FILESIZE         Unsigned Integer  1048576                maximum file size in bytes
@@ -144,17 +144,28 @@ ssh-import-id gh:robherley -o snips_authorized_keys
 
 At runtime, snips.sh will emit various metrics if the `SNIPS_METRICS_STATSD` is defined. This should be the full UDP address with the protocol, e.g. `udp://localhost:8125`.
 
-### Build without Tensorflow
+### Build without File Type Detection
 
-In order to "guess" what language a snippet is, snips.sh will use [Guesslang](https://github.com/yoeo/guesslang) (specifically [guesslang-go](https://github.com/robherley/guesslang-go)). This requires the [`libtensorflow`](https://www.tensorflow.org/install/lang_c) C API.
+In order to "guess" what language a snippet is, snips.sh uses [magika-go](https://github.com/robherley/magika-go), a Go port of Google's Magika AI-powered file type detection system. The model and ONNX runtime are embedded at build time, so no external dependencies are required beyond CGO (for SQLite).
 
-If you do not want tensorflow as a runtime dependency (or if your environment does not support it) you can build without the guesser activated with the `noguesser` build tag:
+For local development, you can build as so:
 
+```bash
+script/build
 ```
-go build -tags noguesser
+
+When running, be sure to setup the environment so everything is linked properly:
+
+```bash
+source script/env
+bin/snips.sh
 ```
 
-For `arm64` systems, this is automatic and will default to not compiling with the Guesslang dependency.
+If you do not want file type detection, you can build without the guesser (and avoid extra linking/env vars):
+
+```bash
+go build -tags noguesser .
+```
 
 ## Examples
 
