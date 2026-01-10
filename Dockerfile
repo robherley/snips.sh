@@ -29,7 +29,7 @@ RUN if [ "${TARGETARCH}" = "arm64" ]; then \
     fi && \
     script/build
 
-FROM gcr.io/distroless/base-debian12
+FROM ubuntu:22.04
 
 COPY --from=build /opt/onnxruntime/lib /opt/onnxruntime/lib
 COPY --from=build /opt/magika/assets /opt/magika/assets
