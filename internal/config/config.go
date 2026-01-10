@@ -24,7 +24,7 @@ KEY	TYPE	DEFAULT	DESCRIPTION
 type Config struct {
 	Debug bool `default:"False" desc:"enable debug logging and pprof"`
 
-	EnableGuesser bool `default:"True" desc:"enable Magika model to detect file types"`
+	EnableGuesser bool `default:"True" desc:"enable AI model to detect file types"`
 
 	HMACKey string `default:"hmac-and-cheese" desc:"symmetric key used to sign URLs"`
 

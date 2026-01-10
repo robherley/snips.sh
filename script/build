@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo ".")"
+OUTPUT="${OUTPUT:-${REPO_ROOT}/bin/snips.sh}"
+
+source "${REPO_ROOT}/script/env"
+
+# Support cross-compilation
+CC_FLAG=""
+if [ -n "${CC:-}" ]; then
+    CC_FLAG="CC=${CC}"
+fi
+
+GOARCH_FLAG=""
+if [ -n "${TARGETARCH:-}" ]; then
+    GOARCH_FLAG="GOARCH=${TARGETARCH}"
+fi
+
+echo "Building snips.sh with ONNX runtime support..."
+env ${CC_FLAG} ${GOARCH_FLAG} go build -tags onnxruntime -ldflags "-extldflags '${GO_EXTLDFLAGS}'" -o "${OUTPUT}" "${REPO_ROOT}"
+
+echo "Built: ${OUTPUT}"

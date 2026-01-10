@@ -1,4 +1,4 @@
-//go:build noguesser
+//go:build !cgo || !onnxruntime || noguesser
 
 package config
 

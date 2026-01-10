@@ -1,8 +1,8 @@
-//go:build noguesser
+//go:build !cgo || !onnxruntime || noguesser
 
 package renderer
 
 func Guess(_ string) string {
-	// guesser disabled via build tag
+	// guesser disabled, should not be called
 	panic("not implemented")
 }

@@ -4,6 +4,7 @@ bin/
 snips.sh
 .env
 docs/tapes/*.gif
+third_party/
 
 # Created by https://www.toptal.com/developers/gitignore/api/git,macos,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=git,macos,visualstudiocode

@@ -41,7 +41,7 @@ docker run ghcr.io/robherley/snips.sh -usage
 ```
 KEY                           TYPE              DEFAULT                DESCRIPTION
 SNIPS_DEBUG                   True or False     False                  enable debug logging and pprof
-SNIPS_ENABLEGUESSER           True or False     True                   enable Guesslang model to detect file types
+SNIPS_ENABLEGUESSER           True or False     True                   enable AI model to detect file types
 SNIPS_HMACKEY                 String            hmac-and-cheese        symmetric key used to sign URLs
 SNIPS_FILECOMPRESSION         True or False     True                   enable compression of file contents
 SNIPS_LIMITS_FILESIZE         Unsigned Integer  1048576                maximum file size in bytes
@@ -146,15 +146,36 @@ At runtime, snips.sh will emit various metrics if the `SNIPS_METRICS_STATSD` is 
 
 ### Build without File Type Detection
 
-In order to "guess" what language a snippet is, snips.sh uses [Magika](https://github.com/google/magika), Google's AI-powered file type detection system. This requires the `magika` CLI to be installed on your system.
+In order to "guess" what language a snippet is, snips.sh uses [Magika](https://github.com/google/magika), Google's AI-powered file type detection system. This uses the ONNX Runtime for inference and requires CGO.
 
-If you do not want to install magika as a runtime dependency, you can build without the guesser activated with the `noguesser` build tag:
+For local development, you can use the setup script to install ONNX Runtime and Magika assets:
 
+```bash
+# Install to /opt (requires sudo)
+./scripts/setup-onnxruntime.sh
+
+# Or install to a custom directory
+./scripts/setup-onnxruntime.sh ~/magika
 ```
-go build -tags noguesser
+
+Then source the environment script and build with the `onnxruntime` tag:
+
+```bash
+source scripts/env-onnxruntime.sh
+go build -tags onnxruntime .
 ```
 
-Note that with the magika integration, all architectures (including arm64) are now supported for file type detection.
+If you do not want to install the ONNX Runtime dependency, you can build without the guesser:
+
+```bash
+go build -tags noguesser .
+```
+
+Or simply build without the `onnxruntime` tag (CGO will still be needed for SQLite):
+
+```bash
+go build .
+```
 
 ## Examples
 

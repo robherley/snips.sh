@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MAGIKA_MODEL="${MAGIKA_MODEL:-standard_v3_3}"
+VENDOR_DIR="${VENDOR_DIR:-third_party}"
+MAGIKA_DIR="${VENDOR_DIR}/magika"
+
+echo "Downloading Magika assets (model: ${MAGIKA_MODEL})..."
+
+TEMP_DIR=$(mktemp -d)
+trap "rm -rf ${TEMP_DIR}" EXIT
+
+git clone --depth 1 --filter=blob:none --sparse \
+    https://github.com/google/magika.git "${TEMP_DIR}/magika"
+
+git -C "${TEMP_DIR}/magika" sparse-checkout set assets
+
+mkdir -p "${MAGIKA_DIR}/assets/models"
+cp "${TEMP_DIR}/magika/assets/content_types_kb.min.json" "${MAGIKA_DIR}/assets/"
+cp -r "${TEMP_DIR}/magika/assets/models/${MAGIKA_MODEL}" "${MAGIKA_DIR}/assets/models/"
+
+echo "Magika assets installed to ${MAGIKA_DIR}/assets"
