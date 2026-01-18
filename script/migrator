@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-set -euo pipefail
+set -eu
 
-GOOSE_VERSION="v3.6.3"
+GOOSE_VERSION="v3.26.3"
 
-if ! command -v goose &> /dev/null; then
+if ! command -v goose > /dev/null 2>&1; then
     echo "goose not found, installing ${GOOSE_VERSION}..."
     go install "github.com/pressly/goose/v3/cmd/goose@${GOOSE_VERSION}"
 fi
