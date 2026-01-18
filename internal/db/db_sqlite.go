@@ -37,7 +37,7 @@ func (s *Sqlite) Migrate(ctx context.Context) error {
 		return err
 	}
 
-	return goose.Up(s.DB, "migrations")
+	return goose.UpContext(ctx, s.DB, "migrations")
 }
 
 func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
