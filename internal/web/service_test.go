@@ -1,5 +1,5 @@
 //nolint:goconst
-package http_test
+package web_test
 
 import (
 	gohttp "net/http"
@@ -10,9 +10,9 @@ import (
 
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/http"
 	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/robherley/snips.sh/internal/testutil"
+	"github.com/robherley/snips.sh/internal/web"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -21,9 +21,9 @@ type HTTPServiceSuite struct {
 	suite.Suite
 
 	config  *config.Config
-	assets  http.Assets
+	assets  web.Assets
 	mockDB  *db.MockDB
-	service *http.Service
+	service *web.Service
 }
 
 func TestHTTPServiceSuite(t *testing.T) {
@@ -42,7 +42,7 @@ func (suite *HTTPServiceSuite) SetupTest() {
 	suite.mockDB = db.NewMockDB(suite.T())
 
 	var err error
-	suite.service, err = http.New(suite.config, suite.mockDB, suite.assets)
+	suite.service, err = web.New(suite.config, suite.mockDB, suite.assets)
 	suite.Require().NoError(err)
 }
 

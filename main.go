@@ -9,9 +9,9 @@ import (
 
 	"github.com/robherley/snips.sh/internal/app"
 	"github.com/robherley/snips.sh/internal/config"
-	"github.com/robherley/snips.sh/internal/http"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/stats"
+	"github.com/robherley/snips.sh/internal/web"
 )
 
 var (
@@ -49,7 +49,7 @@ func main() {
 		return
 	}
 
-	assets, err := http.NewAssets(
+	assets, err := web.NewAssets(
 		&webFS,
 		&docsFS,
 		readme,
