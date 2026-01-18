@@ -6,49 +6,53 @@ I chose SQLite since it's simplest starting point for a database, it keeps the d
 
 ## Schema and Migrations
 
-To prevent breaking behavior across hosted snips.sh instances, [Atlas](https://atlasgo.io/) is used as a schema migration tool to declaratively define the schema and the changes required.
+Database migrations are managed using [goose](https://github.com/pressly/goose). Migration files are located in [`internal/db/migrations/`](https://github.com/robherley/snips.sh/tree/main/internal/db/migrations) and are embedded with the binary at build time. Migrations are automatically applied when the application starts.
 
-The schema is defined at [`internal/db/schema.hcl`](https://github.com/robherley/snips.sh/blob/main/internal/db/schema.hcl). The schema is embedded with the binary at build time, and migrations will be run when the application is started.
+### Creating a New Migration
 
-To change the schema, you will need to edit the schema's HCL. For example, if you wanted to add a nickname attribute to the user's table:
+Use `script/migrator` to create a new migration file:
 
-```diff
-table "users" {
-  schema = schema.main
-  column "id" {
-    type = text
-  }
-  column "created_at" {
-    type = datetime
-  }
-  column "updated_at" {
-    type = datetime
-  }
-+  column "nickname" {
-+    type = text
-+    null = true
-+  }
-  primary_key {
-    columns = [column.id]
-  }
-  index "idx_users_created_at" {
-    columns = [column.created_at]
-  }
-}
+```bash
+script/migrator -s -dir internal/db/migrations create add_user_nickname sql
 ```
 
-To preview the SQL required for the migration, you can use the `script/schema-diff` helper script:
-
-```
-$ script/schema-diff
-```
+This creates a new file like `internal/db/migrations/00002_add_user_nickname.sql` with the goose annotations. Edit it to add your up and down SQL:
 
 ```sql
--- Add column "nickname" to table: "users"
+-- +goose Up
+-- +goose StatementBegin
 ALTER TABLE `users` ADD COLUMN `nickname` text NULL;
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+ALTER TABLE `users` DROP COLUMN `nickname`;
+-- +goose StatementEnd
 ```
 
-In a Pull Request, if the `schema.hcl` changes, this will automatically trigger GitHub Actions to add [the SQL as a comment](https://github.com/robherley/snips.sh/pull/5#issuecomment-1510588137) to the PR.
+### Running Migrations Manually
+
+To run migrations manually via CLI:
+
+```bash
+# Apply all pending migrations
+script/migrator -dir internal/db/migrations sqlite3 <db-path> up
+
+# Roll back the last migration
+script/migrator -dir internal/db/migrations sqlite3 <db-path> down
+
+# Check current migration status
+script/migrator -dir internal/db/migrations sqlite3 <db-path> status
+
+# Migrate to a specific version
+script/migrator -dir internal/db/migrations sqlite3 <db-path> up-to 2
+```
+
+For a full list of goose commands, run:
+
+```bash
+script/migrator --help
+```
 
 ## Replication and Backups
 

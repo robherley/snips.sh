@@ -32,19 +32,19 @@ If you are working on the web UI, I recommend installing [air](https://github.co
 
 This repository follows [scripts-to-rule-them-all](https://github.com/github/scripts-to-rule-them-all), here's a brief description of each:
 
-`script/atlas`: locally installs [atlas](https://atlasgo.io/) CLI
-
 `script/build`: builds the snips.sh binary, supports cross-compilation via `CC` and `TARGETARCH` environment variables
 
 `script/env`: sets CGO/linker flags for ONNX runtime, source this file before building (e.g., `source script/env`)
 
 `script/lint`: locally installs [golangci-lint](https://github.com/golangci/golangci-lint) and runs the linter
 
+`script/migrator`: wrapper for [goose](https://github.com/pressly/goose) to manage database migrations (see [`database.md`](/docs/database.md))
+
+`script/mocks`: generates mock interfaces using [mockery](https://github.com/vektra/mockery) for testing
+
 `script/record-tape`: runs [vhs](https://github.com/charmbracelet/vhs) on `docs/tapes/` to generate gifs for readme
 
 `script/run`: runs the application locally with proper environment runtime configuration
-
-`script/schema-diff`: using [atlas](https://atlasgo.io/), prints the difference of local schema with latest `main` schema
 
 `script/ssh-tmp`: helper to run ssh with a new (temporary) public key, useful for testing new user access
 
