@@ -11,13 +11,13 @@ import (
 
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/http"
 	"github.com/robherley/snips.sh/internal/ssh"
+	"github.com/robherley/snips.sh/internal/web"
 )
 
 type App struct {
 	SSH        *ssh.Service
-	HTTP       *http.Service
+	HTTP       *web.Service
 	DB         db.DB
 	OnShutdown func(context.Context)
 }
@@ -92,7 +92,7 @@ func (app *App) shutdown(ctx context.Context) {
 	wg.Wait()
 }
 
-func New(cfg *config.Config, assets http.Assets) (*App, error) {
+func New(cfg *config.Config, assets web.Assets) (*App, error) {
 	database, err := db.NewSqlite(cfg.DB.FilePath)
 	if err != nil {
 		return nil, err
@@ -103,14 +103,14 @@ func New(cfg *config.Config, assets http.Assets) (*App, error) {
 		return nil, err
 	}
 
-	http, err := http.New(cfg, database, assets)
+	httpSvc, err := web.New(cfg, database, assets)
 	if err != nil {
 		return nil, err
 	}
 
 	return &App{
 		SSH:  ssh,
-		HTTP: http,
+		HTTP: httpSvc,
 		DB:   database,
 	}, nil
 }
