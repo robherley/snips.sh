@@ -17,8 +17,8 @@ jobs:
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
-    - run: script/install-libtensorflow
+    - run: script/vendor-onnxruntime && source script/env
     - name: Test
-      uses: robherley/go-test-action@v0.6.0
+      uses: robherley/go-test-action@v0.7.1
       with:
         omit: untested

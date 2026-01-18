@@ -3,28 +3,32 @@ name: Database Check
 on:
   pull_request:
     paths:
-      - 'internal/db/schema.hcl'
+      - 'internal/db/migrations/*.sql'
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  schema-diff:
+  migrations:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
-    - name: Setup atlas
+    - name: List changed migrations
+      env:
+        BASE_REF: ${{ github.base_ref }}
       run: |
-        script/atlas
-    - name: Check schema
-      run: |
-        echo '## Schema Diff' >> diff-output.md
-        echo '```sql' >> diff-output.md
-        script/schema-diff >> diff-output.md
+        echo '<!-- migration-check-comment -->' >> diff-output.md
+        echo '## Migration Changes' >> diff-output.md
+        echo '' >> diff-output.md
+        echo 'Changed migration files:' >> diff-output.md
+        echo '```' >> diff-output.md
+        git diff --name-only "origin/${BASE_REF}...HEAD" -- 'internal/db/migrations/*.sql' >> diff-output.md
         echo '```' >> diff-output.md
     - name: Add comment and label
       uses: actions/github-script@v8
@@ -32,16 +36,36 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const fs = require('fs');
+          const marker = '<!-- migration-check-comment -->';
           const body = fs.readFileSync('diff-output.md', {encoding:'utf8'});
-          github.rest.issues.createComment({
+
+          const { data: comments } = await github.rest.issues.listComments({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body
           });
-          github.rest.issues.addLabels({
+
+          const existing = comments.find(c => c.body.includes(marker));
+
+          if (existing) {
+            await github.rest.issues.updateComment({
+              comment_id: existing.id,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+          }
+
+          await github.rest.issues.addLabels({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            labels: ['schema-diff']
+            labels: ['migration']
           });

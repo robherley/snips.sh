@@ -1,36 +1,53 @@
-//go:build amd64 && !noguesser
+//go:build !noguesser
 
 package renderer
 
 import (
 	"log/slog"
-	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/armon/go-metrics"
-	"github.com/robherley/guesslang-go/pkg/guesser"
+	"github.com/robherley/magika-go/pkg/magika"
 )
 
-var guesslang *guesser.Guesser
+var (
+	scanner     *magika.Scanner
+	scannerOnce sync.Once
+	scannerErr  error
+)
 
-func init() {
-	var err error
-	guesslang, err = guesser.New()
-	if err != nil {
-		slog.Error("failed to initialize guesslang", "err", err)
-		os.Exit(1)
-	}
+// initScanner initializes the magika scanner once.
+// The model and configuration files are embedded at build time.
+func initScanner() (*magika.Scanner, error) {
+	scannerOnce.Do(func() {
+		start := time.Now()
+		scanner, scannerErr = magika.NewScanner()
+		if scannerErr != nil {
+			slog.Error("failed to initialize magika scanner", "err", scannerErr)
+		} else {
+			slog.Info("magika scanner initialized", "dur", time.Since(start))
+		}
+	})
+	return scanner, scannerErr
 }
 
 func Guess(content string) string {
 	guessStart := time.Now()
-	answer, err := guesslang.Guess(content)
-	metrics.MeasureSince([]string{"guess", "duration"}, guessStart)
-	if err != nil {
-		slog.Warn("failed to guess the file type", "err", err)
+	defer metrics.MeasureSince([]string{"guess", "duration"}, guessStart)
+
+	s, err := initScanner()
+	if err != nil || s == nil {
+		slog.Warn("magika scanner not available", "err", err)
 		return ""
 	}
 
-	return strings.ToLower(answer.Predictions[0].Language)
+	ct, err := s.ScanString(content)
+	if err != nil {
+		slog.Warn("failed to scan content with magika", "err", err)
+		return ""
+	}
+
+	return strings.ToLower(ct.Label)
 }

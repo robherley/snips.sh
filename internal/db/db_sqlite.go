@@ -3,23 +3,19 @@ package db
 import (
 	"context"
 	"database/sql"
-	_ "embed"
+	"embed"
 	"errors"
 	"time"
 
+	"github.com/pressly/goose/v3"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/snips"
 
-	"ariga.io/atlas/sql/migrate"
-	aschema "ariga.io/atlas/sql/schema"
-	asqlite "ariga.io/atlas/sql/sqlite"
 	_ "github.com/mattn/go-sqlite3" // sqlite driver
 )
 
-var (
-	//go:embed schema.hcl
-	schema []byte
-)
+//go:embed migrations/*.sql
+var migrations embed.FS
 
 type Sqlite struct {
 	*sql.DB
@@ -35,27 +31,13 @@ func NewSqlite(dsn string) (DB, error) {
 }
 
 func (s *Sqlite) Migrate(ctx context.Context) error {
-	driver, err := asqlite.Open(s.DB)
-	if err != nil {
+	goose.SetBaseFS(migrations)
+
+	if err := goose.SetDialect("sqlite3"); err != nil {
 		return err
 	}
 
-	want := &aschema.Schema{}
-	if err := asqlite.EvalHCLBytes(schema, want, nil); err != nil {
-		return err
-	}
-
-	got, err := driver.InspectSchema(ctx, "", nil)
-	if err != nil {
-		return err
-	}
-
-	changes, err := driver.SchemaDiff(got, want)
-	if err != nil {
-		return err
-	}
-
-	return driver.ApplyChanges(ctx, changes, []migrate.PlanOption{}...)
+	return goose.UpContext(ctx, s.DB, "migrations")
 }
 
 func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {

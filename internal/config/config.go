@@ -24,10 +24,7 @@ KEY	TYPE	DEFAULT	DESCRIPTION
 type Config struct {
 	Debug bool `default:"False" desc:"enable debug logging and pprof"`
 
-	// NOTE: always false on arm64 arch.
-	// currently not shipping libtensorflow for arm
-	// https://github.com/robherley/snips.sh/issues/39
-	EnableGuesser bool `default:"True" desc:"enable Guesslang model to detect file types"`
+	EnableGuesser bool `default:"True" desc:"enable AI model to detect file types"`
 
 	HMACKey string `default:"hmac-and-cheese" desc:"symmetric key used to sign URLs"`
 

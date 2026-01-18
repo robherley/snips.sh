@@ -1,42 +1,40 @@
-FROM --platform=${BUILDPLATFORM} golang:1.25.5 AS build
+FROM golang:1.25.5 AS build
 
-ARG TARGETARCH BUILDPLATFORM
+ARG TARGETARCH
 
 WORKDIR /build
 
-COPY go.mod ./
-COPY go.sum ./
-RUN go mod download
-RUN go mod verify
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
 
+COPY script/ script/
 COPY . .
 
-RUN dpkg --add-architecture arm64 && \
-	apt-get update && \
-	apt-get install -y \
-		gcc-aarch64-linux-gnu \
-		libsqlite3-dev:arm64 && \
-	mkdir /tmp/extra-lib
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    jq \
+    gcc-aarch64-linux-gnu \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN if [ "${TARGETARCH}" = "amd64" ]; then \
-  script/install-libtensorflow; \
-  cp /usr/local/lib/libtensorflow.so.2 /tmp/extra-lib/; \
-  cp /usr/local/lib/libtensorflow_framework.so.2 /tmp/extra-lib/; \
-  go build -a -o 'snips.sh'; \
-else \
-  CC=aarch64-linux-gnu-gcc GOARCH=${TARGETARCH} CGO_ENABLED=1 go build -ldflags "-linkmode external -extldflags -static" -a -o 'snips.sh'; \
-fi
+ENV VENDOR_DIR=/opt
+ENV TARGETOS=linux
+RUN script/vendor-onnxruntime
 
-FROM --platform=${BUILDPLATFORM} ubuntu:22.04
+ENV ONNX_DIR=/opt/onnxruntime
+ENV OUTPUT=/build/snips.sh
+RUN if [ "${TARGETARCH}" = "arm64" ]; then \
+        export CC=aarch64-linux-gnu-gcc; \
+    fi && \
+    script/build
 
-COPY --from=build /tmp/extra-lib/* /usr/local/lib/
+FROM ubuntu:22.04
+
+COPY --from=build /opt/onnxruntime/lib /opt/onnxruntime/lib
 COPY --from=build /build/snips.sh /usr/bin/snips.sh
 
-RUN ldconfig
-
+ENV LD_LIBRARY_PATH=/opt/onnxruntime/lib
 ENV SNIPS_HTTP_INTERNAL=http://0.0.0.0:8080
 ENV SNIPS_SSH_INTERNAL=ssh://0.0.0.0:2222
 
 EXPOSE 8080 2222
 
-ENTRYPOINT [ "/usr/bin/snips.sh" ]
+ENTRYPOINT ["/usr/bin/snips.sh"]

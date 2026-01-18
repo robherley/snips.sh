@@ -96,8 +96,7 @@ The technology behind snips.sh is powered by these amazing projects:
 - [`charmbracelet`](https://github.com/charmbracelet)
   - [`charmbracelet/wish`](https://github.com/charmbracelet/wish): SSH server
   - [`charmbracelet/bubbletea`](https://github.com/charmbracelet/bubbletea): TUI framework
-- [`yoeo/guesslang`](https://github.com/yoeo/guesslang): Guesslang model to detect programming language source code
-  - [`robherley/guesslang-go`](https://github.com/robherley/guesslang-go): Go port of tensorflow Guesslang model
+- [`robherley/magika-go`](https://github.com/robherley/magika-go): AI-powered file type detection
 - [`alecthomas/chroma`](https://github.com/alecthomas/chroma): Syntax Highlighter
 - [`yuin/goldmark`](https://github.com/yuin/goldmark): Markdown Parser
 - [`microcosm-cc/bluemonday`](https://github.com/microcosm-cc/bluemonday): HTML Sanitizer
