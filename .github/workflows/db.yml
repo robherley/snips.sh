@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
@@ -21,6 +23,7 @@ jobs:
       env:
         BASE_REF: ${{ github.base_ref }}
       run: |
+        echo '<!-- migration-check-comment -->' >> diff-output.md
         echo '## Migration Changes' >> diff-output.md
         echo '' >> diff-output.md
         echo 'Changed migration files:' >> diff-output.md
@@ -33,14 +36,34 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const fs = require('fs');
+          const marker = '<!-- migration-check-comment -->';
           const body = fs.readFileSync('diff-output.md', {encoding:'utf8'});
-          github.rest.issues.createComment({
+
+          const { data: comments } = await github.rest.issues.listComments({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body
           });
-          github.rest.issues.addLabels({
+
+          const existing = comments.find(c => c.body.includes(marker));
+
+          if (existing) {
+            await github.rest.issues.updateComment({
+              comment_id: existing.id,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+          }
+
+          await github.rest.issues.addLabels({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
