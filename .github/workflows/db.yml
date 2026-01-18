@@ -3,28 +3,29 @@ name: Database Check
 on:
   pull_request:
     paths:
-      - 'internal/db/schema.hcl'
+      - 'internal/db/migrations/*.sql'
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  schema-diff:
+  migrations:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
-    - name: Setup atlas
+    - name: List changed migrations
+      env:
+        BASE_REF: ${{ github.base_ref }}
       run: |
-        script/atlas
-    - name: Check schema
-      run: |
-        echo '## Schema Diff' >> diff-output.md
-        echo '```sql' >> diff-output.md
-        script/schema-diff >> diff-output.md
+        echo '## Migration Changes' >> diff-output.md
+        echo '' >> diff-output.md
+        echo 'Changed migration files:' >> diff-output.md
+        echo '```' >> diff-output.md
+        git diff --name-only "origin/${BASE_REF}...HEAD" -- 'internal/db/migrations/*.sql' >> diff-output.md
         echo '```' >> diff-output.md
     - name: Add comment and label
       uses: actions/github-script@v8
@@ -43,5 +44,5 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            labels: ['schema-diff']
+            labels: ['migration']
           });

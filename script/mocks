@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+MOCKERY_VERSION="v3.6.3"
+
+if ! command -v mockery &> /dev/null; then
+    echo "mockery not found, installing ${MOCKERY_VERSION}..."
+    go install "github.com/vektra/mockery/v3@${MOCKERY_VERSION}"
+fi
+
+mockery "$@"
