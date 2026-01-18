@@ -1,5 +1,5 @@
 [build]
-  bin = "./tmp/main"
-  cmd = "go build -o ./tmp/main ."
+  bin = "./bin/snips.sh"
+  cmd = "script/build"
   exclude_dir = ["tmp", "data"]
   include_ext = ["go", "tpl", "tmpl", "html", "css"]
