@@ -12,6 +12,7 @@
     --border-radius: 0;
 
     --color-background: hsl(220 13% 8%);
+    --color-background-secondary: hsl(220 13% 14%);
     --color-border: hsl(220 13% 18%);
     --color-card: hsl(220 13% 10%);
 
@@ -101,7 +102,7 @@
 }
 
 ::selection {
-    background: var(--color-teal-3);
+    background: var(--color-blue-3);
 }
 
 * {
@@ -228,6 +229,7 @@ svg.lucide {
     font-family: var(--font-mono);
     background-color: var(--color-card);
     border: var(--border);
+    margin-bottom: 2rem;
 }
 
 .footer-tree {
