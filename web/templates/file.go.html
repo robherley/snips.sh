@@ -18,7 +18,8 @@
   <script type="importmap">
     {
       "imports": {
-        "mermaid": "https://esm.sh/mermaid@11.12.2"
+        "mermaid": "https://esm.sh/mermaid@11.12.2",
+        "lucide": "https://esm.sh/lucide@0.562.0"
       }
     }
   </script>
@@ -31,11 +32,31 @@
   <div class="container">
     <h1 class="title"><a href="/">snips<span class="sh">.sh</span></a></h1>
     <nav class="file-header">
-      <div class="file-details">
-        file: <a href="#">{{ .FileID }}</a>
-        ({{ .FileType }}) &middot; {{ .FileSize }}
-        {{ if .UpdatedAt }} &middot; modified: {{ .UpdatedAt }} {{ end }}
-        {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}
+      <div class="file-details text-sm">
+        <div class="file-detail">
+            <i data-lucide="terminal"></i>
+            <a href="#">{{ .FileID }}</a>
+        </div>
+        <div class="file-detail">
+            <i data-lucide="file-code"></i>
+            {{ .FileType }}
+        </div>
+        <div class="file-detail">
+            <i data-lucide="hard-drive"></i>
+            {{ .FileSize }}
+        </div>
+        {{ if .UpdatedAt }}
+        <div class="file-detail">
+            <i data-lucide="square-pen"></i>
+            {{ .UpdatedAt }}
+        </div>
+        {{ end }}
+        {{ if .Private }}
+        <div class="file-detail danger">
+            <i data-lucide="hat-glasses"></i>
+            private
+        </div>
+        {{ end }}
       </div>
       <a class="file-header-link" id="to-top" href="#" data-hide aria-label="go to top">&#8593; top</a>
       {{ if .RawHREF }}
@@ -45,14 +66,18 @@
     <article class="file-content">
       {{ .HTML }}
     </article>
+    <footer class="file-footer">
+      <div class="footer-tree">
+        <div class="tree-line"><span class="tree-branch"><span class="tree-dir">docs/</span></div>
+        <div class="tree-line"><span class="tree-branch">├── </span><a href="/">README.md</a></div>
+        <div class="tree-line"><span class="tree-branch">├── </span><a href="/docs/acceptable-use-policy.md">acceptable-use-policy.md</a></div>
+        <div class="tree-line"><span class="tree-branch">├── </span><a href="/docs/contributing.md">contributing.md</a></div>
+        <div class="tree-line"><span class="tree-branch">├── </span><a href="/docs/database.md">database.md</a></div>
+        <div class="tree-line"><span class="tree-branch">├── </span><a href="/docs/self-hosting.md">self-hosting.md</a></div>
+        <div class="tree-line"><span class="tree-branch">└── </span><a href="/docs/terms-of-service.md">terms-of-service.md</a></div>
+      </div>
+    </footer>
   </div>
-  <footer class="file-footer muted">
-    <div style="margin-bottom:0.75rem;">
-      snips.sh is a free, anonymous, open source, snippet hosting service
-    </div>
-    <div>
-      <a href="/">about</a> | <a href="https://github.com/robherley/snips.sh">source code</a> | <a href="/docs/terms-of-service.md">terms of service</a> | <a href="/docs/acceptable-use-policy.md">use policy</a>
-    </div>
-  </footer>
+
 </body>
 </html>

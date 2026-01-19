@@ -1,227 +1,268 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Geist+Mono:wght@400;600&display=swap");
 
 :root {
-  --max-width: 1200px;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --border: 1px solid var(--color-gray-5);
-  --border-radius: 0.5rem;
+    --max-width: 1200px;
+    --font-sans:
+        "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    --font-mono:
+        "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    --border: 1px solid var(--color-border);
+    --border-radius: 0;
 
-  /*
-    these lovely colors are from vercel
-    https://vercel.com/design/color
-  */
-  --color-black:#0a0a0a;
-  --color-gray-1:#1a1a1a;
-  --color-gray-2:#1f1f1f;
-  --color-gray-3:#292929;
-  --color-gray-4:#2e2e2e;
-  --color-gray-5:#454545;
-  --color-gray-6:#878787;
-  --color-gray-7:#8f8f8f;
-  --color-gray-8:#7d7d7d;
-  --color-gray-9:#a0a0a0;
-  --color-gray-10:#ededed;
-  --color-blue-1:#0f1b2d;
-  --color-blue-2:#10243e;
-  --color-blue-3:#0f3058;
-  --color-blue-4:#0d3768;
-  --color-blue-5:#0a4481;
-  --color-blue-6:#0091ff;
-  --color-blue-7:#0071f3;
-  --color-blue-8:#0062d1;
-  --color-blue-9:#52a9ff;
-  --color-blue-10:#eaf6ff;
-  --color-red-1:#2a1314;
-  --color-red-2:#3d1719;
-  --color-red-3:#551a1e;
-  --color-red-4:#671e22;
-  --color-red-5:#822025;
-  --color-red-6:#e5484d;
-  --color-red-7:#e5484d;
-  --color-red-8:#da3036;
-  --color-red-9:#ff6368;
-  --color-red-10:#feecee;
-  --color-amber-1:#271700;
-  --color-amber-2:#341c00;
-  --color-amber-3:#4a2900;
-  --color-amber-4:#573300;
-  --color-amber-5:#693f05;
-  --color-amber-6:#e79d13;
-  --color-amber-7:#ffb224;
-  --color-amber-8:#ffa90a;
-  --color-amber-9:#f1a10d;
-  --color-amber-10:#fef3dd;
-  --color-green-1:#0b2211;
-  --color-green-2:#0f2c17;
-  --color-green-3:#11351b;
-  --color-green-4:#0c461c;
-  --color-green-5:#126426;
-  --color-green-6:#1a9338;
-  --color-green-7:#46a758;
-  --color-green-8:#388e4b;
-  --color-green-9:#63c174;
-  --color-green-10:#e5fbeb;
-  --color-teal-1:#04201b;
-  --color-teal-2:#062923;
-  --color-teal-3:#083a33;
-  --color-teal-4:#053c34;
-  --color-teal-5:#085e53;
-  --color-teal-6:#0c9785;
-  --color-teal-7:#12a594;
-  --color-teal-8:#0f8a7c;
-  --color-teal-9:#0ac5b2;
-  --color-teal-10:#e1faf4;
-  --color-purple-1:#221527;
-  --color-purple-2:#301a3a;
-  --color-purple-3:#432155;
-  --color-purple-4:#4e2667;
-  --color-purple-5:#5e2d84;
-  --color-purple-6:#8e4ec6;
-  --color-purple-7:#8e4ec6;
-  --color-purple-8:#773da9;
-  --color-purple-9:#bf7af0;
-  --color-purple-10:#f7ecfc;
-  --color-pink-1:#27141c;
-  --color-pink-2:#3c1827;
-  --color-pink-3:#4f1c31;
-  --color-pink-4:#541b33;
-  --color-pink-5:#6c1e3f;
-  --color-pink-6:#b21a57;
-  --color-pink-7:#e93d82;
-  --color-pink-8:#de2670;
-  --color-pink-9:#f76191;
-  --color-pink-10:#feecf4;
+    --color-background: hsl(220 13% 8%);
+    --color-border: hsl(220 13% 18%);
+    --color-card: hsl(220 13% 10%);
 
-  --color-primary: var(--color-teal-9);
+    --color-black: #0a0a0a;
+    --color-gray-1: #1a1a1a;
+    --color-gray-2: #1f1f1f;
+    --color-gray-3: #292929;
+    --color-gray-4: #2e2e2e;
+    --color-gray-5: #454545;
+    --color-gray-6: #878787;
+    --color-gray-7: #8f8f8f;
+    --color-gray-8: #7d7d7d;
+    --color-gray-9: #a0a0a0;
+    --color-gray-10: #ededed;
+    --color-blue-1: #0f1b2d;
+    --color-blue-2: #10243e;
+    --color-blue-3: #0f3058;
+    --color-blue-4: #0d3768;
+    --color-blue-5: #0a4481;
+    --color-blue-6: #0091ff;
+    --color-blue-7: #0071f3;
+    --color-blue-8: #0062d1;
+    --color-blue-9: #52a9ff;
+    --color-blue-10: #eaf6ff;
+    --color-red-1: #2a1314;
+    --color-red-2: #3d1719;
+    --color-red-3: #551a1e;
+    --color-red-4: #671e22;
+    --color-red-5: #822025;
+    --color-red-6: #e5484d;
+    --color-red-7: #e5484d;
+    --color-red-8: #da3036;
+    --color-red-9: #ff6368;
+    --color-red-10: #feecee;
+    --color-amber-1: #271700;
+    --color-amber-2: #341c00;
+    --color-amber-3: #4a2900;
+    --color-amber-4: #573300;
+    --color-amber-5: #693f05;
+    --color-amber-6: #e79d13;
+    --color-amber-7: #ffb224;
+    --color-amber-8: #ffa90a;
+    --color-amber-9: #f1a10d;
+    --color-amber-10: #fef3dd;
+    --color-green-1: #0b2211;
+    --color-green-2: #0f2c17;
+    --color-green-3: #11351b;
+    --color-green-4: #0c461c;
+    --color-green-5: #126426;
+    --color-green-6: #1a9338;
+    --color-green-7: #46a758;
+    --color-green-8: #388e4b;
+    --color-green-9: #63c174;
+    --color-green-10: #e5fbeb;
+    --color-teal-1: #04201b;
+    --color-teal-2: #062923;
+    --color-teal-3: #083a33;
+    --color-teal-4: #053c34;
+    --color-teal-5: #085e53;
+    --color-teal-6: #0c9785;
+    --color-teal-7: #12a594;
+    --color-teal-8: #0f8a7c;
+    --color-teal-9: #0ac5b2;
+    --color-teal-10: #e1faf4;
+    --color-purple-1: #221527;
+    --color-purple-2: #301a3a;
+    --color-purple-3: #432155;
+    --color-purple-4: #4e2667;
+    --color-purple-5: #5e2d84;
+    --color-purple-6: #8e4ec6;
+    --color-purple-7: #8e4ec6;
+    --color-purple-8: #773da9;
+    --color-purple-9: #bf7af0;
+    --color-purple-10: #f7ecfc;
+    --color-pink-1: #27141c;
+    --color-pink-2: #3c1827;
+    --color-pink-3: #4f1c31;
+    --color-pink-4: #541b33;
+    --color-pink-5: #6c1e3f;
+    --color-pink-6: #b21a57;
+    --color-pink-7: #e93d82;
+    --color-pink-8: #de2670;
+    --color-pink-9: #f76191;
+    --color-pink-10: #feecf4;
+
+    --color-primary: var(--color-blue-9);
 }
 
 ::selection {
-  background: var(--color-teal-3);
+    background: var(--color-teal-3);
 }
 
 * {
-  color-scheme: dark;
-  box-sizing: border-box;
+    color-scheme: dark;
+    box-sizing: border-box;
 }
 
 *[data-hide] {
-  display: none;
+    display: none;
 }
 
 html {
-  text-size-adjust: none;
-  -webkit-text-size-adjust: none;
-  font-size: 14px;
+    text-size-adjust: none;
+    -webkit-text-size-adjust: none;
+    font-size: 14px;
 }
 
 body {
-  font-family: var(--font-sans);
-  background-color: var(--color-black);
-  color: var(--color-gray-10);
-  margin: 0;
+    font-family: var(--font-sans);
+    background-color: var(--color-background);
+    color: var(--color-gray-10);
+    margin: 0;
 }
 
 code {
-  font-family: var(--font-mono);
+    font-family: var(--font-mono);
 }
 
 span[role="img"] {
-  font-family: serif;
+    font-family: serif;
 }
 
 a {
-  color: var(--color-primary);
-  text-decoration: none;
+    color: var(--color-primary);
+    text-decoration: none;
 }
 
 a:hover {
-  text-decoration: underline;
-  text-underline-offset: 0.25rem;
+    text-decoration: underline;
+    text-underline-offset: 0.25rem;
+}
+
+svg.lucide {
+    width: 1rem;
+    height: 1rem;
 }
 
 .container {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 0 2rem;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 2rem;
 }
 
 .title {
-  font-family: var(--font-mono);
-  font-size: 3rem;
-  margin-bottom: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
 }
 
 .title .sh {
-  font-size: 1.5rem;
+    font-size: 1.5rem;
 }
 
 .title a {
-  color: var(--color-gray-10);
+    color: var(--color-gray-10);
 }
 
 .stripes {
-  display: block;
-  width: 100%;
-  height: 1rem;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    var(--color-primary) 0 2px,
-    transparent 2px 8px
-  );
+    display: block;
+    width: 100%;
+    height: 1rem;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        var(--color-primary) 0 2px,
+        transparent 2px 8px
+    );
 }
 
 .file-header {
-  position: sticky;
-  top: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  border: var(--border);
-  border-radius: var(--border-radius);
-  margin-bottom: 1.5rem;
-  z-index: 999;
-  background-color: var(--color-black);
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    border: var(--border);
+    border-radius: var(--border-radius);
+    z-index: 999;
+    background-color: var(--color-card);
 }
 
 .file-header .file-details {
-  padding: 1rem;
-  color: var(--color-gray-9);
-  flex: 1;
+    padding: 1rem;
+    color: var(--color-gray-9);
+    flex: 1;
+    display: flex;
+    gap: 1.2rem;
+    align-items: center;
+}
+
+.file-header .file-details .file-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .file-header .file-header-link {
-  padding: 0.5rem 1rem;
-  border-left: var(--border);
+    padding: 0.5rem 1rem;
+    border-left: var(--border);
 }
 
 .file-content {
-  overflow-x: auto;
-  background-color: var(--color-gray-1);
-  border-radius: var(--border-radius);
+    overflow-x: auto;
+    border-left: var(--border);
+    border-right: var(--border);
 }
 
 .file-content * {
-  scroll-margin-top: 3.5rem; // offset header
+    scroll-margin-top: 3.5rem; /* header offset */
 }
 
 .file-footer {
-  margin: 2rem;
-  text-align: center;
-  font-family: var(--font-mono);
+    padding: 1rem;
+    font-family: var(--font-mono);
+    background-color: var(--color-card);
+    border: var(--border);
+}
+
+.footer-tree {
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.tree-line {
+    white-space: pre;
+}
+
+.tree-branch {
+    color: var(--color-gray-6);
+    user-select: none;
+}
+
+.tree-dir {
+    color: var(--color-gray-10);
 }
 
 .danger {
-  color: var(--color-red-9);
+    color: var(--color-red-9);
 }
 
 .muted {
-  color: var(--color-gray-6);
+    color: var(--color-gray-6);
+}
+
+.text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
 }
 
 @media (max-width: 768px) {
-  .container {
-    padding: 0 0.5rem;
-  }
+    .container {
+        padding: 0 0.5rem;
+    }
 }

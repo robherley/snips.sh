@@ -1,3 +1,12 @@
+import {
+  createIcons,
+  Terminal,
+  FileCode,
+  HardDrive,
+  SquarePen,
+  HatGlasses,
+} from "lucide";
+
 // getSelectedLines will return the lines specified in the hash.
 const getSelectedLines = () => {
   if (!location.hash.startsWith("#L")) return [];
@@ -83,9 +92,14 @@ const initMermaid = async () => {
   if (!document.querySelector("code.language-mermaid")) return;
 
   const { default: mermaid } = await import("mermaid");
-  mermaid.initialize({ startOnLoad: false, theme: "dark" });
+  const isLight =
+    document.documentElement.getAttribute("data-theme") === "light";
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: isLight ? "default" : "dark",
+  });
   mermaid.run({ querySelector: "code.language-mermaid" });
-}
+};
 
 // initHeaderObserver will hide the "to top" button when the top of the page is visible, and shows it when it's not.
 const initHeaderObserver = () => {
@@ -100,7 +114,7 @@ const initHeaderObserver = () => {
       element.toggleAttribute("data-hide", entry.isIntersecting);
     },
     // https://stackoverflow.com/a/61115077
-    { rootMargin: "-1px 0px 0px 0px", threshold: [1] }
+    { rootMargin: "-1px 0px 0px 0px", threshold: [1] },
   );
 
   observer.observe(nav);
@@ -112,12 +126,19 @@ const initHeaderObserver = () => {
   });
 };
 
+const initIcons = () => {
+  createIcons({
+    icons: { Terminal, FileCode, HardDrive, SquarePen, HatGlasses },
+  });
+};
+
 window.addEventListener("hashchange", highlightLines);
 window.addEventListener("DOMContentLoaded", async () => {
   initHeaderObserver();
   watchForShiftClick();
   highlightLines();
   scrollToLine();
+  initIcons();
 
-  await initMermaid()
+  await initMermaid();
 });
