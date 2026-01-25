@@ -61,14 +61,22 @@
         </div>
         {{ end }}
       </div>
-      <a class="file-header-link" id="to-top" href="#" data-hide aria-label="go to top">&#8593; top</a>
-      {{ if .RawHREF }}
-      <a class="file-header-link" href="{{ .RawHREF }}" aria-label="view raw file">view raw</a>
-      {{ end }}
+      <div class="file-actions">
+        <a class="file-action" id="to-top" href="#" data-hide aria-label="go to top" data-shortcut="t"><kbd>[t]</kbd>top</a>
+        {{ if ne .FileType "binary" }}
+        <button class="file-action" id="copy-content" aria-label="copy to clipboard" data-shortcut="c"><kbd>[c]</kbd>copy</button>
+        {{ end }}
+        {{ if .RawHREF }}
+        <a class="file-action" id="view-raw" href="{{ .RawHREF }}" aria-label="view raw file" data-shortcut="r"><kbd>[r]</kbd>raw</a>
+        {{ end }}
+      </div>
     </nav>
     <article class="file-content">
       {{ .HTML }}
     </article>
+    {{ if ne .FileType "binary" }}
+    <pre id="raw-content" hidden aria-hidden="true">{{ .RawContent }}</pre>
+    {{ end }}
     <footer class="file-footer">
       <div class="footer-tree">
         <div class="tree-line"><span class="tree-branch"><span class="tree-dir">docs/</span></div>

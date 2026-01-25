@@ -132,6 +132,42 @@ const initIcons = () => {
   });
 };
 
+const initKeyboardShortcuts = () => {
+  document.addEventListener("keydown", (event) => {
+    // ignore if user is typing in an input or textarea
+    if (event.target.matches("input, textarea, [contenteditable]")) return;
+    // ignore if modifier keys are pressed
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+    const shortcutEl = document.querySelector(`[data-shortcut="${event.key}"]`);
+    if (!shortcutEl) return;
+
+    event.preventDefault();
+    shortcutEl.click();
+  });
+};
+
+const initCopyButton = () => {
+  const copyBtn = document.querySelector("#copy-content");
+  if (!copyBtn) return;
+
+  copyBtn.addEventListener("click", async () => {
+    const rawContent = document.querySelector("#raw-content");
+    if (!rawContent) return;
+
+    await navigator.clipboard.writeText(rawContent.textContent);
+
+    const kbd = copyBtn.querySelector("kbd");
+    copyBtn.textContent = "copied!";
+    copyBtn.prepend(kbd);
+
+    setTimeout(() => {
+      copyBtn.textContent = "copy";
+      copyBtn.prepend(kbd);
+    }, 1500);
+  });
+};
+
 window.addEventListener("hashchange", highlightLines);
 window.addEventListener("DOMContentLoaded", async () => {
   initHeaderObserver();
@@ -139,6 +175,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   highlightLines();
   scrollToLine();
   initIcons();
+  initKeyboardShortcuts();
+  initCopyButton();
 
   await initMermaid();
 });

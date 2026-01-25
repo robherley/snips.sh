@@ -118,12 +118,15 @@ svg.lucide {
     top: 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    white-space: nowrap;
     font-family: var(--font-mono);
     border: var(--border);
     border-radius: var(--border-radius);
     z-index: 999;
     background-color: var(--color-surface-1);
+    overflow-x: scroll;
 }
 
 .file-header .file-details {
@@ -141,9 +144,38 @@ svg.lucide {
     gap: 0.5rem;
 }
 
-.file-header .file-header-link {
-    padding: 0.5rem 1rem;
-    border-left: var(--border);
+.file-header .file-actions {
+    display: flex;
+    margin-right: 0.5rem;
+}
+
+.file-header .file-actions .file-action {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--color-gray);
+    background-color: transparent;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.file-header .file-actions .file-action:hover {
+    background-color: var(--color-surface-2);
+    color: var(--color-white);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.file-header .file-actions button.file-action {
+    border: none;
+    font-family: var(--font-mono);
+}
+
+.file-header .file-actions .file-action kbd {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-primary);
+    margin-right: 0.5rem;
 }
 
 .file-content {
