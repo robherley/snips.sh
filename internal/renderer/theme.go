@@ -2,7 +2,7 @@ package renderer
 
 import (
 	"bytes"
-	_ "embed"
+	"embed"
 	"sync"
 
 	"github.com/alecthomas/chroma/v2"

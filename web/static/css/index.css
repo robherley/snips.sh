@@ -128,15 +128,11 @@ svg.lucide {
 
 .file-header .file-details {
     padding: 1rem;
-    color: var(--color-white);
+    color: var(--color-gray);
     flex: 1;
     display: flex;
     gap: 1.2rem;
     align-items: center;
-}
-
-.file-header .file-details svg {
-    color: var(--color-gray);
 }
 
 .file-header .file-details .file-detail {
