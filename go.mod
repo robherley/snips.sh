@@ -3,7 +3,7 @@ module github.com/robherley/snips.sh
 go 1.25.5
 
 require (
-	github.com/alecthomas/chroma/v2 v2.21.1
+	github.com/alecthomas/chroma/v2 v2.23.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.10

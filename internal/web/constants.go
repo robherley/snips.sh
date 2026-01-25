@@ -1,4 +1,4 @@
-package http
+package web
 
 type ContextKey string
 

@@ -1,4 +1,4 @@
-package http
+package web
 
 import (
 	"compress/gzip"
@@ -33,7 +33,6 @@ var (
 	cssFiles = []string{
 		"index.css",
 		"code.css",
-		"chroma.css",
 		"markdown.css",
 	}
 

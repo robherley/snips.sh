@@ -4,17 +4,14 @@ import (
 	"bytes"
 
 	"github.com/alecthomas/chroma/v2/formatters"
-	"github.com/alecthomas/chroma/v2/styles"
+	"github.com/robherley/snips.sh/internal/snips"
 )
 
-const (
-	TermFormatter = "terminal256"
-	TermStyle     = "base16-snazzy"
-)
+const TermFormatter = "terminal256"
 
 // ToSyntaxHighlightedTerm returns ANSI of the syntax highlighted code via Chroma
 func ToSyntaxHighlightedTerm(fileType string, fileContent []byte) (string, error) {
-	if fileType == "binary" {
+	if fileType == snips.FileTypeBinary {
 		return "The file is not displayed because it has been detected as binary data.", nil
 	}
 
@@ -25,15 +22,8 @@ func ToSyntaxHighlightedTerm(fileType string, fileContent []byte) (string, error
 		return "", err
 	}
 
-	style := styles.Get(TermStyle)
-	if style == nil {
-		style = styles.Fallback
-	}
-
-	formatter := formatters.Get(TermFormatter)
-
 	chromaTerm := bytes.NewBuffer(nil)
-	err = formatter.Format(chromaTerm, style, it)
+	err = formatters.Get(TermFormatter).Format(chromaTerm, GetStyle(), it)
 	if err != nil {
 		return "", err
 	}

@@ -9,9 +9,9 @@ import (
 
 	"github.com/robherley/snips.sh/internal/app"
 	"github.com/robherley/snips.sh/internal/config"
-	"github.com/robherley/snips.sh/internal/http"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/stats"
+	"github.com/robherley/snips.sh/internal/web"
 )
 
 var (
@@ -27,6 +27,8 @@ func main() {
 	logger.Initialize()
 
 	cfg, err := config.Load()
+
+	cfg.HTTP.Internal.Host = "0.0.0.0:8080"
 	if err != nil {
 		slog.Error("unable to load config", "err", err)
 		os.Exit(1)
@@ -49,7 +51,7 @@ func main() {
 		return
 	}
 
-	assets, err := http.NewAssets(
+	assets, err := web.NewAssets(
 		&webFS,
 		&docsFS,
 		readme,

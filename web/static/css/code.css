@@ -1,49 +1,57 @@
 .code {
-  margin: 1.5rem 1rem;
+    margin: 1.5rem 1rem;
 }
 
 .code .chroma .line {
-  display: flex;
-  line-height: 1.5rem;
+    display: flex;
+    line-height: 1.5rem;
+}
+
+.code .chroma .hl {
+    background-color: unset;
+}
+
+.code .chroma .ln:target {
+    background-color: unset;
 }
 
 .code .chroma .hl .cl {
-  position: relative;
-  flex: 1;
+    position: relative;
+    flex: 1;
 }
 
 .code .chroma .ln {
-  margin-right: 0.4rem;
-  padding: 0 0.4rem 0 0.8rem;
+    margin-right: 0.4rem;
+    padding: 0 0.4rem 0 0.8rem;
 }
 
 .code .chroma .ln + .cl {
-  padding-left: 0.75rem
+    padding-left: 0.75rem;
 }
 
 .code .chroma .hl .cl:before {
-  content: "";
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 2px;
-  height: 100%;
-  background-color: var(--color-primary);
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background-color: var(--color-primary);
 }
 
 .code .chroma .hl .cl:after {
-  content: "";
-  display: block;
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--color-primary);
-  opacity: 0.05;
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-primary);
+    opacity: 0.05;
 }
 
 .code .chroma .hl .lnlinks {
-  color: var(--color-primary);
+    color: var(--color-primary);
 }
