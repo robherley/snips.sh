@@ -49,12 +49,12 @@
 }
 
 .markdown table th {
-    background: var(--color-card);
+    background: var(--color-surface-1);
     font-weight: 600;
 }
 
 .markdown tr:nth-child(2n) {
-    background: var(--color-card);
+    background: var(--color-surface-1);
 }
 
 .markdown table th,
@@ -67,15 +67,15 @@
     margin: unset !important;
     padding: 0rem 1rem;
     border-left: 0.2rem solid var(--color-border);
-    color: var(--color-border);
+    color: var(--color-gray);
 }
 
 .markdown code {
-    background-color: var(--color-background-secondary);
+    background-color: var(--color-surface-2);
 }
 
 .markdown pre {
-    background-color: var(--color-card);
+    background-color: var(--color-surface-1);
 }
 
 .markdown pre code {
@@ -96,4 +96,8 @@
     margin: unset !important;
     padding: 0.2em 0.4em;
     font-size: 85%;
+}
+
+.markdown hr {
+    border: var(--border);
 }

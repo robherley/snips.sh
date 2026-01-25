@@ -23,6 +23,9 @@
       }
     }
   </script>
+  {{ if .CSS }}
+  <style>{{ .CSS }}</style>
+  {{ end }}
   <script type="module" src="/assets/index.js"></script>
   {{ ExtendedHeadContent }}
 </head>
@@ -78,6 +81,5 @@
       </div>
     </footer>
   </div>
-
 </body>
 </html>

@@ -167,7 +167,10 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			rawHref = signedRawURL.String()
 		}
 
-		var html template.HTML
+		var (
+			html template.HTML
+			css  template.CSS
+		)
 
 		switch file.Type {
 		case snips.FileTypeBinary:
@@ -179,6 +182,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)
 				return
 			}
+			css = renderer.GetSyntaxCSS()
 		default:
 			html, err = renderer.ToSyntaxHighlightedHTML(file.Type, content)
 			if err != nil {
@@ -186,6 +190,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)
 				return
 			}
+			css = renderer.GetSyntaxCSS()
 		}
 
 		vars := map[string]interface{}{
@@ -196,6 +201,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			"FileType":  strings.ToLower(file.Type),
 			"RawHREF":   rawHref,
 			"HTML":      html,
+			"CSS":       css,
 			"Private":   file.Private,
 		}
 

@@ -7,6 +7,14 @@
     line-height: 1.5rem;
 }
 
+.code .chroma .hl {
+    background-color: unset;
+}
+
+.code .chroma .ln:target {
+    background-color: unset;
+}
+
 .code .chroma .hl .cl {
     position: relative;
     flex: 1;
