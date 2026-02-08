@@ -1,5 +1,17 @@
 @import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Geist+Mono:wght@400;600&display=swap");
 
+@font-face {
+    font-family: "GeistPixel-Line";
+    src: url("/assets/fonts/GeistPixel-Line.woff2") format("woff2");
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "GeistPixel-Square";
+    src: url("/assets/fonts/GeistPixel-Square.woff2") format("woff2");
+    font-display: swap;
+}
+
 :root {
     --max-width: 1200px;
     --font-sans:
@@ -88,17 +100,37 @@ svg.lucide {
     padding: 0 2rem;
 }
 
-.title {
-    font-family: var(--font-mono);
-    font-size: 3rem;
-    margin-bottom: 1.5rem;
+.header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
 }
 
-.title .sh {
-    font-size: 1.5rem;
+.header .title {
+    font-size: 6rem;
+    position: relative;
+    font-weight: normal;
+    letter-spacing: 0.2rem;
+    font-family: "GeistPixel-Square";
 }
 
-.title a {
+.header .logo {
+    image-rendering: pixelated;
+    height: 3.75rem;
+    margin-top: 1rem;
+}
+
+.header .title::after {
+    content: "snips";
+    position: absolute;
+    top: 0;
+    left: -0.4rem;
+    opacity: 0.4;
+    font-family: "GeistPixel-Line";
+    z-index: -1;
+}
+
+.header a {
     color: var(--color-gray-10);
 }
 
@@ -146,22 +178,20 @@ svg.lucide {
 
 .file-header .file-actions {
     display: flex;
+    padding: 1rem;
+    gap: 1rem;
     margin-right: 0.5rem;
 }
 
 .file-header .file-actions .file-action {
+    background-color: unset;
     font-size: 0.875rem;
-    padding: 0.5rem 0.75rem;
     color: var(--color-gray);
-    background-color: transparent;
-    transition:
-        background-color 0.15s ease,
-        color 0.15s ease;
+    transition: color 0.15s ease;
 }
 
 .file-header .file-actions .file-action:hover {
-    background-color: var(--color-surface-2);
-    color: var(--color-white);
+    color: var(--color-primary);
     text-decoration: none;
     cursor: pointer;
 }
@@ -173,15 +203,22 @@ svg.lucide {
 
 .file-header .file-actions .file-action kbd {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--color-primary);
+    color: var(--color-white);
+    background-color: var(--color-surface-0);
+    border: var(--border);
     margin-right: 0.5rem;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.35rem;
+}
+
+.file-header .file-actions .file-action:hover kbd {
+    color: var(--color-primary);
 }
 
 .file-content {
     overflow-x: auto;
-    border-left: var(--border);
-    border-right: var(--border);
+    border: var(--border);
+    border-top: none;
 }
 
 .file-content * {
@@ -189,6 +226,8 @@ svg.lucide {
 }
 
 .file-footer {
+    display: flex;
+    justify-content: space-between;
     padding: 1rem;
     font-family: var(--font-mono);
     background-color: var(--color-surface-1);
@@ -196,22 +235,17 @@ svg.lucide {
     margin-bottom: 2rem;
 }
 
-.footer-tree {
-    font-size: 0.85rem;
-    line-height: 1.4;
-}
-
-.tree-line {
-    white-space: pre;
-}
-
-.tree-branch {
-    color: var(--color-gray);
-    user-select: none;
-}
-
-.tree-dir {
-    color: var(--color-gray);
+.footer-stripes {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: block;
+    width: 100%;
+    height: 1rem;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        var(--color-border) 0 2px,
+        transparent 2px 8px
+    );
 }
 
 .danger {

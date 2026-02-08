@@ -27,8 +27,6 @@ func main() {
 	logger.Initialize()
 
 	cfg, err := config.Load()
-
-	cfg.HTTP.Internal.Host = "0.0.0.0:8080"
 	if err != nil {
 		slog.Error("unable to load config", "err", err)
 		os.Exit(1)

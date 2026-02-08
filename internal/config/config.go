@@ -6,11 +6,17 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"runtime/debug"
+	"sync"
 	"text/tabwriter"
 	"time"
 
 	"github.com/charmbracelet/ssh"
 	"github.com/kelseyhightower/envconfig"
+)
+
+var (
+	BuildCommit = sync.OnceValue(readBuildCommit)
 )
 
 const (
@@ -41,7 +47,7 @@ type Config struct {
 	}
 
 	HTTP struct {
-		Internal url.URL `default:"http://localhost:8080" desc:"internal address to listen for http requests"`
+		Internal url.URL `default:"http://0.0.0.0:8080" desc:"internal address to listen for http requests"`
 		External url.URL `default:"http://localhost:8080" desc:"external http address displayed in commands"`
 	}
 
@@ -126,4 +132,17 @@ func Load() (*Config, error) {
 	cfg.EnableGuesser = cfg.EnableGuesser && GuessingSupported
 
 	return cfg, nil
+}
+
+func readBuildCommit() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "unknown"
+	}
+	for _, s := range info.Settings {
+		if s.Key == "vcs.revision" {
+			return s.Value
+		}
+	}
+	return "unknown"
 }

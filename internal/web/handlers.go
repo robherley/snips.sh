@@ -96,6 +96,7 @@ func DocHandler(assets Assets) http.HandlerFunc {
 			"FileType":   "markdown",
 			"HTML":       md,
 			"RawContent": string(content),
+			"CommitSHA":  config.BuildCommit(),
 		}
 
 		err = assets.Template().ExecuteTemplate(w, "file.go.html", vars)
@@ -205,6 +206,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			"HTML":       html,
 			"CSS":        css,
 			"Private":    file.Private,
+			"CommitSHA":  config.BuildCommit(),
 		}
 
 		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)

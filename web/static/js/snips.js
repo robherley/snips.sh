@@ -5,6 +5,8 @@ import {
   HardDrive,
   SquarePen,
   HatGlasses,
+  Folder,
+  FileText,
 } from "lucide";
 
 // getSelectedLines will return the lines specified in the hash.
@@ -128,7 +130,15 @@ const initHeaderObserver = () => {
 
 const initIcons = () => {
   createIcons({
-    icons: { Terminal, FileCode, HardDrive, SquarePen, HatGlasses },
+    icons: {
+      Terminal,
+      FileCode,
+      HardDrive,
+      SquarePen,
+      HatGlasses,
+      Folder,
+      FileText,
+    },
   });
 };
 
