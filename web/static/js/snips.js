@@ -94,11 +94,9 @@ const initMermaid = async () => {
   if (!document.querySelector("code.language-mermaid")) return;
 
   const { default: mermaid } = await import("mermaid");
-  const isLight =
-    document.documentElement.getAttribute("data-theme") === "light";
   mermaid.initialize({
     startOnLoad: false,
-    theme: isLight ? "default" : "dark",
+    theme: "dark",
   });
   mermaid.run({ querySelector: "code.language-mermaid" });
 };

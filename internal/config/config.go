@@ -47,7 +47,7 @@ type Config struct {
 	}
 
 	HTTP struct {
-		Internal url.URL `default:"http://0.0.0.0:8080" desc:"internal address to listen for http requests"`
+		Internal url.URL `default:"http://localhost:8080" desc:"internal address to listen for http requests"`
 		External url.URL `default:"http://localhost:8080" desc:"external http address displayed in commands"`
 	}
 
