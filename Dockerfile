@@ -26,7 +26,7 @@ RUN if [ "${TARGETARCH}" = "arm64" ]; then \
     fi && \
     script/build
 
-FROM ubuntu:22.04
+FROM gcr.io/distroless/cc-debian12
 
 COPY --from=build /opt/onnxruntime/lib /opt/onnxruntime/lib
 COPY --from=build /build/snips.sh /usr/bin/snips.sh
