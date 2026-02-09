@@ -1,4 +1,13 @@
-import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.1.0/+esm";
+import {
+  createIcons,
+  Terminal,
+  FileCode,
+  HardDrive,
+  SquarePen,
+  HatGlasses,
+  Folder,
+  FileText,
+} from "lucide";
 
 // getSelectedLines will return the lines specified in the hash.
 const getSelectedLines = () => {
@@ -81,6 +90,17 @@ const watchForShiftClick = () => {
   });
 };
 
+const initMermaid = async () => {
+  if (!document.querySelector("code.language-mermaid")) return;
+
+  const { default: mermaid } = await import("mermaid");
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: "dark",
+  });
+  mermaid.run({ querySelector: "code.language-mermaid" });
+};
+
 // initHeaderObserver will hide the "to top" button when the top of the page is visible, and shows it when it's not.
 const initHeaderObserver = () => {
   const element = document.querySelector("#to-top");
@@ -94,7 +114,7 @@ const initHeaderObserver = () => {
       element.toggleAttribute("data-hide", entry.isIntersecting);
     },
     // https://stackoverflow.com/a/61115077
-    { rootMargin: "-1px 0px 0px 0px", threshold: [1] }
+    { rootMargin: "-1px 0px 0px 0px", threshold: [1] },
   );
 
   observer.observe(nav);
@@ -106,13 +126,65 @@ const initHeaderObserver = () => {
   });
 };
 
+const initIcons = () => {
+  createIcons({
+    icons: {
+      Terminal,
+      FileCode,
+      HardDrive,
+      SquarePen,
+      HatGlasses,
+      Folder,
+      FileText,
+    },
+  });
+};
+
+const initKeyboardShortcuts = () => {
+  document.addEventListener("keydown", (event) => {
+    // ignore if user is typing in an input or textarea
+    if (event.target.matches("input, textarea, [contenteditable]")) return;
+    // ignore if modifier keys are pressed
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+    const shortcutEl = document.querySelector(`[data-shortcut="${event.key}"]`);
+    if (!shortcutEl) return;
+
+    event.preventDefault();
+    shortcutEl.click();
+  });
+};
+
+const initCopyButton = () => {
+  const copyBtn = document.querySelector("#copy-content");
+  if (!copyBtn) return;
+
+  copyBtn.addEventListener("click", async () => {
+    const rawContent = document.querySelector("#raw-content");
+    if (!rawContent) return;
+
+    await navigator.clipboard.writeText(rawContent.textContent);
+
+    const kbd = copyBtn.querySelector("kbd");
+    copyBtn.textContent = "copied!";
+    copyBtn.prepend(kbd);
+
+    setTimeout(() => {
+      copyBtn.textContent = "copy";
+      copyBtn.prepend(kbd);
+    }, 1500);
+  });
+};
+
 window.addEventListener("hashchange", highlightLines);
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   initHeaderObserver();
   watchForShiftClick();
   highlightLines();
   scrollToLine();
+  initIcons();
+  initKeyboardShortcuts();
+  initCopyButton();
 
-  mermaid.initialize({ startOnLoad: false, theme: "dark" });
-  mermaid.run({ querySelector: "code.language-mermaid" });
+  await initMermaid();
 });

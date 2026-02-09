@@ -1,51 +1,131 @@
-<!DOCTYPE html>
-<html lang="en" data-color-mode="dark" data-dark-theme="dark">
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta property="og:title" content="{{.FileID}} - snips.sh" />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="snips.sh" />
+        <meta
+            property="og:description"
+            content="snips.sh is a free, anonymous, open source, snippet hosting service"
+        />
+        <meta
+            property="description"
+            content="snips.sh is a free, anonymous, open source, snippet hosting service"
+        />
+        <meta name="theme-color" content="#0ac5b2" />
+        <link rel="icon" href="/assets/img/favicon.png" />
+        <title>{{ .FileID }} - snips.sh</title>
+        <link rel="stylesheet" href="/assets/index.css" />
+        <script type="importmap">
+            {
+                "imports": {
+                    "mermaid": "https://esm.sh/mermaid@11.12.2",
+                    "lucide": "https://esm.sh/lucide@0.562.0"
+                }
+            }
+        </script>
+        {{ if .CSS }}
+        <style>
+            {{ .CSS }}
+        </style>
+        {{ end }}
+        <script type="module" src="/assets/index.js"></script>
+        {{ ExtendedHeadContent }}
+    </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta property="og:title" content="{{.FileID}} - snips.sh" />
-  <meta property="og:type" content="article" />
-  <meta property="og:site_name" content="snips.sh" />
-  <meta property="og:description" content="snips.sh is a free, anonymous, open source, snippet hosting service" />
-  <meta property="description" content="snips.sh is a free, anonymous, open source, snippet hosting service" />
-  <meta name="theme-color" content="#0ac5b2" />
-  <link rel="icon"
-    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>">
-  <title>{{ .FileID }} - snips.sh</title>
-  <link rel="stylesheet" href="/assets/index.css">
-  <script type="module" src="/assets/index.js"></script>
-  {{ ExtendedHeadContent }}
-</head>
+    <body>
+        <div class="stripes"></div>
+        <div class="container">
+            <h1 class="header">
+                <span class="logo"
+                    ><img src="/assets/img/logo.png" alt="snips logo"
+                /></span>
+                <a class="title" href="/">snips</a>
+            </h1>
+            <nav class="file-header">
+                <div class="file-details text-sm">
+                    <div class="file-detail">
+                        <i data-lucide="terminal"></i>
+                        <a href="">{{ .FileID }}</a>
+                    </div>
+                    <div class="file-detail">
+                        <i data-lucide="file-code"></i>
+                        {{ .FileType }}
+                    </div>
+                    <div class="file-detail">
+                        <i data-lucide="hard-drive"></i>
+                        {{ .FileSize }}
+                    </div>
+                    {{ if .UpdatedAt }}
+                    <div class="file-detail">
+                        <i data-lucide="square-pen"></i>
+                        {{ .UpdatedAt }}
+                    </div>
+                    {{ end }} {{ if .Private }}
+                    <div class="file-detail danger">
+                        <i data-lucide="hat-glasses"></i>
+                        private
+                    </div>
+                    {{ end }}
+                </div>
+                <div class="file-actions">
+                    <a
+                        class="file-action"
+                        id="to-top"
+                        data-hide
+                        aria-label="go to top"
+                        data-shortcut="t"
+                    >
+                        <kbd>t</kbd>top
+                    </a>
+                    {{ if ne .FileType "binary" }}
+                    <button
+                        class="file-action"
+                        id="copy-content"
+                        aria-label="copy to clipboard"
+                        data-shortcut="c"
+                    >
+                        <kbd>c</kbd>copy
+                    </button>
+                    {{ end }} {{ if .RawHREF }}
+                    <a
+                        class="file-action"
+                        id="view-raw"
+                        href="{{ .RawHREF }}"
+                        aria-label="view raw file"
+                        data-shortcut="r"
+                    >
+                        <kbd>r</kbd>raw
+                    </a>
+                    {{ end }}
+                </div>
+            </nav>
+            <article class="file-content">{{ .HTML }}</article>
+            {{ if ne .FileType "binary" }}
+            <pre id="raw-content" hidden aria-hidden="true">
+{{ .RawContent }}</pre
+            >
+            {{ end }}
 
-<body>
-  <div class="stripes"></div>
-  <div class="container">
-    <h1 class="title"><a href="/">snips<span class="sh">.sh</span></a></h1>
-    <nav class="file-header">
-      <div class="file-details">
-        file: <a href="#">{{ .FileID }}</a>
-        ({{ .FileType }}) &middot; {{ .FileSize }}
-        {{ if .UpdatedAt }} &middot; modified: {{ .UpdatedAt }} {{ end }}
-        {{ if .Private }} &middot; <span class="danger">private</span> {{ end }}
-      </div>
-      <a class="file-header-link" id="to-top" href="#" data-hide aria-label="go to top">&#8593; top</a>
-      {{ if .RawHREF }}
-      <a class="file-header-link" href="{{ .RawHREF }}" aria-label="view raw file">view raw</a>
-      {{ end }}
-    </nav>
-    <article class="file-content">
-      {{ .HTML }}
-    </article>
-  </div>
-  <footer class="file-footer muted">
-    <div style="margin-bottom:0.75rem;">
-      snips.sh is a free, anonymous, open source, snippet hosting service
-    </div>
-    <div>
-      <a href="/">about</a> | <a href="https://github.com/robherley/snips.sh">source code</a> | <a href="/docs/terms-of-service.md">terms of service</a> | <a href="/docs/acceptable-use-policy.md">use policy</a>
-    </div>
-  </footer>
-</body>
+            <div class="footer-stripes"></div>
+            <footer class="file-footer text-sm muted">
+                <div>
+                    <a href="/">about</a> /
+                    <a href="/docs/terms-of-service.md">terms</a> /
+                    <a href="/docs/acceptable-use-policy.md">acceptable use</a>
+                </div>
+                <div>
+                    snips.sh {{ if .CommitSHA }}/
+                    <a
+                        href="https://github.com/robherley/snips.sh/commit/{{ .CommitSHA }}"
+                        >{{ slice .CommitSHA 0 7 }}</a
+                    >
+                    {{ end }}
+                </div>
+            </footer>
+        </div>
+    </body>
 </html>

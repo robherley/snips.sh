@@ -1,6 +1,9 @@
 #!/bin/sh
 
-BINDIR="$(git rev-parse --show-toplevel)"/bin
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+source "${REPO_ROOT}/script/env"
+
+BINDIR="${REPO_ROOT}/bin"
 BINARY=$BINDIR/golangci-lint
 GOLANGCI_LINT_VERSION=v2.7.2
 

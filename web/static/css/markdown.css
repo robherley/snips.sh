@@ -1,73 +1,103 @@
 .markdown {
-  font-family: var(--font-sans);
-  box-sizing: border-box;
-  padding: 2rem;
-  font-size: 16px;
-  line-height: 1.6;
+    font-family: var(--font-sans);
+    box-sizing: border-box;
+    padding: 2rem;
+    font-size: 16px;
+    line-height: 1.6;
 }
 
 .markdown > :first-child {
-  margin-top: unset !important;
+    margin-top: unset !important;
 }
 
-.markdown h1, .markdown h2, .markdown h3, .markdown h4, .markdown h5, .markdown h6 {
-  font-weight: 600;
-  padding-bottom: 0.3rem;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+    font-weight: 600;
+    padding-bottom: 0.3rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
 }
 
-.markdown h1, .markdown h2 {
-  border-bottom: var(--border);
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+    font-weight: 600;
+    padding-bottom: 0.3rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.markdown h1,
+.markdown h2 {
+    border-bottom: var(--border);
 }
 
 .markdown table {
-  display: block;
-  overflow: auto;
-  width: max-content;
-  max-width: 100%;
-  border-spacing: 0;
-  border-collapse: collapse;
+    display: block;
+    overflow: auto;
+    width: max-content;
+    max-width: 100%;
+    border-spacing: 0;
+    border-collapse: collapse;
 }
 
 .markdown table th {
-  background: var(--color-gray-3);
-  font-weight: 600;
+    background: var(--color-surface-1);
+    font-weight: 600;
 }
 
 .markdown tr:nth-child(2n) {
-  background: var(--color-gray-3);
+    background: var(--color-surface-1);
 }
 
-.markdown table th, .markdown table td {
-  padding: 0.5rem 1rem;
-  border: var(--border);
+.markdown table th,
+.markdown table td {
+    padding: 0.5rem 1rem;
+    border: var(--border);
 }
 
 .markdown blockquote {
-  margin: unset !important;
-  padding: 0rem 1rem;
-  border-left: 0.2rem solid var(--color-gray-7);
-  color: var(--color-gray-7);
-}
-
-.markdown code, .markdown pre {
-  background: var(--color-gray-3);
-  border-radius: var(--border-radius);
-}
-
-.markdown pre {
-  margin: 0.5rem 0;
-  padding: 1rem;
-  overflow-x: auto;
-}
-
-.markdown pre code {
-  padding: unset;
+    margin: unset !important;
+    padding: 0rem 1rem;
+    border-left: 0.2rem solid var(--color-border);
+    color: var(--color-gray);
 }
 
 .markdown code {
-  margin: unset !important;
-  padding: 0.2em 0.4em;
-  font-size: 85%;
+    background-color: var(--color-surface-2);
+}
+
+.markdown pre {
+    background-color: var(--color-surface-1);
+}
+
+.markdown pre code {
+    background: unset;
+}
+
+.markdown pre {
+    margin: 0.5rem 0;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+.markdown pre code {
+    padding: unset;
+}
+
+.markdown code {
+    margin: unset !important;
+    padding: 0.2em 0.4em;
+    font-size: 85%;
+}
+
+.markdown hr {
+    border: var(--border);
 }

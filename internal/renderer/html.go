@@ -2,11 +2,24 @@ package renderer
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"html/template"
+	"sync"
 
 	"github.com/alecthomas/chroma/v2/formatters/html"
-	"github.com/alecthomas/chroma/v2/styles"
+)
+
+var (
+	formatter = html.New(
+		html.WithClasses(true),
+		html.WithAllClasses(true),
+		html.WithLineNumbers(true),
+		html.WithLinkableLineNumbers(true, "L"),
+	)
+
+	syntaxCSS     template.CSS
+	syntaxCSSOnce sync.Once
 )
 
 // ToSyntaxHighlightedHTML returns HTML of the syntax highlighted code via Chroma
@@ -18,20 +31,24 @@ func ToSyntaxHighlightedHTML(fileType string, fileContent []byte) (template.HTML
 		return "", err
 	}
 
-	formatter := html.New(
-		html.WithClasses(true),
-		html.WithAllClasses(true),
-		html.WithLineNumbers(true),
-		html.WithLinkableLineNumbers(true, "L"),
-	)
-
 	chromaHTML := bytes.NewBuffer(nil)
-	// using fallback style because we'll use custom prebaked CSS
-	err = formatter.Format(chromaHTML, styles.Fallback, it)
+	err = formatter.Format(chromaHTML, GetStyle(), it)
 	if err != nil {
 		return "", err
 	}
 
 	wrapped := fmt.Sprintf("<div class=\"code\">%s</div>", chromaHTML.String())
 	return template.HTML(wrapped), nil
+}
+
+func GetSyntaxCSS() template.CSS {
+	syntaxCSSOnce.Do(func() {
+		chromaCSS := bytes.NewBuffer(nil)
+		err := formatter.WriteCSS(chromaCSS, GetStyle())
+		if err != nil {
+			return
+		}
+		syntaxCSS = template.CSS(chromaCSS.String())
+	})
+	return syntaxCSS
 }

@@ -1,11 +1,13 @@
-package http
+package web
 
 import (
+	"bytes"
 	"compress/gzip"
 	"html/template"
 	"io"
 	"io/fs"
 	"log/slog"
+	"mime"
 	"net/http"
 	"os"
 	"path"
@@ -33,7 +35,6 @@ var (
 	cssFiles = []string{
 		"index.css",
 		"code.css",
-		"chroma.css",
 		"markdown.css",
 	}
 
@@ -137,30 +138,41 @@ func (a *StaticAssets) Template() *template.Template {
 }
 
 func (a *StaticAssets) Serve(w http.ResponseWriter, r *http.Request) {
-	switch r.PathValue("asset") {
+	asset := r.PathValue("asset")
+	switch asset {
 	case "index.js":
-		serve(w, r, a.js, jsMime)
+		serve(w, r, bytes.NewReader(a.js), jsMime)
 	case "index.css":
-		serve(w, r, a.css, cssMime)
+		serve(w, r, bytes.NewReader(a.css), cssMime)
 	default:
-		http.NotFound(w, r)
+		file, err := a.webFS.Open(path.Join("web/static", asset))
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		defer file.Close()
+		contentType := mime.TypeByExtension(filepath.Ext(asset))
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+		serve(w, r, file, contentType)
 	}
 }
 
 // serve serves the content, gzipped if the client accepts it.
-func serve(w http.ResponseWriter, r *http.Request, content []byte, contentType string) {
+func serve(w http.ResponseWriter, r *http.Request, content io.Reader, contentType string) {
 	w.Header().Set("Content-Type", contentType)
 
 	hasGzip := strings.Contains(strings.ToLower(r.Header.Get("Accept-Encoding")), "gzip")
 	if !hasGzip {
-		_, _ = w.Write(content)
+		_, _ = io.Copy(w, content)
 		return
 	}
 
 	w.Header().Set("Content-Encoding", "gzip")
 	w.Header().Set("Vary", "Accept-Encoding")
 	gw := gzip.NewWriter(w)
-	_, _ = gw.Write(content)
+	_, _ = io.Copy(gw, content)
 	gw.Close()
 }
 

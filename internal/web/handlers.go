@@ -1,4 +1,4 @@
-package http
+package web
 
 import (
 	"encoding/json"
@@ -91,10 +91,12 @@ func DocHandler(assets Assets) http.HandlerFunc {
 		}
 
 		vars := map[string]interface{}{
-			"FileID":   name,
-			"FileSize": humanize.Bytes(uint64(len(content))),
-			"FileType": "markdown",
-			"HTML":     md,
+			"FileID":     name,
+			"FileSize":   humanize.Bytes(uint64(len(content))),
+			"FileType":   "markdown",
+			"HTML":       md,
+			"RawContent": string(content),
+			"CommitSHA":  config.BuildCommit(),
 		}
 
 		err = assets.Template().ExecuteTemplate(w, "file.go.html", vars)
@@ -167,7 +169,10 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			rawHref = signedRawURL.String()
 		}
 
-		var html template.HTML
+		var (
+			html template.HTML
+			css  template.CSS
+		)
 
 		switch file.Type {
 		case snips.FileTypeBinary:
@@ -179,6 +184,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)
 				return
 			}
+			css = renderer.GetSyntaxCSS()
 		default:
 			html, err = renderer.ToSyntaxHighlightedHTML(file.Type, content)
 			if err != nil {
@@ -186,17 +192,21 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 				http.Error(w, "unable to parse file", http.StatusInternalServerError)
 				return
 			}
+			css = renderer.GetSyntaxCSS()
 		}
 
 		vars := map[string]interface{}{
-			"FileID":    file.ID,
-			"FileSize":  humanize.Bytes(file.Size),
-			"CreatedAt": humanize.Time(file.CreatedAt),
-			"UpdatedAt": humanize.Time(file.UpdatedAt),
-			"FileType":  strings.ToLower(file.Type),
-			"RawHREF":   rawHref,
-			"HTML":      html,
-			"Private":   file.Private,
+			"FileID":     file.ID,
+			"FileSize":   humanize.Bytes(file.Size),
+			"CreatedAt":  humanize.Time(file.CreatedAt),
+			"UpdatedAt":  humanize.Time(file.UpdatedAt),
+			"FileType":   strings.ToLower(file.Type),
+			"RawHREF":    rawHref,
+			"RawContent": string(content),
+			"HTML":       html,
+			"CSS":        css,
+			"Private":    file.Private,
+			"CommitSHA":  config.BuildCommit(),
 		}
 
 		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)

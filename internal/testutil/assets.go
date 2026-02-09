@@ -7,12 +7,12 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/robherley/snips.sh/internal/http"
+	"github.com/robherley/snips.sh/internal/web"
 )
 
 // Assets returns the _real_ assets used to render the web server.
 // Instead of being embedded normally, this will hacky load the assets at runtime.
-func Assets(t *testing.T) http.Assets {
+func Assets(t *testing.T) web.Assets {
 	t.Helper()
 
 	_, filename, _, _ := runtime.Caller(0)
@@ -31,7 +31,7 @@ func Assets(t *testing.T) http.Assets {
 		t.Fatal(err)
 	}
 
-	assets, err := http.NewAssets(
+	assets, err := web.NewAssets(
 		rootFS, // webFS
 		rootFS, // docFS
 		readmeBytes,
