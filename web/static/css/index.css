@@ -107,7 +107,7 @@ svg.lucide {
 }
 
 .header .title {
-    font-size: 6rem;
+    font-size: 5rem;
     position: relative;
     font-weight: normal;
     letter-spacing: 0.2rem;
@@ -115,9 +115,32 @@ svg.lucide {
 }
 
 .header .logo {
-    image-rendering: pixelated;
-    height: 3.75rem;
+    position: relative;
+    display: inline-block;
     margin-top: 1rem;
+    isolation: isolate;
+}
+
+.header .logo img {
+    display: block;
+    height: 3rem;
+    image-rendering: pixelated;
+    position: relative;
+    mix-blend-mode: lighten;
+}
+
+.header .logo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: var(--color-primary);
+    -webkit-mask-image: url("/assets/img/logo.png");
+    mask-image: url("/assets/img/logo.png");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    image-rendering: pixelated;
 }
 
 .header .title::after {
@@ -276,9 +299,16 @@ svg.lucide {
         letter-spacing: 0.1rem;
     }
 
+    .header .title::after {
+        left: -0.3rem;
+    }
+
     .header .logo {
-        height: 2.25rem;
         margin-top: 0.5rem;
+    }
+
+    .header .logo img {
+        height: 2.25rem;
     }
 
     .file-header {
