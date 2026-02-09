@@ -73,12 +73,12 @@
                     <a
                         class="file-action"
                         id="to-top"
-                        href="#"
                         data-hide
                         aria-label="go to top"
                         data-shortcut="t"
-                        ><kbd>t</kbd>top</a
                     >
+                        <kbd>t</kbd>top
+                    </a>
                     {{ if ne .FileType "binary" }}
                     <button
                         class="file-action"
@@ -95,8 +95,9 @@
                         href="{{ .RawHREF }}"
                         aria-label="view raw file"
                         data-shortcut="r"
-                        ><kbd>r</kbd>raw</a
                     >
+                        <kbd>r</kbd>raw
+                    </a>
                     {{ end }}
                 </div>
             </nav>
