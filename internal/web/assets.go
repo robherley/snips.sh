@@ -222,18 +222,14 @@ func (a *StaticAssets) Template() *template.Template {
 func (a *StaticAssets) Serve(w http.ResponseWriter, r *http.Request) {
 	asset := r.PathValue("asset")
 
-	switch {
-	// Hashed CSS: index.HASH.css → immutable cache
-	case asset == a.css.filename:
+	switch asset {
+	case a.css.filename: // Hashed CSS → immutable cache
 		serveCompressed(w, r, a.css, cssMime, true)
-	// Hashed JS: index.HASH.js → immutable cache
-	case asset == a.js.filename:
+	case a.js.filename: // Hashed JS → immutable cache
 		serveCompressed(w, r, a.js, jsMime, true)
-	// Unhashed CSS: index.css → short cache with revalidation
-	case asset == "index.css":
+	case "index.css": // Unhashed CSS → short cache with revalidation
 		serveCompressed(w, r, a.css, cssMime, false)
-	// Unhashed JS: index.js → short cache with revalidation
-	case asset == "index.js":
+	case "index.js": // Unhashed JS → short cache with revalidation
 		serveCompressed(w, r, a.js, jsMime, false)
 	default:
 		// Try static files (fonts, images)
