@@ -46,15 +46,22 @@ func MetaHandler(cfg *config.Config) http.HandlerFunc {
 
 		metadata := map[string]interface{}{
 			"limits": map[string]interface{}{
-				"file_size_bytes":         cfg.Limits.FileSize,
-				"file_size_human":         humanize.Bytes(cfg.Limits.FileSize),
-				"files_per_user":          cfg.Limits.FilesPerUser,
-				"ssh_session_dur_seconds": cfg.Limits.SessionDuration.Seconds(),
-				"ssh_session_dur_human":   cfg.Limits.SessionDuration.String(),
+				"file_size": map[string]interface{}{
+					"bytes": cfg.Limits.FileSize,
+					"human": humanize.Bytes(cfg.Limits.FileSize),
+				},
+				"files_per_user": cfg.Limits.FilesPerUser,
+				"session_duration": map[string]interface{}{
+					"seconds": cfg.Limits.SessionDuration.Seconds(),
+					"human":   cfg.Limits.SessionDuration.String(),
+				},
 			},
+			"endpoints": map[string]interface{}{
+				"http": cfg.HTTP.External.String(),
+				"ssh":  cfg.SSH.External.String(),
+			},
+			"commit_sha":      config.BuildCommit(),
 			"guesser_enabled": cfg.EnableGuesser,
-			"http":            cfg.HTTP.External.String(),
-			"ssh":             cfg.SSH.External.String(),
 		}
 
 		metabites, err := json.MarshalIndent(metadata, "", "  ")
