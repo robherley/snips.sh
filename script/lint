@@ -5,7 +5,7 @@ source "${REPO_ROOT}/script/env"
 
 BINDIR="${REPO_ROOT}/bin"
 BINARY=$BINDIR/golangci-lint
-GOLANGCI_LINT_VERSION=v2.7.2
+GOLANGCI_LINT_VERSION=v2.9.0
 
 if [ ! -f "$BINARY" ]; then
   curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s "$GOLANGCI_LINT_VERSION"
