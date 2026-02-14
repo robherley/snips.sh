@@ -155,6 +155,69 @@ const initKeyboardShortcuts = () => {
   });
 };
 
+const parseColor = (cssColor) => {
+  const ctx = document.createElement("canvas").getContext("2d");
+  ctx.fillStyle = cssColor;
+  ctx.fillRect(0, 0, 1, 1);
+  return ctx.getImageData(0, 0, 1, 1).data;
+};
+
+const updateFavicon = (cssColor) => {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = "/assets/img/favicon.png";
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const d = imageData.data;
+    const [nr, ng, nb] = parseColor(cssColor);
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] === 0) continue;
+      const isWhite = d[i] > 200 && d[i + 1] > 200 && d[i + 2] > 200;
+      if (!isWhite) {
+        d[i] = nr;
+        d[i + 1] = ng;
+        d[i + 2] = nb;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+    const link = document.querySelector("link[rel='icon']");
+    if (link) link.href = canvas.toDataURL("image/png");
+  };
+};
+
+const resolveColor = (colorName) =>
+  getComputedStyle(document.documentElement).getPropertyValue(`--color-${colorName}`).trim();
+
+const applyColor = (colorName) => {
+  document.documentElement.style.setProperty("--color-primary", `var(--color-${colorName})`);
+  updateFavicon(resolveColor(colorName));
+};
+
+const initColorPicker = () => {
+  const swatches = document.querySelectorAll(".color-swatch");
+  if (!swatches.length) return;
+
+  const saved = localStorage.getItem("color-primary");
+  if (saved) applyColor(saved);
+
+  const active = saved || "blue";
+  swatches.forEach((swatch) => {
+    if (swatch.dataset.color === active) swatch.classList.add("active");
+
+    swatch.addEventListener("click", () => {
+      const color = swatch.dataset.color;
+      localStorage.setItem("color-primary", color);
+      swatches.forEach((s) => s.classList.toggle("active", s === swatch));
+      applyColor(color);
+    });
+  });
+};
+
 const initCopyButton = () => {
   const copyBtn = document.querySelector("#copy-content");
   if (!copyBtn) return;
@@ -185,6 +248,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   initIcons();
   initKeyboardShortcuts();
   initCopyButton();
+  initColorPicker();
 
   await initMermaid();
 });
