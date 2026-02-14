@@ -191,10 +191,15 @@ const updateFavicon = (cssColor) => {
 };
 
 const resolveColor = (colorName) =>
-  getComputedStyle(document.documentElement).getPropertyValue(`--color-${colorName}`).trim();
+  getComputedStyle(document.documentElement)
+    .getPropertyValue(`--color-${colorName}`)
+    .trim();
 
 const applyColor = (colorName) => {
-  document.documentElement.style.setProperty("--color-primary", `var(--color-${colorName})`);
+  document.documentElement.style.setProperty(
+    "--color-primary",
+    `var(--color-${colorName})`,
+  );
   updateFavicon(resolveColor(colorName));
 };
 
