@@ -18,7 +18,7 @@
         <meta name="theme-color" content="#0ac5b2" />
         <link rel="icon" href="/assets/img/favicon.png" />
         <title>{{ .FileID }} - snips.sh</title>
-        <link rel="stylesheet" href="/assets/index.css" />
+        <link rel="stylesheet" href="{{ AssetPath "index.css" }}" />
         <script type="importmap">
             {
                 "imports": {
@@ -32,7 +32,7 @@
             {{ .CSS }}
         </style>
         {{ end }}
-        <script type="module" src="/assets/index.js"></script>
+        <script type="module" src="{{ AssetPath "index.js" }}"></script>
         {{ ExtendedHeadContent }}
     </head>
 

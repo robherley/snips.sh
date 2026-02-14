@@ -2,6 +2,7 @@
 package web_test
 
 import (
+	"io"
 	gohttp "net/http"
 	"net/http/httptest"
 	"net/url"
@@ -183,4 +184,115 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 			suite.Require().Equal(tc.expected, resp.StatusCode)
 		})
 	}
+}
+
+func (suite *HTTPServiceSuite) TestAssetCaching() {
+	ts := httptest.NewServer(suite.service.Handler)
+	defer ts.Close()
+
+	staticAssets := suite.assets.(*web.StaticAssets)
+	hashedCSSPath := staticAssets.AssetPath("index.css")
+	hashedJSPath := staticAssets.AssetPath("index.js")
+
+	suite.Run("hashed css returns immutable cache", func() {
+		req, err := gohttp.NewRequest("GET", ts.URL+hashedCSSPath, nil)
+		suite.Require().NoError(err)
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("public, max-age=31536000, immutable", resp.Header.Get("Cache-Control"))
+		suite.Require().Equal("Accept-Encoding", resp.Header.Get("Vary"))
+		suite.Require().Equal("text/css", resp.Header.Get("Content-Type"))
+	})
+
+	suite.Run("hashed js returns immutable cache", func() {
+		req, err := gohttp.NewRequest("GET", ts.URL+hashedJSPath, nil)
+		suite.Require().NoError(err)
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("public, max-age=31536000, immutable", resp.Header.Get("Cache-Control"))
+	})
+
+	suite.Run("unhashed css returns short cache", func() {
+		req, err := gohttp.NewRequest("GET", ts.URL+"/assets/index.css", nil)
+		suite.Require().NoError(err)
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("public, max-age=60, must-revalidate", resp.Header.Get("Cache-Control"))
+		suite.Require().NotEmpty(resp.Header.Get("ETag"))
+	})
+
+	suite.Run("gzip content encoding", func() {
+		req, err := gohttp.NewRequest("GET", ts.URL+hashedCSSPath, nil)
+		suite.Require().NoError(err)
+		req.Header.Set("Accept-Encoding", "gzip")
+
+		resp, err := (&gohttp.Client{Transport: &gohttp.Transport{DisableCompression: true}}).Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("gzip", resp.Header.Get("Content-Encoding"))
+	})
+
+	suite.Run("zstd content encoding", func() {
+		req, err := gohttp.NewRequest("GET", ts.URL+hashedCSSPath, nil)
+		suite.Require().NoError(err)
+		req.Header.Set("Accept-Encoding", "zstd")
+
+		resp, err := (&gohttp.Client{Transport: &gohttp.Transport{DisableCompression: true}}).Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("zstd", resp.Header.Get("Content-Encoding"))
+	})
+
+	suite.Run("no encoding returns raw", func() {
+		req, err := gohttp.NewRequest("GET", ts.URL+hashedCSSPath, nil)
+		suite.Require().NoError(err)
+		req.Header.Set("Accept-Encoding", "identity")
+
+		resp, err := (&gohttp.Client{Transport: &gohttp.Transport{DisableCompression: true}}).Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Empty(resp.Header.Get("Content-Encoding"))
+
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		suite.Require().Equal(staticAssets.CSS(), body)
+	})
+
+	suite.Run("static file returns etag and cache headers", func() {
+		req, err := gohttp.NewRequest("GET", ts.URL+"/assets/img/favicon.png", nil)
+		suite.Require().NoError(err)
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("public, max-age=604800", resp.Header.Get("Cache-Control"))
+		suite.Require().NotEmpty(resp.Header.Get("ETag"))
+	})
+
+	suite.Run("static file returns 304 for matching etag", func() {
+		// First request to get the ETag
+		req, err := gohttp.NewRequest("GET", ts.URL+"/assets/img/favicon.png", nil)
+		suite.Require().NoError(err)
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		etag := resp.Header.Get("ETag")
+		suite.Require().NotEmpty(etag)
+
+		// Second request with If-None-Match
+		req2, err := gohttp.NewRequest("GET", ts.URL+"/assets/img/favicon.png", nil)
+		suite.Require().NoError(err)
+		req2.Header.Set("If-None-Match", etag)
+
+		resp2, err := ts.Client().Do(req2)
+		suite.Require().NoError(err)
+		suite.Require().Equal(304, resp2.StatusCode)
+	})
 }
