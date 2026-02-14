@@ -49,6 +49,7 @@ var (
 
 type Assets interface {
 	Doc(filename string) ([]byte, error)
+	StaticFile(name string) ([]byte, bool)
 	Template() *template.Template
 	Serve(w http.ResponseWriter, r *http.Request)
 }
@@ -213,6 +214,13 @@ func (a *StaticAssets) Doc(filename string) ([]byte, error) {
 	defer file.Close()
 
 	return io.ReadAll(file)
+}
+
+func (a *StaticAssets) StaticFile(name string) ([]byte, bool) {
+	if sf, ok := a.staticFiles[name]; ok {
+		return sf.data, true
+	}
+	return nil, false
 }
 
 func (a *StaticAssets) Template() *template.Template {

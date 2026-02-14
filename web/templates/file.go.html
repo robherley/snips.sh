@@ -11,6 +11,9 @@
             property="og:description"
             content="snips.sh is a free, anonymous, open source, snippet hosting service"
         />
+        {{ if .OGImageURL }}
+        <meta property="og:image" content="{{.OGImageURL}}" />
+        {{ end }}
         <meta
             property="description"
             content="snips.sh is a free, anonymous, open source, snippet hosting service"

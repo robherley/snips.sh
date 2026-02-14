@@ -1,8 +1,11 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"html/template"
+	"image/png"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
@@ -12,6 +15,7 @@ import (
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
+	"github.com/robherley/snips.sh/internal/opengraph"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/robherley/snips.sh/internal/snips"
@@ -202,6 +206,8 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			css = renderer.GetSyntaxCSS()
 		}
 
+		ogImageURL := fmt.Sprintf("%s://%s/f/%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, file.ID)
+
 		vars := map[string]interface{}{
 			"FileID":     file.ID,
 			"FileSize":   humanize.Bytes(file.Size),
@@ -214,6 +220,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			"CSS":        css,
 			"Private":    file.Private,
 			"CommitSHA":  config.BuildCommit(),
+			"OGImageURL": ogImageURL,
 		}
 
 		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)
@@ -222,6 +229,78 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+	}
+}
+
+func OGImageHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+	sgnr := signer.New(cfg.HMACKey)
+
+	loadFont := func(name string) []byte {
+		data, ok := assets.StaticFile(name)
+		if !ok {
+			panic("missing required font: " + name)
+		}
+		return data
+	}
+
+	fonts := &opengraph.Fonts{
+		Regular:     loadFont("fonts/GeistMono-Regular.ttf"),
+		Display:     loadFont("fonts/GeistPixel-Square.ttf"),
+		DisplayLine: loadFont("fonts/GeistPixel-Line.ttf"),
+	}
+
+	logoData, ok := assets.StaticFile("img/og-logo.png")
+	if !ok {
+		panic("missing required asset: img/og-logo.png")
+	}
+
+	logo, err := png.Decode(bytes.NewReader(logoData))
+	if err != nil {
+		panic("unable to decode og logo: " + err.Error())
+	}
+
+	renderer, err := opengraph.NewRenderer(fonts, logo)
+	if err != nil {
+		panic("unable to create og renderer: " + err.Error())
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		log := logger.From(r.Context())
+
+		fileID := r.PathValue("fileID")
+		if fileID == "" {
+			http.NotFound(w, r)
+			return
+		}
+
+		file, err := database.FindFile(r.Context(), fileID)
+		if err != nil {
+			log.Error("unable to lookup file", "err", err)
+			http.NotFound(w, r)
+			return
+		}
+
+		if file == nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		if file.Private && !sgnr.VerifyURLAndNotExpired(*r.URL) {
+			http.NotFound(w, r)
+			return
+		}
+
+		imgBytes, err := renderer.GenerateImage(file)
+		if err != nil {
+			log.Error("unable to generate og image", "err", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(imgBytes)
 	}
 }
 
