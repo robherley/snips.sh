@@ -3,7 +3,7 @@ package web_test
 
 import (
 	"io"
-	gohttp "net/http"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -176,7 +176,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 		suite.Run(tc.name, func() {
 			tc.setup()
 
-			req, err := gohttp.NewRequest(tc.method, ts.URL+tc.path, nil)
+			req, err := http.NewRequest(tc.method, ts.URL+tc.path, nil)
 			suite.Require().NoError(err)
 
 			resp, err := ts.Client().Do(req)
@@ -195,7 +195,7 @@ func (suite *HTTPServiceSuite) TestAssetCaching() {
 	hashedJSPath := staticAssets.AssetPath("index.js")
 
 	suite.Run("hashed css returns immutable cache", func() {
-		req, err := gohttp.NewRequest("GET", ts.URL+hashedCSSPath, nil)
+		req, err := http.NewRequest("GET", ts.URL+hashedCSSPath, nil)
 		suite.Require().NoError(err)
 
 		resp, err := ts.Client().Do(req)
@@ -207,7 +207,7 @@ func (suite *HTTPServiceSuite) TestAssetCaching() {
 	})
 
 	suite.Run("hashed js returns immutable cache", func() {
-		req, err := gohttp.NewRequest("GET", ts.URL+hashedJSPath, nil)
+		req, err := http.NewRequest("GET", ts.URL+hashedJSPath, nil)
 		suite.Require().NoError(err)
 
 		resp, err := ts.Client().Do(req)
@@ -217,7 +217,7 @@ func (suite *HTTPServiceSuite) TestAssetCaching() {
 	})
 
 	suite.Run("unhashed css returns short cache", func() {
-		req, err := gohttp.NewRequest("GET", ts.URL+"/assets/index.css", nil)
+		req, err := http.NewRequest("GET", ts.URL+"/assets/index.css", nil)
 		suite.Require().NoError(err)
 
 		resp, err := ts.Client().Do(req)
@@ -228,33 +228,33 @@ func (suite *HTTPServiceSuite) TestAssetCaching() {
 	})
 
 	suite.Run("gzip content encoding", func() {
-		req, err := gohttp.NewRequest("GET", ts.URL+hashedCSSPath, nil)
+		req, err := http.NewRequest("GET", ts.URL+hashedCSSPath, nil)
 		suite.Require().NoError(err)
 		req.Header.Set("Accept-Encoding", "gzip")
 
-		resp, err := (&gohttp.Client{Transport: &gohttp.Transport{DisableCompression: true}}).Do(req)
+		resp, err := (&http.Client{Transport: &http.Transport{DisableCompression: true}}).Do(req)
 		suite.Require().NoError(err)
 		suite.Require().Equal(200, resp.StatusCode)
 		suite.Require().Equal("gzip", resp.Header.Get("Content-Encoding"))
 	})
 
 	suite.Run("zstd content encoding", func() {
-		req, err := gohttp.NewRequest("GET", ts.URL+hashedCSSPath, nil)
+		req, err := http.NewRequest("GET", ts.URL+hashedCSSPath, nil)
 		suite.Require().NoError(err)
 		req.Header.Set("Accept-Encoding", "zstd")
 
-		resp, err := (&gohttp.Client{Transport: &gohttp.Transport{DisableCompression: true}}).Do(req)
+		resp, err := (&http.Client{Transport: &http.Transport{DisableCompression: true}}).Do(req)
 		suite.Require().NoError(err)
 		suite.Require().Equal(200, resp.StatusCode)
 		suite.Require().Equal("zstd", resp.Header.Get("Content-Encoding"))
 	})
 
 	suite.Run("no encoding returns raw", func() {
-		req, err := gohttp.NewRequest("GET", ts.URL+hashedCSSPath, nil)
+		req, err := http.NewRequest("GET", ts.URL+hashedCSSPath, nil)
 		suite.Require().NoError(err)
 		req.Header.Set("Accept-Encoding", "identity")
 
-		resp, err := (&gohttp.Client{Transport: &gohttp.Transport{DisableCompression: true}}).Do(req)
+		resp, err := (&http.Client{Transport: &http.Transport{DisableCompression: true}}).Do(req)
 		suite.Require().NoError(err)
 		suite.Require().Equal(200, resp.StatusCode)
 		suite.Require().Empty(resp.Header.Get("Content-Encoding"))
@@ -265,7 +265,7 @@ func (suite *HTTPServiceSuite) TestAssetCaching() {
 	})
 
 	suite.Run("static file returns etag and cache headers", func() {
-		req, err := gohttp.NewRequest("GET", ts.URL+"/assets/img/favicon.png", nil)
+		req, err := http.NewRequest("GET", ts.URL+"/assets/img/favicon.png", nil)
 		suite.Require().NoError(err)
 
 		resp, err := ts.Client().Do(req)
@@ -277,7 +277,7 @@ func (suite *HTTPServiceSuite) TestAssetCaching() {
 
 	suite.Run("static file returns 304 for matching etag", func() {
 		// First request to get the ETag
-		req, err := gohttp.NewRequest("GET", ts.URL+"/assets/img/favicon.png", nil)
+		req, err := http.NewRequest("GET", ts.URL+"/assets/img/favicon.png", nil)
 		suite.Require().NoError(err)
 
 		resp, err := ts.Client().Do(req)
@@ -287,7 +287,7 @@ func (suite *HTTPServiceSuite) TestAssetCaching() {
 		suite.Require().NotEmpty(etag)
 
 		// Second request with If-None-Match
-		req2, err := gohttp.NewRequest("GET", ts.URL+"/assets/img/favicon.png", nil)
+		req2, err := http.NewRequest("GET", ts.URL+"/assets/img/favicon.png", nil)
 		suite.Require().NoError(err)
 		req2.Header.Set("If-None-Match", etag)
 
