@@ -37,9 +37,10 @@ type Config struct {
 	FileCompression bool `default:"True" desc:"enable compression of file contents"`
 
 	Limits struct {
-		FileSize        uint64        `default:"1048576" desc:"maximum file size in bytes"`
-		FilesPerUser    uint64        `default:"100" desc:"maximum number of files per user"`
-		SessionDuration time.Duration `default:"15m" desc:"maximum ssh session duration"`
+		FileSize         uint64        `default:"1048576" desc:"maximum file size in bytes"`
+		FilesPerUser     uint64        `default:"100" desc:"maximum number of files per user"`
+		SessionDuration  time.Duration `default:"15m" desc:"maximum ssh session duration"`
+		RevisionsPerFile uint64        `default:"64" desc:"maximum number of revisions per file"`
 	}
 
 	DB struct {

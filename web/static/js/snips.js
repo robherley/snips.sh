@@ -1,8 +1,11 @@
 import {
+  ArrowLeft,
+  Clock,
   createIcons,
   FileCode,
   FileText,
   Folder,
+  GitCommitHorizontal,
   HardDrive,
   HatGlasses,
   SquarePen,
@@ -132,13 +135,16 @@ const initHeaderObserver = () => {
 const initIcons = () => {
   createIcons({
     icons: {
-      Terminal,
+      ArrowLeft,
+      Clock,
       FileCode,
-      HardDrive,
-      SquarePen,
-      HatGlasses,
-      Folder,
       FileText,
+      Folder,
+      GitCommitHorizontal,
+      HardDrive,
+      HatGlasses,
+      SquarePen,
+      Terminal,
     },
   });
 };

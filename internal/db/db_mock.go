@@ -38,6 +38,72 @@ func (_m *MockDB) EXPECT() *MockDB_Expecter {
 	return &MockDB_Expecter{mock: &_m.Mock}
 }
 
+// CountRevisionsByFileID provides a mock function for the type MockDB
+func (_mock *MockDB) CountRevisionsByFileID(ctx context.Context, fileID string) (int64, error) {
+	ret := _mock.Called(ctx, fileID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountRevisionsByFileID")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (int64, error)); ok {
+		return returnFunc(ctx, fileID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) int64); ok {
+		r0 = returnFunc(ctx, fileID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, fileID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDB_CountRevisionsByFileID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountRevisionsByFileID'
+type MockDB_CountRevisionsByFileID_Call struct {
+	*mock.Call
+}
+
+// CountRevisionsByFileID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - fileID string
+func (_e *MockDB_Expecter) CountRevisionsByFileID(ctx interface{}, fileID interface{}) *MockDB_CountRevisionsByFileID_Call {
+	return &MockDB_CountRevisionsByFileID_Call{Call: _e.mock.On("CountRevisionsByFileID", ctx, fileID)}
+}
+
+func (_c *MockDB_CountRevisionsByFileID_Call) Run(run func(ctx context.Context, fileID string)) *MockDB_CountRevisionsByFileID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_CountRevisionsByFileID_Call) Return(n int64, err error) *MockDB_CountRevisionsByFileID_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockDB_CountRevisionsByFileID_Call) RunAndReturn(run func(ctx context.Context, fileID string) (int64, error)) *MockDB_CountRevisionsByFileID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateFile provides a mock function for the type MockDB
 func (_mock *MockDB) CreateFile(ctx context.Context, file *snips.File, maxFiles uint64) error {
 	ret := _mock.Called(ctx, file, maxFiles)
@@ -97,6 +163,69 @@ func (_c *MockDB_CreateFile_Call) Return(err error) *MockDB_CreateFile_Call {
 }
 
 func (_c *MockDB_CreateFile_Call) RunAndReturn(run func(ctx context.Context, file *snips.File, maxFiles uint64) error) *MockDB_CreateFile_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateRevision provides a mock function for the type MockDB
+func (_mock *MockDB) CreateRevision(ctx context.Context, revision *snips.Revision, maxRevisions uint64) error {
+	ret := _mock.Called(ctx, revision, maxRevisions)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateRevision")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *snips.Revision, uint64) error); ok {
+		r0 = returnFunc(ctx, revision, maxRevisions)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockDB_CreateRevision_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateRevision'
+type MockDB_CreateRevision_Call struct {
+	*mock.Call
+}
+
+// CreateRevision is a helper method to define mock.On call
+//   - ctx context.Context
+//   - revision *snips.Revision
+//   - maxRevisions uint64
+func (_e *MockDB_Expecter) CreateRevision(ctx interface{}, revision interface{}, maxRevisions interface{}) *MockDB_CreateRevision_Call {
+	return &MockDB_CreateRevision_Call{Call: _e.mock.On("CreateRevision", ctx, revision, maxRevisions)}
+}
+
+func (_c *MockDB_CreateRevision_Call) Run(run func(ctx context.Context, revision *snips.Revision, maxRevisions uint64)) *MockDB_CreateRevision_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *snips.Revision
+		if args[1] != nil {
+			arg1 = args[1].(*snips.Revision)
+		}
+		var arg2 uint64
+		if args[2] != nil {
+			arg2 = args[2].(uint64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_CreateRevision_Call) Return(err error) *MockDB_CreateRevision_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockDB_CreateRevision_Call) RunAndReturn(run func(ctx context.Context, revision *snips.Revision, maxRevisions uint64) error) *MockDB_CreateRevision_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -222,6 +351,63 @@ func (_c *MockDB_DeleteFile_Call) Return(err error) *MockDB_DeleteFile_Call {
 }
 
 func (_c *MockDB_DeleteFile_Call) RunAndReturn(run func(ctx context.Context, id string) error) *MockDB_DeleteFile_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteRevisionsByFileID provides a mock function for the type MockDB
+func (_mock *MockDB) DeleteRevisionsByFileID(ctx context.Context, fileID string) error {
+	ret := _mock.Called(ctx, fileID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteRevisionsByFileID")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, fileID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockDB_DeleteRevisionsByFileID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRevisionsByFileID'
+type MockDB_DeleteRevisionsByFileID_Call struct {
+	*mock.Call
+}
+
+// DeleteRevisionsByFileID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - fileID string
+func (_e *MockDB_Expecter) DeleteRevisionsByFileID(ctx interface{}, fileID interface{}) *MockDB_DeleteRevisionsByFileID_Call {
+	return &MockDB_DeleteRevisionsByFileID_Call{Call: _e.mock.On("DeleteRevisionsByFileID", ctx, fileID)}
+}
+
+func (_c *MockDB_DeleteRevisionsByFileID_Call) Run(run func(ctx context.Context, fileID string)) *MockDB_DeleteRevisionsByFileID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_DeleteRevisionsByFileID_Call) Return(err error) *MockDB_DeleteRevisionsByFileID_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockDB_DeleteRevisionsByFileID_Call) RunAndReturn(run func(ctx context.Context, fileID string) error) *MockDB_DeleteRevisionsByFileID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -426,6 +612,148 @@ func (_c *MockDB_FindPublicKeyByFingerprint_Call) Return(publicKey *snips.Public
 }
 
 func (_c *MockDB_FindPublicKeyByFingerprint_Call) RunAndReturn(run func(ctx context.Context, fingerprint string) (*snips.PublicKey, error)) *MockDB_FindPublicKeyByFingerprint_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindRevision provides a mock function for the type MockDB
+func (_mock *MockDB) FindRevision(ctx context.Context, fileID string, id int64) (*snips.Revision, error) {
+	ret := _mock.Called(ctx, fileID, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindRevision")
+	}
+
+	var r0 *snips.Revision
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) (*snips.Revision, error)); ok {
+		return returnFunc(ctx, fileID, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) *snips.Revision); ok {
+		r0 = returnFunc(ctx, fileID, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*snips.Revision)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
+		r1 = returnFunc(ctx, fileID, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDB_FindRevision_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindRevision'
+type MockDB_FindRevision_Call struct {
+	*mock.Call
+}
+
+// FindRevision is a helper method to define mock.On call
+//   - ctx context.Context
+//   - fileID string
+//   - id int64
+func (_e *MockDB_Expecter) FindRevision(ctx interface{}, fileID interface{}, id interface{}) *MockDB_FindRevision_Call {
+	return &MockDB_FindRevision_Call{Call: _e.mock.On("FindRevision", ctx, fileID, id)}
+}
+
+func (_c *MockDB_FindRevision_Call) Run(run func(ctx context.Context, fileID string, id int64)) *MockDB_FindRevision_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_FindRevision_Call) Return(revision *snips.Revision, err error) *MockDB_FindRevision_Call {
+	_c.Call.Return(revision, err)
+	return _c
+}
+
+func (_c *MockDB_FindRevision_Call) RunAndReturn(run func(ctx context.Context, fileID string, id int64) (*snips.Revision, error)) *MockDB_FindRevision_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindRevisionsByFileID provides a mock function for the type MockDB
+func (_mock *MockDB) FindRevisionsByFileID(ctx context.Context, fileID string) ([]*snips.Revision, error) {
+	ret := _mock.Called(ctx, fileID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindRevisionsByFileID")
+	}
+
+	var r0 []*snips.Revision
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]*snips.Revision, error)); ok {
+		return returnFunc(ctx, fileID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []*snips.Revision); ok {
+		r0 = returnFunc(ctx, fileID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*snips.Revision)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, fileID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDB_FindRevisionsByFileID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindRevisionsByFileID'
+type MockDB_FindRevisionsByFileID_Call struct {
+	*mock.Call
+}
+
+// FindRevisionsByFileID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - fileID string
+func (_e *MockDB_Expecter) FindRevisionsByFileID(ctx interface{}, fileID interface{}) *MockDB_FindRevisionsByFileID_Call {
+	return &MockDB_FindRevisionsByFileID_Call{Call: _e.mock.On("FindRevisionsByFileID", ctx, fileID)}
+}
+
+func (_c *MockDB_FindRevisionsByFileID_Call) Run(run func(ctx context.Context, fileID string)) *MockDB_FindRevisionsByFileID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_FindRevisionsByFileID_Call) Return(revisions []*snips.Revision, err error) *MockDB_FindRevisionsByFileID_Call {
+	_c.Call.Return(revisions, err)
+	return _c
+}
+
+func (_c *MockDB_FindRevisionsByFileID_Call) RunAndReturn(run func(ctx context.Context, fileID string) ([]*snips.Revision, error)) *MockDB_FindRevisionsByFileID_Call {
 	_c.Call.Return(run)
 	return _c
 }

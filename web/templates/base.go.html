@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            property="description"
+            content="snips.sh is a free, anonymous, open source, snippet hosting service"
+        />
+        <meta name="theme-color" content="#0ac5b2" />
+        <link rel="icon" href="/assets/img/favicon.png" />
+        <title>{{ block "title" . }}snips.sh{{ end }}</title>
+        <link rel="stylesheet" href="{{ AssetPath "index.css" }}" />
+        <script type="importmap">
+            {
+                "imports": {
+                    "mermaid": "https://esm.sh/mermaid@11.12.2",
+                    "lucide": "https://esm.sh/lucide@0.562.0"
+                }
+            }
+        </script>
+        {{ block "head" . }}{{ end }}
+        <script type="module" src="{{ AssetPath "index.js" }}"></script>
+        {{ ExtendedHeadContent }}
+    </head>
+
+    <body>
+        <div class="stripes"></div>
+        <div class="container">
+            <h1 class="header">
+                <span class="logo"
+                    ><img src="/assets/img/logo.png" alt="snips logo"
+                /></span>
+                <a class="title" href="/">snips</a>
+            </h1>
+            <nav class="file-header">
+                {{ block "nav" . }}{{ end }}
+            </nav>
+            {{ block "content" . }}{{ end }}
+
+            <div class="footer-stripes-container">
+                <div class="footer-stripes"></div>
+                <div class="color-picker">
+                    <button
+                        class="color-swatch"
+                        data-color="blue"
+                        style="background: var(--color-blue)"
+                        aria-label="Blue"
+                        title="Blue"
+                    ></button>
+                    <button
+                        class="color-swatch"
+                        data-color="red"
+                        style="background: var(--color-red)"
+                        aria-label="Red"
+                        title="Red"
+                    ></button>
+                    <button
+                        class="color-swatch"
+                        data-color="amber"
+                        style="background: var(--color-amber)"
+                        aria-label="Amber"
+                        title="Amber"
+                    ></button>
+                    <button
+                        class="color-swatch"
+                        data-color="green"
+                        style="background: var(--color-green)"
+                        aria-label="Green"
+                        title="Green"
+                    ></button>
+                    <button
+                        class="color-swatch"
+                        data-color="teal"
+                        style="background: var(--color-teal)"
+                        aria-label="Teal"
+                        title="Teal"
+                    ></button>
+                    <button
+                        class="color-swatch"
+                        data-color="purple"
+                        style="background: var(--color-purple)"
+                        aria-label="Purple"
+                        title="Purple"
+                    ></button>
+                    <button
+                        class="color-swatch"
+                        data-color="pink"
+                        style="background: var(--color-pink)"
+                        aria-label="Pink"
+                        title="Pink"
+                    ></button>
+                </div>
+            </div>
+            <footer class="file-footer text-sm muted">
+                <div>
+                    <a href="/">about</a> /
+                    <a href="/docs/terms-of-service.md">terms</a> /
+                    <a href="/docs/acceptable-use-policy.md">acceptable use</a>
+                </div>
+                <div>
+                    snips.sh {{ if .CommitSHA }}/
+                    <a
+                        href="https://github.com/robherley/snips.sh/commit/{{ .CommitSHA }}"
+                        >{{ slice .CommitSHA 0 7 }}</a
+                    >
+                    {{ end }}
+                </div>
+            </footer>
+        </div>
+    </body>
+</html>

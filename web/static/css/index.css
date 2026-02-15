@@ -309,6 +309,109 @@ svg.lucide {
   line-height: 1.25rem;
 }
 
+.revision-indicator {
+  color: var(--color-primary);
+}
+
+.revision-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.revision-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-gray);
+  border-bottom: var(--border);
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.revision-item:last-child {
+  border-bottom: none;
+}
+
+.revision-item:hover {
+  background-color: var(--color-surface-2);
+  text-decoration: none;
+}
+
+.revision-item-details {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.revision-item-id {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-primary);
+}
+
+.revision-item-meta {
+  display: flex;
+  gap: 1rem;
+}
+
+.revision-item-time {
+  white-space: nowrap;
+}
+
+.revision-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.revision-note {
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono);
+  text-align: center;
+  border-top: var(--border);
+}
+
+.diff-content {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+.diff-line {
+  display: block;
+  padding: 0 0.5rem;
+  white-space: pre;
+}
+
+.diff-add {
+  background: color-mix(in srgb, var(--color-green) 15%, transparent);
+  color: var(--color-green);
+}
+
+.diff-del {
+  background: color-mix(in srgb, var(--color-red) 15%, transparent);
+  color: var(--color-red);
+}
+
+.diff-hdr {
+  color: var(--color-primary);
+}
+
+.diff-ctx {
+  color: var(--color-gray);
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0 0.5rem;
