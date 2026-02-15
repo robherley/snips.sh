@@ -338,6 +338,7 @@ func (suite *HTTPServiceSuite) TestFileMarkdownAccept() {
 		file.ID = "mdtest5"
 		file.Type = "go"
 		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+		suite.mockDB.EXPECT().CountRevisionsByFileID(mock.Anything, file.ID).Return(int64(0), nil)
 
 		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
 		suite.Require().NoError(err)
