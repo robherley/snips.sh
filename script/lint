@@ -1,14 +1,9 @@
 #!/bin/sh
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-source "${REPO_ROOT}/script/env"
 
-BINDIR="${REPO_ROOT}/bin"
-BINARY=$BINDIR/golangci-lint
-GOLANGCI_LINT_VERSION=v2.9.0
+echo "linting go code..."
+"${REPO_ROOT}/script/lint-go"
 
-if [ ! -f "$BINARY" ]; then
-  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s "$GOLANGCI_LINT_VERSION"
-fi
-
-$BINARY run
+echo "linting web code..."
+"${REPO_ROOT}/script/lint-web"

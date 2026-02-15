@@ -1,354 +1,354 @@
 @import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Geist+Mono:wght@400;600&display=swap");
 
 @font-face {
-    font-family: "GeistPixel-Line";
-    src: url("/assets/fonts/GeistPixel-Line.woff2") format("woff2");
-    font-display: swap;
+  font-family: "GeistPixel-Line";
+  src: url("/assets/fonts/GeistPixel-Line.woff2") format("woff2");
+  font-display: swap;
 }
 
 @font-face {
-    font-family: "GeistPixel-Square";
-    src: url("/assets/fonts/GeistPixel-Square.woff2") format("woff2");
-    font-display: swap;
+  font-family: "GeistPixel-Square";
+  src: url("/assets/fonts/GeistPixel-Square.woff2") format("woff2");
+  font-display: swap;
 }
 
 :root {
-    --max-width: 1200px;
-    --font-sans:
-        "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-    --font-mono:
-        "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-        "Liberation Mono", "Courier New", monospace;
-    --border: 1px solid var(--color-border);
-    --border-radius: 0;
+  --max-width: 1200px;
+  --font-sans:
+    "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --font-mono:
+    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  --border: 1px solid var(--color-border);
+  --border-radius: 0;
 
-    --color-surface-0: hsl(220 13% 8%);
-    --color-surface-1: hsl(220 13% 10%);
-    --color-surface-2: hsl(220 13% 14%);
-    --color-border: hsl(220 13% 18%);
+  --color-surface-0: hsl(220 13% 8%);
+  --color-surface-1: hsl(220 13% 10%);
+  --color-surface-2: hsl(220 13% 14%);
+  --color-border: hsl(220 13% 18%);
 
-    --color-gray: hsl(220 5% 55%);
-    --color-blue: hsl(212 100% 70%);
-    --color-red: hsl(356 100% 72%);
-    --color-amber: hsl(42 92% 54%);
-    --color-green: hsl(134 48% 62%);
-    --color-teal: hsl(171 85% 45%);
-    --color-purple: hsl(278 76% 74%);
-    --color-pink: hsl(344 88% 71%);
-    --color-white: hsl(0 0% 100%);
-    --color-primary: var(--color-blue);
+  --color-gray: hsl(220 5% 55%);
+  --color-blue: hsl(212 100% 70%);
+  --color-red: hsl(356 100% 72%);
+  --color-amber: hsl(42 92% 54%);
+  --color-green: hsl(134 48% 62%);
+  --color-teal: hsl(171 85% 45%);
+  --color-purple: hsl(278 76% 74%);
+  --color-pink: hsl(344 88% 71%);
+  --color-white: hsl(0 0% 100%);
+  --color-primary: var(--color-blue);
 }
 
 ::selection {
-    background: color-mix(in srgb, var(--color-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
 
 :focus-visible {
-    outline: 2px dotted var(--color-primary);
-    outline-offset: 3px;
+  outline: 2px dotted var(--color-primary);
+  outline-offset: 3px;
 }
 
 * {
-    color-scheme: dark;
-    box-sizing: border-box;
+  color-scheme: dark;
+  box-sizing: border-box;
 }
 
 *[data-hide] {
-    display: none;
+  display: none;
 }
 
 html {
-    text-size-adjust: none;
-    -webkit-text-size-adjust: none;
-    font-size: 14px;
+  text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  font-size: 14px;
 }
 
 body {
-    font-family: var(--font-sans);
-    background-color: var(--color-surface-0);
-    color: var(--color-gray-10);
-    margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-surface-0);
+  color: var(--color-white);
+  margin: 0;
 }
 
 code {
-    font-family: var(--font-mono);
+  font-family: var(--font-mono);
 }
 
 span[role="img"] {
-    font-family: serif;
+  font-family: serif;
 }
 
 a {
-    color: var(--color-primary);
-    text-decoration: none;
+  color: var(--color-primary);
+  text-decoration: none;
 }
 
 a:hover {
-    text-decoration: underline;
-    text-underline-offset: 0.25rem;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
 }
 
 svg.lucide {
-    width: 1rem;
-    height: 1rem;
+  width: 1rem;
+  height: 1rem;
 }
 
 .container {
-    max-width: var(--max-width);
-    margin: 0 auto;
-    padding: 0 2rem;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 2rem;
 }
 
 .header {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
 }
 
 .header .title {
-    font-size: 5rem;
-    position: relative;
-    font-weight: normal;
-    letter-spacing: 0.2rem;
-    font-family: "GeistPixel-Square";
+  font-size: 5rem;
+  position: relative;
+  font-weight: normal;
+  letter-spacing: 0.2rem;
+  font-family: "GeistPixel-Square", monospace;
 }
 
 .header .logo {
-    position: relative;
-    display: inline-block;
-    margin-top: 1rem;
-    isolation: isolate;
+  position: relative;
+  display: inline-block;
+  margin-top: 1rem;
+  isolation: isolate;
 }
 
 .header .logo img {
-    display: block;
-    height: 3rem;
-    image-rendering: pixelated;
-    position: relative;
-    mix-blend-mode: lighten;
+  display: block;
+  height: 3rem;
+  image-rendering: pixelated;
+  position: relative;
+  mix-blend-mode: lighten;
 }
 
 .header .logo::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-color: var(--color-primary);
-    -webkit-mask-image: url("/assets/img/logo.png");
-    mask-image: url("/assets/img/logo.png");
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    image-rendering: pixelated;
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-primary);
+  -webkit-mask-image: url("/assets/img/logo.png");
+  mask-image: url("/assets/img/logo.png");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  image-rendering: pixelated;
 }
 
 .header .title::after {
-    content: "snips";
-    position: absolute;
-    top: 0;
-    left: -0.4rem;
-    opacity: 0.4;
-    font-family: "GeistPixel-Line";
-    z-index: -1;
+  content: "snips";
+  position: absolute;
+  top: 0;
+  left: -0.4rem;
+  opacity: 0.4;
+  font-family: "GeistPixel-Line", monospace;
+  z-index: -1;
 }
 
 .header a {
-    color: var(--color-gray-10);
+  color: var(--color-gray-10);
 }
 
 .stripes {
-    display: block;
-    width: 100%;
-    height: 1rem;
-    background-image: repeating-linear-gradient(
-        -45deg,
-        var(--color-primary) 0 2px,
-        transparent 2px 8px
-    );
+  display: block;
+  width: 100%;
+  height: 1rem;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-primary) 0 2px,
+    transparent 2px 8px
+  );
 }
 
 .file-header {
-    position: sticky;
-    top: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    white-space: nowrap;
-    font-family: var(--font-mono);
-    border: var(--border);
-    border-radius: var(--border-radius);
-    z-index: 999;
-    background-color: var(--color-surface-1);
-    overflow-x: scroll;
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  border: var(--border);
+  border-radius: var(--border-radius);
+  z-index: 999;
+  background-color: var(--color-surface-1);
+  overflow-x: scroll;
 }
 
 .file-header .file-details {
-    padding: 1rem;
-    color: var(--color-gray);
-    flex: 1;
-    display: flex;
-    gap: 1.2rem;
-    align-items: center;
+  padding: 1rem;
+  color: var(--color-gray);
+  flex: 1;
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
 }
 
 .file-header .file-details .file-detail {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .file-header .file-actions {
-    display: flex;
-    padding: 1rem;
-    gap: 1rem;
-    margin-right: 0.5rem;
+  display: flex;
+  padding: 1rem;
+  gap: 1rem;
+  margin-right: 0.5rem;
 }
 
 .file-header .file-actions .file-action {
-    background-color: unset;
-    border: none;
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    color: var(--color-gray);
-    padding: 0;
-    transition: color 0.15s ease;
+  background-color: unset;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-gray);
+  padding: 0;
+  transition: color 0.15s ease;
 }
 
 .file-header .file-actions .file-action:hover {
-    color: var(--color-primary);
-    text-decoration: none;
-    cursor: pointer;
+  color: var(--color-primary);
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .file-header .file-actions .file-action kbd {
-    font-family: var(--font-mono);
-    color: var(--color-white);
-    background-color: var(--color-surface-0);
-    border: var(--border);
-    margin-right: 0.5rem;
-    font-size: 0.75rem;
-    padding: 0.15rem 0.35rem;
+  font-family: var(--font-mono);
+  color: var(--color-white);
+  background-color: var(--color-surface-0);
+  border: var(--border);
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.35rem;
 }
 
 .file-header .file-actions .file-action:hover kbd {
-    color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .file-content {
-    overflow-x: auto;
-    border: var(--border);
-    border-top: none;
+  overflow-x: auto;
+  border: var(--border);
+  border-top: none;
 }
 
 .file-content * {
-    scroll-margin-top: 3.5rem; /* header offset */
+  scroll-margin-top: 3.5rem; /* header offset */
 }
 
 .file-footer {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-    padding: 1rem;
-    font-family: var(--font-mono);
-    background-color: var(--color-surface-1);
-    border: var(--border);
-    margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  font-family: var(--font-mono);
+  background-color: var(--color-surface-1);
+  border: var(--border);
+  margin-bottom: 2rem;
 }
 
 .footer-stripes-container {
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .footer-stripes {
-    flex: 1;
-    display: block;
-    height: 1rem;
-    background-image: repeating-linear-gradient(
-        -45deg,
-        var(--color-border) 0 2px,
-        transparent 2px 8px
-    );
+  flex: 1;
+  display: block;
+  height: 1rem;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-border) 0 2px,
+    transparent 2px 8px
+  );
 }
 
 .color-picker {
-    display: flex;
-    gap: 4px;
-    flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .color-swatch {
-    width: 1rem;
-    height: 1rem;
-    padding: 0;
-    border: 2px solid transparent;
-    cursor: pointer;
-    box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: 2px solid transparent;
+  cursor: pointer;
+  box-sizing: border-box;
 }
 
 .color-swatch.active {
-    border-color: var(--color-white);
+  border-color: var(--color-white);
 }
 
 .danger {
-    color: var(--color-red);
+  color: var(--color-red);
 }
 
 .muted {
-    color: var(--color-gray);
+  color: var(--color-gray);
 }
 
 .text-sm {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
 @media (max-width: 768px) {
-    .container {
-        padding: 0 0.5rem;
-        padding-bottom: 3.5rem;
-    }
+  .container {
+    padding: 0 0.5rem;
+    padding-bottom: 3.5rem;
+  }
 
-    .header {
-        gap: 0.75rem;
-    }
+  .header {
+    gap: 0.75rem;
+  }
 
-    .header .title {
-        font-size: 3.5rem;
-        letter-spacing: 0.1rem;
-    }
+  .header .title {
+    font-size: 3.5rem;
+    letter-spacing: 0.1rem;
+  }
 
-    .header .title::after {
-        left: -0.3rem;
-    }
+  .header .title::after {
+    left: -0.3rem;
+  }
 
-    .header .logo {
-        margin-top: 0.5rem;
-    }
+  .header .logo {
+    margin-top: 0.5rem;
+  }
 
-    .header .logo img {
-        height: 2.25rem;
-    }
+  .header .logo img {
+    height: 2.25rem;
+  }
 
-    .file-header {
-        overflow-x: visible;
-    }
+  .file-header {
+    overflow-x: visible;
+  }
 
-    .file-header .file-actions {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        margin: 0;
-        justify-content: center;
-        background-color: var(--color-surface-1);
-        border-top: var(--border);
-        z-index: 999;
-    }
+  .file-header .file-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    justify-content: center;
+    background-color: var(--color-surface-1);
+    border-top: var(--border);
+    z-index: 999;
+  }
 }

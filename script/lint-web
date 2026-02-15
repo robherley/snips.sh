@@ -1,0 +1,22 @@
+#!/bin/sh
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+BINDIR="${REPO_ROOT}/bin"
+
+BIOME_BINARY=$BINDIR/biome
+BIOME_VERSION="@biomejs/biome@2.3.15"
+
+if [ ! -f "$BIOME_BINARY" ]; then
+  case "$(uname -s)-$(uname -m)" in
+    Darwin-arm64) BIOME_TARGET="biome-darwin-arm64" ;;
+    Darwin-x86_64) BIOME_TARGET="biome-darwin-x64" ;;
+    Linux-x86_64) BIOME_TARGET="biome-linux-x64" ;;
+    Linux-aarch64) BIOME_TARGET="biome-linux-arm64" ;;
+    *) echo "Unsupported platform: $(uname -s)-$(uname -m)"; exit 1 ;;
+  esac
+  curl -sSfL "https://github.com/biomejs/biome/releases/download/${BIOME_VERSION}/${BIOME_TARGET}" -o "$BIOME_BINARY"
+  chmod +x "$BIOME_BINARY"
+fi
+
+$BIOME_BINARY check
