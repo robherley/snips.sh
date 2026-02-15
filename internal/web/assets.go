@@ -27,6 +27,7 @@ const (
 	tmplPattern = "web/templates/*"
 
 	docsPath = "docs/"
+	readme   = "README.md"
 
 	cssPath = "web/static/css"
 	cssMime = "text/css"
@@ -202,7 +203,7 @@ func NewAssets(webFS fs.FS, docsFS fs.FS, readme []byte, extendHeadFile string) 
 }
 
 func (a *StaticAssets) Doc(filename string) ([]byte, error) {
-	if filename == "README.md" {
+	if filename == readme {
 		return a.readme, nil
 	}
 

@@ -84,7 +84,7 @@ func DocHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 
 		name := r.PathValue("name")
 		if name == "" {
-			name = "README.md"
+			name = readme
 		}
 
 		content, err := assets.Doc(name)
@@ -102,7 +102,7 @@ func DocHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 		}
 
 		var ogImageURL string
-		if name == "README.md" {
+		if name == readme {
 			ogImageURL = fmt.Sprintf("%s://%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host)
 		} else {
 			ogImageURL = fmt.Sprintf("%s://%s/docs/%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, name)
@@ -138,7 +138,7 @@ func DocOGImageHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 
 		name := r.PathValue("name")
 		if name == "" {
-			name = "README.md"
+			name = readme
 		}
 
 		content, err := assets.Doc(name)
