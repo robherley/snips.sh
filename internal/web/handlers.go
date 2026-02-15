@@ -1,8 +1,11 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"html/template"
+	"image/png"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
@@ -12,6 +15,7 @@ import (
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/logger"
+	"github.com/robherley/snips.sh/internal/opengraph"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/robherley/snips.sh/internal/snips"
@@ -74,13 +78,13 @@ func MetaHandler(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
-func DocHandler(assets Assets) http.HandlerFunc {
+func DocHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
 		name := r.PathValue("name")
 		if name == "" {
-			name = "README.md"
+			name = readme
 		}
 
 		content, err := assets.Doc(name)
@@ -97,13 +101,24 @@ func DocHandler(assets Assets) http.HandlerFunc {
 			return
 		}
 
+		var ogImageURL string
+		if name == readme {
+			ogImageURL = fmt.Sprintf("%s://%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host)
+		} else {
+			ogImageURL = fmt.Sprintf("%s://%s/docs/%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, name)
+		}
+
+		ogDescription := fmt.Sprintf("%s · %s · %s", name, "markdown", humanize.Bytes(uint64(len(content))))
+
 		vars := map[string]interface{}{
-			"FileID":     name,
-			"FileSize":   humanize.Bytes(uint64(len(content))),
-			"FileType":   "markdown",
-			"HTML":       md,
-			"RawContent": string(content),
-			"CommitSHA":  config.BuildCommit(),
+			"FileID":        name,
+			"FileSize":      humanize.Bytes(uint64(len(content))),
+			"FileType":      "markdown",
+			"HTML":          md,
+			"RawContent":    string(content),
+			"CommitSHA":     config.BuildCommit(),
+			"OGImageURL":    ogImageURL,
+			"OGDescription": ogDescription,
 		}
 
 		err = assets.Template().ExecuteTemplate(w, "file.go.html", vars)
@@ -112,6 +127,42 @@ func DocHandler(assets Assets) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+	}
+}
+
+func DocOGImageHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
+	ogRenderer := newOGRenderer(assets)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		log := logger.From(r.Context())
+
+		name := r.PathValue("name")
+		if name == "" {
+			name = readme
+		}
+
+		content, err := assets.Doc(name)
+		if err != nil {
+			log.Error("unable to load doc", "err", err)
+			http.NotFound(w, r)
+			return
+		}
+
+		imgBytes, err := ogRenderer.GenerateImage(&opengraph.FileInfo{
+			ID:   name,
+			Type: "markdown",
+			Size: uint64(len(content)),
+		})
+		if err != nil {
+			log.Error("unable to generate og image", "err", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(imgBytes)
 	}
 }
 
@@ -202,18 +253,23 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			css = renderer.GetSyntaxCSS()
 		}
 
+		ogImageURL := fmt.Sprintf("%s://%s/f/%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, file.ID)
+		ogDescription := fmt.Sprintf("%s · %s · %s · %s", file.ID, strings.ToLower(file.Type), humanize.Bytes(file.Size), humanize.Time(file.UpdatedAt))
+
 		vars := map[string]interface{}{
-			"FileID":     file.ID,
-			"FileSize":   humanize.Bytes(file.Size),
-			"CreatedAt":  humanize.Time(file.CreatedAt),
-			"UpdatedAt":  humanize.Time(file.UpdatedAt),
-			"FileType":   strings.ToLower(file.Type),
-			"RawHREF":    rawHref,
-			"RawContent": string(content),
-			"HTML":       html,
-			"CSS":        css,
-			"Private":    file.Private,
-			"CommitSHA":  config.BuildCommit(),
+			"FileID":        file.ID,
+			"FileSize":      humanize.Bytes(file.Size),
+			"CreatedAt":     humanize.Time(file.CreatedAt),
+			"UpdatedAt":     humanize.Time(file.UpdatedAt),
+			"FileType":      strings.ToLower(file.Type),
+			"RawHREF":       rawHref,
+			"RawContent":    string(content),
+			"HTML":          html,
+			"CSS":           css,
+			"Private":       file.Private,
+			"CommitSHA":     config.BuildCommit(),
+			"OGImageURL":    ogImageURL,
+			"OGDescription": ogDescription,
 		}
 
 		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)
@@ -222,6 +278,88 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+	}
+}
+
+func newOGRenderer(assets Assets) *opengraph.Renderer {
+	loadFont := func(name string) []byte {
+		data, ok := assets.StaticFile(name)
+		if !ok {
+			panic("missing required font: " + name)
+		}
+		return data
+	}
+
+	fonts := &opengraph.Fonts{
+		Regular:     loadFont("fonts/GeistMono-Regular.ttf"),
+		Display:     loadFont("fonts/GeistPixel-Square.ttf"),
+		DisplayLine: loadFont("fonts/GeistPixel-Line.ttf"),
+	}
+
+	logoData, ok := assets.StaticFile("img/og-logo.png")
+	if !ok {
+		panic("missing required asset: img/og-logo.png")
+	}
+
+	logo, err := png.Decode(bytes.NewReader(logoData))
+	if err != nil {
+		panic("unable to decode og logo: " + err.Error())
+	}
+
+	renderer, err := opengraph.NewRenderer(fonts, logo)
+	if err != nil {
+		panic("unable to create og renderer: " + err.Error())
+	}
+
+	return renderer
+}
+
+func OGImageHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+	sgnr := signer.New(cfg.HMACKey)
+	renderer := newOGRenderer(assets)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		log := logger.From(r.Context())
+
+		fileID := r.PathValue("fileID")
+		if fileID == "" {
+			http.NotFound(w, r)
+			return
+		}
+
+		file, err := database.FindFile(r.Context(), fileID)
+		if err != nil {
+			log.Error("unable to lookup file", "err", err)
+			http.NotFound(w, r)
+			return
+		}
+
+		if file == nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		if file.Private && !sgnr.VerifyURLAndNotExpired(*r.URL) {
+			http.NotFound(w, r)
+			return
+		}
+
+		imgBytes, err := renderer.GenerateImage(&opengraph.FileInfo{
+			ID:        file.ID,
+			Type:      file.Type,
+			Size:      file.Size,
+			UpdatedAt: file.UpdatedAt,
+		})
+		if err != nil {
+			log.Error("unable to generate og image", "err", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(imgBytes)
 	}
 }
 

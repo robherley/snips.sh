@@ -7,10 +7,16 @@
         <meta property="og:title" content="{{.FileID}} - snips.sh" />
         <meta property="og:type" content="article" />
         <meta property="og:site_name" content="snips.sh" />
-        <meta
-            property="og:description"
-            content="snips.sh is a free, anonymous, open source, snippet hosting service"
-        />
+        <meta property="og:description" content="{{.OGDescription}}" />
+        {{ if .OGImageURL }}
+        <meta property="og:image" content="{{.OGImageURL}}" />
+        {{ end }}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="{{.FileID}} - snips.sh" />
+        <meta name="twitter:description" content="{{.OGDescription}}" />
+        {{ if .OGImageURL }}
+        <meta name="twitter:image" content="{{.OGImageURL}}" />
+        {{ end }}
         <meta
             property="description"
             content="snips.sh is a free, anonymous, open source, snippet hosting service"
