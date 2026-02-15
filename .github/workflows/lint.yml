@@ -2,9 +2,9 @@ name: Lint
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 permissions:
   contents: read
@@ -14,12 +14,19 @@ jobs:
   golangci-lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version-file: go.mod
-    - run: script/vendor-onnxruntime
-    - run: source script/env
-    - uses: golangci/golangci-lint-action@v9
-      with:
-        version: v2.9.0
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: script/vendor-onnxruntime
+      - run: source script/env
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.9.0
+  biome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: biomejs/setup-biome@v2
+        with:
+          version: v2.3.15
