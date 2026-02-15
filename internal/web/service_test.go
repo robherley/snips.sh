@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -184,6 +185,167 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 			suite.Require().Equal(tc.expected, resp.StatusCode)
 		})
 	}
+}
+
+func (suite *HTTPServiceSuite) TestDocMarkdownAccept() {
+	ts := httptest.NewServer(suite.service.Handler)
+	defer ts.Close()
+
+	suite.Run("landing page returns markdown with frontmatter", func() {
+		req, err := http.NewRequest("GET", ts.URL+"/", nil)
+		suite.Require().NoError(err)
+		req.Header.Set("Accept", "text/markdown")
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("text/markdown; charset=utf-8", resp.Header.Get("Content-Type"))
+		suite.Require().Equal("Accept", resp.Header.Get("Vary"))
+
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		content := string(body)
+		suite.Require().True(strings.HasPrefix(content, "---\n"))
+		suite.Require().Contains(content, "type: markdown")
+		suite.Require().Contains(content, "source: ")
+	})
+
+	suite.Run("doc page returns markdown with frontmatter", func() {
+		req, err := http.NewRequest("GET", ts.URL+"/docs/self-hosting.md", nil)
+		suite.Require().NoError(err)
+		req.Header.Set("Accept", "text/markdown")
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("text/markdown; charset=utf-8", resp.Header.Get("Content-Type"))
+
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		content := string(body)
+		suite.Require().Contains(content, "name: self-hosting.md")
+		suite.Require().Contains(content, "source: ")
+	})
+
+	suite.Run("no markdown accept returns html", func() {
+		req, err := http.NewRequest("GET", ts.URL+"/", nil)
+		suite.Require().NoError(err)
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().NotEqual("text/markdown; charset=utf-8", resp.Header.Get("Content-Type"))
+	})
+}
+
+func (suite *HTTPServiceSuite) TestFileMarkdownAccept() {
+	ts := httptest.NewServer(suite.service.Handler)
+	defer ts.Close()
+
+	suite.Run("code file returns frontmatter and fenced code block", func() {
+		file := testutil.Fixtures.File(suite.T())
+		file.ID = "mdtest1"
+		file.Type = "go"
+		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+
+		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
+		suite.Require().NoError(err)
+		req.Header.Set("Accept", "text/markdown")
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("text/markdown; charset=utf-8", resp.Header.Get("Content-Type"))
+		suite.Require().Equal("Accept", resp.Header.Get("Vary"))
+
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		content := string(body)
+		suite.Require().True(strings.HasPrefix(content, "---\n"))
+		suite.Require().Contains(content, "id: mdtest1")
+		suite.Require().Contains(content, "type: go")
+		suite.Require().Contains(content, "source: ")
+		suite.Require().Contains(content, "```go\n")
+		suite.Require().Contains(content, "```\n")
+	})
+
+	suite.Run("markdown file returns frontmatter and raw markdown", func() {
+		file := testutil.Fixtures.File(suite.T())
+		file.ID = "mdtest2"
+		file.Type = "markdown"
+		err := file.SetContent([]byte("# Hello\n\nworld\n"), true)
+		suite.Require().NoError(err)
+		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+
+		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
+		suite.Require().NoError(err)
+		req.Header.Set("Accept", "text/markdown")
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("text/markdown; charset=utf-8", resp.Header.Get("Content-Type"))
+
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		content := string(body)
+		suite.Require().Contains(content, "type: markdown")
+		suite.Require().Contains(content, "# Hello\n\nworld\n")
+	})
+
+	suite.Run("binary file returns frontmatter and placeholder", func() {
+		file := testutil.Fixtures.File(suite.T())
+		file.ID = "mdtest3"
+		file.Type = "binary"
+		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+
+		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
+		suite.Require().NoError(err)
+		req.Header.Set("Accept", "text/markdown")
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		content := string(body)
+		suite.Require().Contains(content, "type: binary")
+		suite.Require().Contains(content, "_Binary file._\n")
+	})
+
+	suite.Run("accept with quality params", func() {
+		file := testutil.Fixtures.File(suite.T())
+		file.ID = "mdtest4"
+		file.Type = "go"
+		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+
+		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
+		suite.Require().NoError(err)
+		req.Header.Set("Accept", "text/html, text/markdown;q=0.9")
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		// Should still return markdown since text/markdown is in the Accept header
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().Equal("text/markdown; charset=utf-8", resp.Header.Get("Content-Type"))
+	})
+
+	suite.Run("no markdown accept returns html", func() {
+		file := testutil.Fixtures.File(suite.T())
+		file.ID = "mdtest5"
+		file.Type = "go"
+		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+
+		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
+		suite.Require().NoError(err)
+		req.Header.Set("Accept", "text/html")
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(200, resp.StatusCode)
+		suite.Require().NotEqual("text/markdown; charset=utf-8", resp.Header.Get("Content-Type"))
+	})
 }
 
 func (suite *HTTPServiceSuite) TestAssetCaching() {
