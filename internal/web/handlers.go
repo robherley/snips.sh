@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/dustin/go-humanize"
@@ -54,7 +55,8 @@ func MetaHandler(cfg *config.Config) http.HandlerFunc {
 					"bytes": cfg.Limits.FileSize,
 					"human": humanize.Bytes(cfg.Limits.FileSize),
 				},
-				"files_per_user": cfg.Limits.FilesPerUser,
+				"files_per_user":     cfg.Limits.FilesPerUser,
+				"revisions_per_file": cfg.Limits.RevisionsPerFile,
 				"session_duration": map[string]interface{}{
 					"seconds": cfg.Limits.SessionDuration.Seconds(),
 					"human":   cfg.Limits.SessionDuration.String(),
@@ -253,6 +255,11 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			css = renderer.GetSyntaxCSS()
 		}
 
+		revisionCount, err := database.CountRevisionsByFileID(r.Context(), file.ID)
+		if err != nil {
+			log.Warn("unable to count revisions", "err", err)
+		}
+
 		ogImageURL := fmt.Sprintf("%s://%s/f/%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, file.ID)
 		ogDescription := fmt.Sprintf("%s · %s · %s · %s", file.ID, strings.ToLower(file.Type), humanize.Bytes(file.Size), humanize.Time(file.UpdatedAt))
 
@@ -270,6 +277,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			"CommitSHA":     config.BuildCommit(),
 			"OGImageURL":    ogImageURL,
 			"OGDescription": ogDescription,
+			"RevisionCount": revisionCount,
 		}
 
 		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)
@@ -361,6 +369,189 @@ func OGImageHandler(cfg *config.Config, database db.DB, assets Assets) http.Hand
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(imgBytes)
 	}
+}
+
+func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+	sgnr := signer.New(cfg.HMACKey)
+	tmpl := assets.Template()
+	return func(w http.ResponseWriter, r *http.Request) {
+		log := logger.From(r.Context())
+
+		fileID := r.PathValue("fileID")
+		if fileID == "" {
+			http.NotFound(w, r)
+			return
+		}
+
+		file, err := database.FindFile(r.Context(), fileID)
+		if err != nil {
+			log.Error("unable to lookup file", "err", err)
+			http.NotFound(w, r)
+			return
+		}
+
+		if file == nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		isSignedAndNotExpired := sgnr.VerifyURLAndNotExpired(*r.URL)
+
+		if file.Private && !isSignedAndNotExpired {
+			log.Warn("attempted to access private file revisions")
+			http.NotFound(w, r)
+			return
+		}
+
+		revisions, err := database.FindRevisionsByFileID(r.Context(), file.ID)
+		if err != nil {
+			log.Error("unable to lookup revisions", "err", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		type revisionItem struct {
+			ID        int64
+			CreatedAt string
+			Size      string
+			Type      string
+		}
+
+		items := make([]revisionItem, len(revisions))
+		for i, rev := range revisions {
+			items[i] = revisionItem{
+				ID:        rev.ID,
+				CreatedAt: humanize.Time(rev.CreatedAt),
+				Size:      humanize.Bytes(rev.Size),
+				Type:      strings.ToLower(rev.Type),
+			}
+		}
+
+		vars := map[string]interface{}{
+			"FileID":       file.ID,
+			"FileSize":     humanize.Bytes(file.Size),
+			"FileType":     strings.ToLower(file.Type),
+			"UpdatedAt":    humanize.Time(file.UpdatedAt),
+			"Private":      file.Private,
+			"Revisions":    items,
+			"MaxRevisions": cfg.Limits.RevisionsPerFile,
+			"CommitSHA":    config.BuildCommit(),
+		}
+
+		err = tmpl.ExecuteTemplate(w, "revisions.go.html", vars)
+		if err != nil {
+			log.Error("unable to render template", "err", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+	sgnr := signer.New(cfg.HMACKey)
+	tmpl := assets.Template()
+	return func(w http.ResponseWriter, r *http.Request) {
+		log := logger.From(r.Context())
+
+		fileID := r.PathValue("fileID")
+		revisionIDStr := r.PathValue("revisionID")
+		if fileID == "" || revisionIDStr == "" {
+			http.NotFound(w, r)
+			return
+		}
+
+		revisionID, err := strconv.ParseInt(revisionIDStr, 10, 64)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		file, err := database.FindFile(r.Context(), fileID)
+		if err != nil {
+			log.Error("unable to lookup file", "err", err)
+			http.NotFound(w, r)
+			return
+		}
+
+		if file == nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		isSignedAndNotExpired := sgnr.VerifyURLAndNotExpired(*r.URL)
+
+		if file.Private && !isSignedAndNotExpired {
+			log.Warn("attempted to access private file revision")
+			http.NotFound(w, r)
+			return
+		}
+
+		revision, err := database.FindRevision(r.Context(), file.ID, revisionID)
+		if err != nil {
+			log.Error("unable to lookup revision", "err", err)
+			http.NotFound(w, r)
+			return
+		}
+
+		if revision == nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		diffContent, err := revision.GetDiff()
+		if err != nil {
+			log.Error("unable to decompress diff", "err", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		diffLines := parseDiffLines(string(diffContent))
+
+		vars := map[string]interface{}{
+			"FileID":     file.ID,
+			"FileSize":   humanize.Bytes(file.Size),
+			"FileType":   strings.ToLower(file.Type),
+			"Private":    file.Private,
+			"RevisionID": revision.ID,
+			"CreatedAt":  humanize.Time(revision.CreatedAt),
+			"RevSize":    humanize.Bytes(revision.Size),
+			"RevType":    strings.ToLower(revision.Type),
+			"DiffLines":  diffLines,
+			"CommitSHA":  config.BuildCommit(),
+		}
+
+		err = tmpl.ExecuteTemplate(w, "revision.go.html", vars)
+		if err != nil {
+			log.Error("unable to render template", "err", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+type diffLine struct {
+	Class   string
+	Content string
+}
+
+func parseDiffLines(diff string) []diffLine {
+	lines := strings.Split(diff, "\n")
+	result := make([]diffLine, 0, len(lines))
+	for _, line := range lines {
+		var class string
+		switch {
+		case strings.HasPrefix(line, "+++"), strings.HasPrefix(line, "---"), strings.HasPrefix(line, "@@"):
+			class = "diff-hdr"
+		case strings.HasPrefix(line, "+"):
+			class = "diff-add"
+		case strings.HasPrefix(line, "-"):
+			class = "diff-del"
+		default:
+			class = "diff-ctx"
+		}
+		result = append(result, diffLine{Class: class, Content: line})
+	}
+	return result
 }
 
 func ShouldSendRaw(r *http.Request) bool {

@@ -129,6 +129,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.ID = "eLcyRMrrgP"
 
 				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.EXPECT().CountRevisionsByFileID(mock.Anything, file.ID).Return(int64(0), nil)
 			},
 		},
 		{
@@ -155,6 +156,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.Private = true
 
 				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.EXPECT().CountRevisionsByFileID(mock.Anything, file.ID).Return(int64(0), nil)
 			},
 		},
 		{

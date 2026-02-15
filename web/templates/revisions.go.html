@@ -4,40 +4,21 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta property="og:title" content="{{.FileID}} - snips.sh" />
-        <meta property="og:type" content="article" />
-        <meta property="og:site_name" content="snips.sh" />
-        <meta property="og:description" content="{{.OGDescription}}" />
-        {{ if .OGImageURL }}
-        <meta property="og:image" content="{{.OGImageURL}}" />
-        {{ end }}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="{{.FileID}} - snips.sh" />
-        <meta name="twitter:description" content="{{.OGDescription}}" />
-        {{ if .OGImageURL }}
-        <meta name="twitter:image" content="{{.OGImageURL}}" />
-        {{ end }}
         <meta
             property="description"
             content="snips.sh is a free, anonymous, open source, snippet hosting service"
         />
         <meta name="theme-color" content="#0ac5b2" />
         <link rel="icon" href="/assets/img/favicon.png" />
-        <title>{{ .FileID }} - snips.sh</title>
+        <title>{{ .FileID }} revisions - snips.sh</title>
         <link rel="stylesheet" href="{{ AssetPath "index.css" }}" />
         <script type="importmap">
             {
                 "imports": {
-                    "mermaid": "https://esm.sh/mermaid@11.12.2",
                     "lucide": "https://esm.sh/lucide@0.562.0"
                 }
             }
         </script>
-        {{ if .CSS }}
-        <style>
-            {{ .CSS }}
-        </style>
-        {{ end }}
         <script type="module" src="{{ AssetPath "index.js" }}"></script>
         {{ ExtendedHeadContent }}
     </head>
@@ -55,75 +36,55 @@
                 <div class="file-details text-sm">
                     <div class="file-detail">
                         <i data-lucide="terminal"></i>
-                        <a href="">{{ .FileID }}</a>
+                        <a href="/f/{{ .FileID }}">{{ .FileID }}</a>
                     </div>
-                    <div class="file-detail">
-                        <i data-lucide="file-code"></i>
-                        {{ .FileType }}
-                    </div>
-                    <div class="file-detail">
-                        <i data-lucide="hard-drive"></i>
-                        {{ .FileSize }}
-                    </div>
-                    {{ if .UpdatedAt }}
-                    <div class="file-detail">
-                        <i data-lucide="square-pen"></i>
-                        {{ .UpdatedAt }}{{ if .RevisionCount }}<span class="revision-indicator">*</span>{{ end }}
-                    </div>
-                    {{ end }} {{ if .Private }}
-                    <div class="file-detail danger">
-                        <i data-lucide="hat-glasses"></i>
-                        private
-                    </div>
-                    {{ end }}
-                </div>
-                <div class="file-actions">
-                    <a
-                        class="file-action"
-                        id="to-top"
-                        data-hide
-                        aria-label="go to top"
-                        data-shortcut="t"
-                    >
-                        <kbd>t</kbd>top
-                    </a>
-                    {{ if ne .FileType "binary" }}
-                    <button
-                        class="file-action"
-                        id="copy-content"
-                        aria-label="copy to clipboard"
-                        data-shortcut="c"
-                    >
-                        <kbd>c</kbd>copy
-                    </button>
-                    {{ end }} {{ if .RawHREF }}
-                    <a
-                        class="file-action"
-                        id="view-raw"
-                        href="{{ .RawHREF }}"
-                        aria-label="view raw file"
-                        data-shortcut="r"
-                    >
-                        <kbd>r</kbd>raw
-                    </a>
-                    {{ end }} {{ if .RevisionCount }}
-                    <a
-                        class="file-action"
-                        href="/f/{{ .FileID }}/rev"
-                        aria-label="view revision history"
-                        data-shortcut="h"
-                    >
-                        <kbd>h</kbd>history
-                    </a>
-                    {{ end }}
                 </div>
             </nav>
-            <article class="file-content">{{ .HTML }}</article>
-            {{ if ne .FileType "binary" }}
-            <pre id="raw-content" hidden aria-hidden="true">
-{{ .RawContent }}</pre
-            >
-            {{ end }}
+            <div class="file-content">
+                <div class="revision-list">
+                    <a
+                        class="revision-item"
+                        href="/f/{{ .FileID }}"
+                    >
+                        <div class="revision-item-details">
+                            <span class="revision-item-id">
+                                <i data-lucide="file-code"></i>
+                                current
+                            </span>
+                            <span class="revision-item-meta muted">
+                                <span>{{ .FileType }}</span>
+                                <span>{{ .FileSize }}</span>
+                            </span>
+                        </div>
+                        <span class="revision-item-time muted">
+                            {{ .UpdatedAt }}
+                        </span>
+                    </a>
+                    {{ range .Revisions }}
+                    <a
+                        class="revision-item"
+                        href="/f/{{ $.FileID }}/rev/{{ .ID }}"
+                    >
+                        <div class="revision-item-details">
+                            <span class="revision-item-id">
+                                <i data-lucide="git-commit-horizontal"></i>
+                                {{ .ID }}
+                            </span>
+                            <span class="revision-item-meta muted">
+                                <span>{{ .Type }}</span>
+                                <span>{{ .Size }}</span>
+                            </span>
+                        </div>
+                        <span class="revision-item-time muted">
+                            {{ .CreatedAt }}
+                        </span>
+                    </a>
+                    {{ end }}
+                </div>
+                <div class="revision-note muted text-sm">
+                    note: only the past {{ .MaxRevisions }} revisions are retained
+                </div>
+            </div>
 
             <div class="footer-stripes-container">
                 <div class="footer-stripes"></div>
