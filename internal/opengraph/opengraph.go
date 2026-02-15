@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"image"
 	"image/color"
-	"image/draw"
 	"image/png"
 	"strings"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/fogleman/gg"
-	"github.com/robherley/snips.sh/internal/snips"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 )
@@ -68,15 +67,15 @@ func NewRenderer(fonts *Fonts, logo image.Image) (*Renderer, error) {
 		})
 	}
 
-	fontCode, err := parseFace(fonts.Regular, 36)
+	fontCode, err := parseFace(fonts.Regular, 48)
 	if err != nil {
 		return nil, err
 	}
-	fontTitle, err := parseFace(fonts.Display, 164)
+	fontTitle, err := parseFace(fonts.Display, 148)
 	if err != nil {
 		return nil, err
 	}
-	fontTitleLine, err := parseFace(fonts.DisplayLine, 164)
+	fontTitleLine, err := parseFace(fonts.DisplayLine, 148)
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +88,23 @@ func NewRenderer(fonts *Fonts, logo image.Image) (*Renderer, error) {
 	}, nil
 }
 
-// GenerateImage creates a 1200x630 PNG open graph image for a snippet.
-func (r *Renderer) GenerateImage(file *snips.File) ([]byte, error) {
+func abbreviate(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	return s[:max-3] + "..."
+}
+
+// FileInfo contains the metadata displayed on an OG image.
+type FileInfo struct {
+	ID        string
+	Type      string
+	Size      uint64
+	UpdatedAt time.Time
+}
+
+// GenerateImage creates a 1200x630 PNG open graph image.
+func (r *Renderer) GenerateImage(info *FileInfo) ([]byte, error) {
 	dc := gg.NewContext(imgWidth, imgHeight)
 
 	dc.SetColor(colorBackground)
@@ -120,6 +134,7 @@ func (r *Renderer) GenerateImage(file *snips.File) ([]byte, error) {
 	}
 
 	titleX, titleY := 60.0, 95.0
+
 	dc.SetFontFace(r.fontTitleLine)
 	dc.SetColor(color.NRGBA{0x71, 0x71, 0x74, 0xFF})
 	dc.DrawStringAnchored("snips.sh", titleX-10, titleY, 0, 0.5)
@@ -128,15 +143,18 @@ func (r *Renderer) GenerateImage(file *snips.File) ([]byte, error) {
 	dc.DrawStringAnchored("snips.sh", titleX, titleY, 0, 0.5)
 
 	logoBounds := r.logo.Bounds()
-	logoX := imgWidth - logoBounds.Dx() - 40
-	logoY := (imgHeight - logoBounds.Dy()) / 2
-	draw.Draw(
-		dc.Image().(*image.RGBA),
-		image.Rect(logoX, logoY, logoX+logoBounds.Dx(), logoY+logoBounds.Dy()),
-		r.logo,
-		image.Point{},
-		draw.Over,
-	)
+	logoX := imgWidth - logoBounds.Dx() - 60
+	logoY := 60
+	dst := dc.Image().(*image.RGBA)
+	for y := 0; y < logoBounds.Dy(); y++ {
+		for x := 0; x < logoBounds.Dx(); x++ {
+			c := r.logo.At(logoBounds.Min.X+x, logoBounds.Min.Y+y)
+			_, _, _, a := c.RGBA()
+			if a > 0 {
+				dst.Set(logoX+x, logoY+y, c)
+			}
+		}
+	}
 
 	type token struct {
 		text  string
@@ -144,10 +162,12 @@ func (r *Renderer) GenerateImage(file *snips.File) ([]byte, error) {
 	}
 
 	props := []struct{ key, value string }{
-		{"id", file.ID},
-		{"type", strings.ToLower(file.Type)},
-		{"size", humanize.Bytes(file.Size)},
-		{"modified", humanize.Time(file.UpdatedAt)},
+		{"id", abbreviate(info.ID, 26)},
+		{"type", strings.ToLower(info.Type)},
+		{"size", humanize.Bytes(info.Size)},
+	}
+	if !info.UpdatedAt.IsZero() {
+		props = append(props, struct{ key, value string }{"modified", humanize.Time(info.UpdatedAt)})
 	}
 
 	var lines [][]token
