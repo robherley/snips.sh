@@ -29,8 +29,14 @@ func (sesh *UserSession) IsFileRequest() bool {
 	return strings.HasPrefix(sesh.User(), FileRequestPrefix)
 }
 
+func (sesh *UserSession) IsContentUpdate() bool {
+	return strings.HasSuffix(sesh.User(), ":content")
+}
+
 func (sesh *UserSession) RequestedFileID() string {
-	return strings.TrimPrefix(sesh.User(), FileRequestPrefix)
+	id := strings.TrimPrefix(sesh.User(), FileRequestPrefix)
+	id = strings.TrimSuffix(id, ":content")
+	return id
 }
 
 func (sesh *UserSession) Error(err error, title string, f string, v ...interface{}) {

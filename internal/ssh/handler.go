@@ -136,6 +136,15 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 		return
 	}
 
+	if sesh.IsContentUpdate() {
+		if file.UserID != userID {
+			sesh.Error(ErrFileNotFound, "Unable to get file", "File not found: %s", fileID)
+			return
+		}
+		h.UpdateFileContent(sesh, file)
+		return
+	}
+
 	args := sesh.Command()
 	if len(args) == 0 {
 		h.DownloadFile(sesh, file)
@@ -143,7 +152,7 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 	}
 
 	if file.UserID != userID {
-		sesh.Error(ErrOpOnNonOwnedFile, "Unable to perform operation on file", "You do not own %q, therefore you cannot perform an operation on it.", fileID)
+		sesh.Error(ErrFileNotFound, "Unable to get file", "File not found: %s", fileID)
 		return
 	}
 
@@ -268,6 +277,129 @@ func (h *SessionHandler) DownloadFile(sesh *UserSession, file *snips.File) {
 		sesh.Error(err, "Unable to download file", "There was an error downloading the file: %q", file.ID)
 	} else {
 		wish.Print(sesh, string(content))
+	}
+}
+
+func (h *SessionHandler) UpdateFileContent(sesh *UserSession, file *snips.File) {
+	log := logger.From(sesh.Context())
+
+	flags := UpdateFileContentFlags{}
+	if err := flags.Parse(sesh.Stderr(), sesh.Command()); err != nil {
+		if !errors.Is(err, flag.ErrHelp) {
+			log.Warn("invalid user specified flags", "err", err)
+			sesh.Error(err, "Error parsing flag", "Error: %q", err.Error())
+		}
+		return
+	}
+
+	content := make([]byte, 0)
+	size := uint64(0)
+	for {
+		buf := make([]byte, UploadBufferSize)
+		n, err := sesh.Read(buf)
+		isEOF := errors.Is(err, io.EOF)
+		if err != nil && !isEOF {
+			sesh.Error(err, "Unable to read content", "There was an error reading the content: %q", err.Error())
+			return
+		}
+
+		size += uint64(n)
+		content = append(content, buf[:n]...)
+
+		if size > h.Config.Limits.FileSize {
+			sesh.Error(ErrFileTooLarge, "Unable to update file", "File too large, max size is %s", humanize.Bytes(h.Config.Limits.FileSize))
+			return
+		}
+
+		if isEOF {
+			if size == 0 {
+				sesh.Error(ErrEmptyContent, "Unable to update file", "No content provided. Pipe content to update a file:\n  cat <file> | %s", h.Config.SSHCommandForFile(file.ID+":content"))
+				return
+			}
+
+			file.Size = size
+
+			if flags.Extension != "" {
+				file.Type = renderer.DetectFileType(content, flags.Extension, h.Config.EnableGuesser)
+			} else {
+				file.Type = renderer.DetectFileType(content, "", h.Config.EnableGuesser)
+			}
+
+			if err := file.SetContent(content, h.Config.FileCompression); err != nil {
+				sesh.Error(err, "Unable to update file", "There was an error updating the file: %s", err.Error())
+				return
+			}
+
+			if err := h.DB.UpdateFile(sesh.Context(), file); err != nil {
+				sesh.Error(err, "Unable to update file", "There was an error updating the file: %s", err.Error())
+				return
+			}
+
+			metrics.IncrCounterWithLabels([]string{"file", "update"}, 1, []metrics.Label{
+				{Name: "type", Value: file.Type},
+			})
+
+			log.Info("file content updated",
+				"file_id", file.ID,
+				"user_id", file.UserID,
+				"size", file.Size,
+				"file_type", file.Type,
+			)
+
+			visibility := styles.C(styles.Colors.White, "public")
+			if file.Private {
+				visibility = styles.C(styles.Colors.Red, "private")
+			}
+
+			attrs := make([]string, 0)
+			kvp := map[string]string{
+				"type":       styles.C(styles.Colors.White, file.Type),
+				"size":       styles.C(styles.Colors.White, humanize.Bytes(file.Size)),
+				"visibility": visibility,
+			}
+			for k, v := range kvp {
+				key := styles.C(styles.Colors.Muted, k+": ")
+				attrs = append(attrs, key+v)
+			}
+			sort.Strings(attrs)
+
+			noti := Notification{
+				Color: styles.Colors.Green,
+				Title: "File Updated 📤",
+				WithStyle: func(s *lipgloss.Style) {
+					s.MarginTop(1)
+				},
+			}
+			noti.Messagef("id: %s\n%s", styles.C(styles.Colors.White, file.ID), strings.Join(attrs, styles.C(styles.Colors.Muted, " • ")))
+			noti.Render(sesh)
+
+			noti = Notification{
+				Title:   "SSH 📠",
+				Message: styles.C(styles.Colors.Blue, h.Config.SSHCommandForFile(file.ID)),
+				WithStyle: func(s *lipgloss.Style) {
+					s.MarginTop(1)
+				},
+			}
+			noti.Render(sesh)
+
+			url := lipgloss.NewStyle().
+				Foreground(styles.Colors.Blue).
+				Underline(true).
+				Render(h.Config.HTTPAddressForFile(file.ID))
+
+			noti = Notification{
+				Title:   "URL 🔗",
+				Message: url,
+			}
+
+			if file.Private {
+				noti.Message = "<none> (requires a signed URL)"
+			}
+
+			noti.Render(sesh)
+
+			return
+		}
 	}
 }
 

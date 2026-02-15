@@ -10,4 +10,5 @@ var (
 	ErrUnknownCommand    = errors.New("unknown command")
 	ErrSignPublicFile    = errors.New("unable to sign public file")
 	ErrOpOnNonOwnedFile  = errors.New("operation on non-owned file")
+	ErrEmptyContent      = errors.New("empty content")
 )

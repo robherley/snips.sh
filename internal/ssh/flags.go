@@ -83,6 +83,27 @@ func (df *DeleteFlags) Parse(out io.Writer, args []string) error {
 	return df.FlagSet.Parse(args)
 }
 
+type UpdateFileContentFlags struct {
+	*flag.FlagSet
+
+	Extension string
+}
+
+func (uf *UpdateFileContentFlags) Parse(out io.Writer, args []string) error {
+	uf.FlagSet = flag.NewFlagSet("", flag.ContinueOnError)
+	uf.SetOutput(out)
+
+	uf.StringVar(&uf.Extension, "ext", "", "hint the file extension (optional)")
+
+	if err := uf.FlagSet.Parse(args); err != nil {
+		return err
+	}
+
+	uf.Extension = strings.TrimPrefix(strings.ToLower(uf.Extension), ".")
+
+	return nil
+}
+
 // durationFlagValue is a wrapper around time.Duration that implements the flag.Value interface using a custom parser.
 type durationFlagValue time.Duration
 
