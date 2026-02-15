@@ -10,6 +10,7 @@ import (
 	"net/http/pprof"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/config"
@@ -91,6 +92,14 @@ func DocHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 		if err != nil {
 			log.Error("unable to load file", "err", err)
 			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+
+		if AcceptsMarkdown(r) {
+			w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+			w.Header().Set("Vary", "Accept")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(DocToMarkdown(cfg, name, content))
 			return
 		}
 
@@ -202,6 +211,14 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 		if err != nil {
 			log.Error("unable to get file content", "err", err)
 			http.Error(w, "unable to get file content", http.StatusInternalServerError)
+			return
+		}
+
+		if AcceptsMarkdown(r) {
+			w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+			w.Header().Set("Vary", "Accept")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(FileToMarkdown(cfg, file, content))
 			return
 		}
 
@@ -373,4 +390,60 @@ func ShouldSendRaw(r *http.Request) bool {
 	}
 
 	return false
+}
+
+func AcceptsMarkdown(r *http.Request) bool {
+	for _, part := range strings.Split(r.Header.Get("Accept"), ",") {
+		if strings.TrimSpace(strings.SplitN(part, ";", 2)[0]) == "text/markdown" {
+			return true
+		}
+	}
+	return false
+}
+
+func FileToMarkdown(cfg *config.Config, file *snips.File, content []byte) []byte {
+	var buf bytes.Buffer
+
+	fmt.Fprintf(&buf, "---\n")
+	fmt.Fprintf(&buf, "id: %s\n", file.ID)
+	fmt.Fprintf(&buf, "size: %s\n", humanize.Bytes(file.Size))
+	fmt.Fprintf(&buf, "type: %s\n", strings.ToLower(file.Type))
+	fmt.Fprintf(&buf, "created: %s\n", file.CreatedAt.UTC().Format(time.RFC3339))
+	fmt.Fprintf(&buf, "updated: %s\n", file.UpdatedAt.UTC().Format(time.RFC3339))
+	fmt.Fprintf(&buf, "source: %s://%s/f/%s\n", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, file.ID)
+	fmt.Fprintf(&buf, "---\n\n")
+
+	switch file.Type {
+	case snips.FileTypeBinary:
+		buf.WriteString("_Binary file._\n")
+	case snips.FileTypeMarkdown:
+		buf.Write(content)
+	default:
+		fmt.Fprintf(&buf, "```%s\n", file.Type)
+		buf.Write(content)
+		if len(content) > 0 && content[len(content)-1] != '\n' {
+			buf.WriteByte('\n')
+		}
+		buf.WriteString("```\n")
+	}
+
+	return buf.Bytes()
+}
+
+func DocToMarkdown(cfg *config.Config, name string, content []byte) []byte {
+	var buf bytes.Buffer
+
+	fmt.Fprintf(&buf, "---\n")
+	fmt.Fprintf(&buf, "name: %s\n", name)
+	fmt.Fprintf(&buf, "type: markdown\n")
+	if name == readme {
+		fmt.Fprintf(&buf, "source: %s://%s/\n", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host)
+	} else {
+		fmt.Fprintf(&buf, "source: %s://%s/docs/%s\n", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, name)
+	}
+	fmt.Fprintf(&buf, "---\n\n")
+
+	buf.Write(content)
+
+	return buf.Bytes()
 }
