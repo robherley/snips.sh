@@ -123,7 +123,7 @@ func DocHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 			"OGDescription": ogDescription,
 		}
 
-		err = assets.Template().ExecuteTemplate(w, "file.go.html", vars)
+		err = assets.Template("file.go.html").Execute(w, vars)
 		if err != nil {
 			log.Error("unable to render template", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -170,7 +170,6 @@ func DocOGImageHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 
 func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
 	signer := signer.New(cfg.HMACKey)
-	tmpl := assets.Template()
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
@@ -280,7 +279,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			"RevisionCount": revisionCount,
 		}
 
-		err = tmpl.ExecuteTemplate(w, "file.go.html", vars)
+		err = assets.Template("file.go.html").Execute(w, vars)
 		if err != nil {
 			log.Error("unable to render template", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -373,7 +372,6 @@ func OGImageHandler(cfg *config.Config, database db.DB, assets Assets) http.Hand
 
 func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
 	sgnr := signer.New(cfg.HMACKey)
-	tmpl := assets.Template()
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
@@ -438,7 +436,7 @@ func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.Ha
 			"CommitSHA":    config.BuildCommit(),
 		}
 
-		err = tmpl.ExecuteTemplate(w, "revisions.go.html", vars)
+		err = assets.Template("revisions.go.html").Execute(w, vars)
 		if err != nil {
 			log.Error("unable to render template", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -449,7 +447,6 @@ func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.Ha
 
 func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
 	sgnr := signer.New(cfg.HMACKey)
-	tmpl := assets.Template()
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
@@ -520,7 +517,7 @@ func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http
 			"CommitSHA":  config.BuildCommit(),
 		}
 
-		err = tmpl.ExecuteTemplate(w, "revision.go.html", vars)
+		err = assets.Template("revision.go.html").Execute(w, vars)
 		if err != nil {
 			log.Error("unable to render template", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)

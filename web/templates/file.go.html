@@ -1,199 +1,90 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta property="og:title" content="{{.FileID}} - snips.sh" />
-        <meta property="og:type" content="article" />
-        <meta property="og:site_name" content="snips.sh" />
-        <meta property="og:description" content="{{.OGDescription}}" />
-        {{ if .OGImageURL }}
-        <meta property="og:image" content="{{.OGImageURL}}" />
-        {{ end }}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="{{.FileID}} - snips.sh" />
-        <meta name="twitter:description" content="{{.OGDescription}}" />
-        {{ if .OGImageURL }}
-        <meta name="twitter:image" content="{{.OGImageURL}}" />
-        {{ end }}
-        <meta
-            property="description"
-            content="snips.sh is a free, anonymous, open source, snippet hosting service"
-        />
-        <meta name="theme-color" content="#0ac5b2" />
-        <link rel="icon" href="/assets/img/favicon.png" />
-        <title>{{ .FileID }} - snips.sh</title>
-        <link rel="stylesheet" href="{{ AssetPath "index.css" }}" />
-        <script type="importmap">
-            {
-                "imports": {
-                    "mermaid": "https://esm.sh/mermaid@11.12.2",
-                    "lucide": "https://esm.sh/lucide@0.562.0"
-                }
-            }
-        </script>
-        {{ if .CSS }}
-        <style>
-            {{ .CSS }}
-        </style>
-        {{ end }}
-        <script type="module" src="{{ AssetPath "index.js" }}"></script>
-        {{ ExtendedHeadContent }}
-    </head>
-
-    <body>
-        <div class="stripes"></div>
-        <div class="container">
-            <h1 class="header">
-                <span class="logo"
-                    ><img src="/assets/img/logo.png" alt="snips logo"
-                /></span>
-                <a class="title" href="/">snips</a>
-            </h1>
-            <nav class="file-header">
-                <div class="file-details text-sm">
-                    <div class="file-detail">
-                        <i data-lucide="terminal"></i>
-                        <a href="">{{ .FileID }}</a>
-                    </div>
-                    <div class="file-detail">
-                        <i data-lucide="file-code"></i>
-                        {{ .FileType }}
-                    </div>
-                    <div class="file-detail">
-                        <i data-lucide="hard-drive"></i>
-                        {{ .FileSize }}
-                    </div>
-                    {{ if .UpdatedAt }}
-                    <div class="file-detail">
-                        <i data-lucide="square-pen"></i>
-                        {{ .UpdatedAt }}{{ if .RevisionCount }}<span class="revision-indicator">*</span>{{ end }}
-                    </div>
-                    {{ end }} {{ if .Private }}
-                    <div class="file-detail danger">
-                        <i data-lucide="hat-glasses"></i>
-                        private
-                    </div>
-                    {{ end }}
-                </div>
-                <div class="file-actions">
-                    <a
-                        class="file-action"
-                        id="to-top"
-                        data-hide
-                        aria-label="go to top"
-                        data-shortcut="t"
-                    >
-                        <kbd>t</kbd>top
-                    </a>
-                    {{ if ne .FileType "binary" }}
-                    <button
-                        class="file-action"
-                        id="copy-content"
-                        aria-label="copy to clipboard"
-                        data-shortcut="c"
-                    >
-                        <kbd>c</kbd>copy
-                    </button>
-                    {{ end }} {{ if .RawHREF }}
-                    <a
-                        class="file-action"
-                        id="view-raw"
-                        href="{{ .RawHREF }}"
-                        aria-label="view raw file"
-                        data-shortcut="r"
-                    >
-                        <kbd>r</kbd>raw
-                    </a>
-                    {{ end }} {{ if .RevisionCount }}
-                    <a
-                        class="file-action"
-                        href="/f/{{ .FileID }}/rev"
-                        aria-label="view revision history"
-                        data-shortcut="h"
-                    >
-                        <kbd>h</kbd>history
-                    </a>
-                    {{ end }}
-                </div>
-            </nav>
-            <article class="file-content">{{ .HTML }}</article>
-            {{ if ne .FileType "binary" }}
-            <pre id="raw-content" hidden aria-hidden="true">
-{{ .RawContent }}</pre
-            >
-            {{ end }}
-
-            <div class="footer-stripes-container">
-                <div class="footer-stripes"></div>
-                <div class="color-picker">
-                    <button
-                        class="color-swatch"
-                        data-color="blue"
-                        style="background: var(--color-blue)"
-                        aria-label="Blue"
-                        title="Blue"
-                    ></button>
-                    <button
-                        class="color-swatch"
-                        data-color="red"
-                        style="background: var(--color-red)"
-                        aria-label="Red"
-                        title="Red"
-                    ></button>
-                    <button
-                        class="color-swatch"
-                        data-color="amber"
-                        style="background: var(--color-amber)"
-                        aria-label="Amber"
-                        title="Amber"
-                    ></button>
-                    <button
-                        class="color-swatch"
-                        data-color="green"
-                        style="background: var(--color-green)"
-                        aria-label="Green"
-                        title="Green"
-                    ></button>
-                    <button
-                        class="color-swatch"
-                        data-color="teal"
-                        style="background: var(--color-teal)"
-                        aria-label="Teal"
-                        title="Teal"
-                    ></button>
-                    <button
-                        class="color-swatch"
-                        data-color="purple"
-                        style="background: var(--color-purple)"
-                        aria-label="Purple"
-                        title="Purple"
-                    ></button>
-                    <button
-                        class="color-swatch"
-                        data-color="pink"
-                        style="background: var(--color-pink)"
-                        aria-label="Pink"
-                        title="Pink"
-                    ></button>
-                </div>
-            </div>
-            <footer class="file-footer text-sm muted">
-                <div>
-                    <a href="/">about</a> /
-                    <a href="/docs/terms-of-service.md">terms</a> /
-                    <a href="/docs/acceptable-use-policy.md">acceptable use</a>
-                </div>
-                <div>
-                    snips.sh {{ if .CommitSHA }}/
-                    <a
-                        href="https://github.com/robherley/snips.sh/commit/{{ .CommitSHA }}"
-                        >{{ slice .CommitSHA 0 7 }}</a
-                    >
-                    {{ end }}
-                </div>
-            </footer>
-        </div>
-    </body>
-</html>
+{{ define "title" }}{{ .FileID }} - snips.sh{{ end }} {{ define "head" }}
+<meta property="og:title" content="{{.FileID}} - snips.sh" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="snips.sh" />
+<meta property="og:description" content="{{.OGDescription}}" />
+{{ if .OGImageURL }}
+<meta property="og:image" content="{{.OGImageURL}}" />
+{{ end }}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{{.FileID}} - snips.sh" />
+<meta name="twitter:description" content="{{.OGDescription}}" />
+{{ if .OGImageURL }}
+<meta name="twitter:image" content="{{.OGImageURL}}" />
+{{ end }} {{ if .CSS }}
+<style>
+    {{ .CSS }}
+</style>
+{{ end }} {{ end }} {{ define "nav" }}
+<div class="file-details text-sm">
+    <div class="file-detail">
+        <i data-lucide="terminal"></i>
+        <a href="">{{ .FileID }}</a>
+    </div>
+    <div class="file-detail">
+        <i data-lucide="file-code"></i>
+        {{ .FileType }}
+    </div>
+    <div class="file-detail">
+        <i data-lucide="hard-drive"></i>
+        {{ .FileSize }}
+    </div>
+    {{ if .UpdatedAt }}
+    <div class="file-detail">
+        <i data-lucide="square-pen"></i>
+        {{ .UpdatedAt }}{{ if .RevisionCount }}<span class="revision-indicator"
+            >*</span
+        >{{ end }}
+    </div>
+    {{ end }} {{ if .Private }}
+    <div class="file-detail danger">
+        <i data-lucide="hat-glasses"></i>
+        private
+    </div>
+    {{ end }}
+</div>
+<div class="file-actions">
+    <a
+        class="file-action"
+        id="to-top"
+        data-hide
+        aria-label="go to top"
+        data-shortcut="t"
+    >
+        <kbd>t</kbd>top
+    </a>
+    {{ if ne .FileType "binary" }}
+    <button
+        class="file-action"
+        id="copy-content"
+        aria-label="copy to clipboard"
+        data-shortcut="c"
+    >
+        <kbd>c</kbd>copy
+    </button>
+    {{ end }} {{ if .RawHREF }}
+    <a
+        class="file-action"
+        id="view-raw"
+        href="{{ .RawHREF }}"
+        aria-label="view raw file"
+        data-shortcut="r"
+    >
+        <kbd>r</kbd>raw
+    </a>
+    {{ end }} {{ if .RevisionCount }}
+    <a
+        class="file-action"
+        href="/f/{{ .FileID }}/rev"
+        aria-label="view revision history"
+        data-shortcut="h"
+    >
+        <kbd>h</kbd>history
+    </a>
+    {{ end }}
+</div>
+{{ end }} {{ define "content" }}
+<article class="file-content">{{ .HTML }}</article>
+{{ if ne .FileType "binary" }}
+<pre id="raw-content" hidden aria-hidden="true">{{ .RawContent }}</pre>
+{{ end }} {{ end }}
