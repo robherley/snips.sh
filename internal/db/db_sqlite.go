@@ -337,35 +337,37 @@ func (s *Sqlite) CreateRevision(ctx context.Context, revision *snips.Revision, m
 		_ = tx.Rollback()
 	}()
 
-	// Get next incrementing ID for this file
-	const nextIDQuery = `
-		SELECT COALESCE(MAX(id), 0) + 1
+	const nextSeqQuery = `
+		SELECT COALESCE(MAX(sequence), 0) + 1
 		FROM revisions
 		WHERE file_id = ?
 	`
 
-	var nextID int64
-	row := tx.QueryRowContext(ctx, nextIDQuery, revision.FileID)
-	if err := row.Scan(&nextID); err != nil {
+	var nextSeq int64
+	row := tx.QueryRowContext(ctx, nextSeqQuery, revision.FileID)
+	if err := row.Scan(&nextSeq); err != nil {
 		return err
 	}
 
-	revision.ID = nextID
+	revision.ID = id.New()
+	revision.Sequence = nextSeq
 	revision.CreatedAt = time.Now().UTC()
 
 	const insertQuery = `
 		INSERT INTO revisions (
 			id,
+			sequence,
 			file_id,
 			created_at,
 			diff,
 			size,
 			type
-		) VALUES (?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 
 	if _, err := tx.ExecContext(ctx, insertQuery,
 		revision.ID,
+		revision.Sequence,
 		revision.FileID,
 		revision.CreatedAt,
 		revision.RawDiff,
@@ -382,7 +384,7 @@ func (s *Sqlite) CreateRevision(ctx context.Context, revision *snips.Revision, m
 			WHERE file_id = ? AND id NOT IN (
 				SELECT id FROM revisions
 				WHERE file_id = ?
-				ORDER BY id DESC
+				ORDER BY sequence DESC
 				LIMIT ?
 			)
 		`
@@ -399,13 +401,14 @@ func (s *Sqlite) FindRevisionsByFileID(ctx context.Context, fileID string) ([]*s
 	const query = `
 		SELECT
 			id,
+			sequence,
 			file_id,
 			created_at,
 			size,
 			type
 		FROM revisions
 		WHERE file_id = ?
-		ORDER BY id DESC
+		ORDER BY sequence DESC
 	`
 
 	rows, err := s.QueryContext(ctx, query, fileID)
@@ -419,6 +422,7 @@ func (s *Sqlite) FindRevisionsByFileID(ctx context.Context, fileID string) ([]*s
 		rev := &snips.Revision{}
 		if err := rows.Scan(
 			&rev.ID,
+			&rev.Sequence,
 			&rev.FileID,
 			&rev.CreatedAt,
 			&rev.Size,
@@ -433,24 +437,26 @@ func (s *Sqlite) FindRevisionsByFileID(ctx context.Context, fileID string) ([]*s
 	return revisions, nil
 }
 
-func (s *Sqlite) FindRevision(ctx context.Context, fileID string, revID int64) (*snips.Revision, error) {
+func (s *Sqlite) FindRevisionByFileIDAndSequence(ctx context.Context, fileID string, sequence int64) (*snips.Revision, error) {
 	const query = `
 		SELECT
 			id,
+			sequence,
 			file_id,
 			created_at,
 			diff,
 			size,
 			type
 		FROM revisions
-		WHERE file_id = ? AND id = ?
+		WHERE file_id = ? AND sequence = ?
 	`
 
 	rev := &snips.Revision{}
-	row := s.QueryRowContext(ctx, query, fileID, revID)
+	row := s.QueryRowContext(ctx, query, fileID, sequence)
 
 	if err := row.Scan(
 		&rev.ID,
+		&rev.Sequence,
 		&rev.FileID,
 		&rev.CreatedAt,
 		&rev.RawDiff,

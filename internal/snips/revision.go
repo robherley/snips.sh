@@ -7,7 +7,8 @@ import (
 )
 
 type Revision struct {
-	ID        int64
+	ID        string
+	Sequence  int64
 	FileID    string
 	CreatedAt time.Time
 	RawDiff   []byte // may be zstd-compressed

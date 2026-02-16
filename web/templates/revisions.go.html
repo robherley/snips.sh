@@ -23,11 +23,11 @@
             <span class="revision-item-time muted"> {{ .UpdatedAt }} </span>
         </a>
         {{ range .Revisions }}
-        <a class="revision-item" href="/f/{{ $.FileID }}/rev/{{ .ID }}">
+        <a class="revision-item" href="/f/{{ $.FileID }}/rev/{{ .Sequence }}">
             <div class="revision-item-details">
                 <span class="revision-item-id">
                     <i data-lucide="git-commit-horizontal"></i>
-                    {{ .ID }}
+                    {{ .Sequence }}
                 </span>
                 <span class="revision-item-meta muted">
                     <span>{{ .Type }}</span>

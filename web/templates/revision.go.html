@@ -1,4 +1,4 @@
-{{ define "title" }}{{ .FileID }} revision {{ .RevisionID }} - snips.sh{{ end }}
+{{ define "title" }}{{ .FileID }} revision {{ .RevisionSequence }} - snips.sh{{ end }}
 {{ define "nav" }}
 <div class="file-details text-sm">
     <div class="file-detail">
@@ -7,7 +7,7 @@
     </div>
     <div class="file-detail">
         <i data-lucide="git-commit-horizontal"></i>
-        {{ .RevisionID }}
+        {{ .RevisionSequence }}
     </div>
     <div class="file-detail">
         <i data-lucide="file-code"></i>

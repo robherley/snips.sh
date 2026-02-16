@@ -559,48 +559,48 @@ func (_c *MockDB_FindPublicKeyByFingerprint_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
-// FindRevision provides a mock function for the type MockDB
-func (_mock *MockDB) FindRevision(ctx context.Context, fileID string, id int64) (*snips.Revision, error) {
-	ret := _mock.Called(ctx, fileID, id)
+// FindRevisionByFileIDAndSequence provides a mock function for the type MockDB
+func (_mock *MockDB) FindRevisionByFileIDAndSequence(ctx context.Context, fileID string, sequence int64) (*snips.Revision, error) {
+	ret := _mock.Called(ctx, fileID, sequence)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindRevision")
+		panic("no return value specified for FindRevisionByFileIDAndSequence")
 	}
 
 	var r0 *snips.Revision
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) (*snips.Revision, error)); ok {
-		return returnFunc(ctx, fileID, id)
+		return returnFunc(ctx, fileID, sequence)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) *snips.Revision); ok {
-		r0 = returnFunc(ctx, fileID, id)
+		r0 = returnFunc(ctx, fileID, sequence)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*snips.Revision)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
-		r1 = returnFunc(ctx, fileID, id)
+		r1 = returnFunc(ctx, fileID, sequence)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockDB_FindRevision_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindRevision'
-type MockDB_FindRevision_Call struct {
+// MockDB_FindRevisionByFileIDAndSequence_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindRevisionByFileIDAndSequence'
+type MockDB_FindRevisionByFileIDAndSequence_Call struct {
 	*mock.Call
 }
 
-// FindRevision is a helper method to define mock.On call
+// FindRevisionByFileIDAndSequence is a helper method to define mock.On call
 //   - ctx context.Context
 //   - fileID string
-//   - id int64
-func (_e *MockDB_Expecter) FindRevision(ctx interface{}, fileID interface{}, id interface{}) *MockDB_FindRevision_Call {
-	return &MockDB_FindRevision_Call{Call: _e.mock.On("FindRevision", ctx, fileID, id)}
+//   - sequence int64
+func (_e *MockDB_Expecter) FindRevisionByFileIDAndSequence(ctx interface{}, fileID interface{}, sequence interface{}) *MockDB_FindRevisionByFileIDAndSequence_Call {
+	return &MockDB_FindRevisionByFileIDAndSequence_Call{Call: _e.mock.On("FindRevisionByFileIDAndSequence", ctx, fileID, sequence)}
 }
 
-func (_c *MockDB_FindRevision_Call) Run(run func(ctx context.Context, fileID string, id int64)) *MockDB_FindRevision_Call {
+func (_c *MockDB_FindRevisionByFileIDAndSequence_Call) Run(run func(ctx context.Context, fileID string, sequence int64)) *MockDB_FindRevisionByFileIDAndSequence_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -623,12 +623,12 @@ func (_c *MockDB_FindRevision_Call) Run(run func(ctx context.Context, fileID str
 	return _c
 }
 
-func (_c *MockDB_FindRevision_Call) Return(revision *snips.Revision, err error) *MockDB_FindRevision_Call {
+func (_c *MockDB_FindRevisionByFileIDAndSequence_Call) Return(revision *snips.Revision, err error) *MockDB_FindRevisionByFileIDAndSequence_Call {
 	_c.Call.Return(revision, err)
 	return _c
 }
 
-func (_c *MockDB_FindRevision_Call) RunAndReturn(run func(ctx context.Context, fileID string, id int64) (*snips.Revision, error)) *MockDB_FindRevision_Call {
+func (_c *MockDB_FindRevisionByFileIDAndSequence_Call) RunAndReturn(run func(ctx context.Context, fileID string, sequence int64) (*snips.Revision, error)) *MockDB_FindRevisionByFileIDAndSequence_Call {
 	_c.Call.Return(run)
 	return _c
 }

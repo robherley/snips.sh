@@ -426,7 +426,7 @@ func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.Ha
 		}
 
 		type revisionItem struct {
-			ID        int64
+			Sequence  int64
 			CreatedAt string
 			Size      string
 			Type      string
@@ -435,7 +435,7 @@ func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.Ha
 		items := make([]revisionItem, len(revisions))
 		for i, rev := range revisions {
 			items[i] = revisionItem{
-				ID:        rev.ID,
+				Sequence:  rev.Sequence,
 				CreatedAt: humanize.Time(rev.CreatedAt),
 				Size:      humanize.Bytes(rev.Size),
 				Type:      strings.ToLower(rev.Type),
@@ -468,13 +468,13 @@ func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http
 		log := logger.From(r.Context())
 
 		fileID := r.PathValue("fileID")
-		revisionIDStr := r.PathValue("revisionID")
-		if fileID == "" || revisionIDStr == "" {
+		seqStr := r.PathValue("revisionID")
+		if fileID == "" || seqStr == "" {
 			http.NotFound(w, r)
 			return
 		}
 
-		revisionID, err := strconv.ParseInt(revisionIDStr, 10, 64)
+		seq, err := strconv.ParseInt(seqStr, 10, 64)
 		if err != nil {
 			http.NotFound(w, r)
 			return
@@ -500,7 +500,7 @@ func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http
 			return
 		}
 
-		revision, err := database.FindRevision(r.Context(), file.ID, revisionID)
+		revision, err := database.FindRevisionByFileIDAndSequence(r.Context(), file.ID, seq)
 		if err != nil {
 			log.Error("unable to lookup revision", "err", err)
 			http.NotFound(w, r)
@@ -522,16 +522,16 @@ func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http
 		diffLines := parseDiffLines(string(diffContent))
 
 		vars := map[string]interface{}{
-			"FileID":     file.ID,
-			"FileSize":   humanize.Bytes(file.Size),
-			"FileType":   strings.ToLower(file.Type),
-			"Private":    file.Private,
-			"RevisionID": revision.ID,
-			"CreatedAt":  humanize.Time(revision.CreatedAt),
-			"RevSize":    humanize.Bytes(revision.Size),
-			"RevType":    strings.ToLower(revision.Type),
-			"DiffLines":  diffLines,
-			"CommitSHA":  config.BuildCommit(),
+			"FileID":           file.ID,
+			"FileSize":         humanize.Bytes(file.Size),
+			"FileType":         strings.ToLower(file.Type),
+			"Private":          file.Private,
+			"RevisionSequence": revision.Sequence,
+			"CreatedAt":        humanize.Time(revision.CreatedAt),
+			"RevSize":          humanize.Bytes(revision.Size),
+			"RevType":          strings.ToLower(revision.Type),
+			"DiffLines":        diffLines,
+			"CommitSHA":        config.BuildCommit(),
 		}
 
 		err = assets.Template("revision.go.html").Execute(w, vars)
