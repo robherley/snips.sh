@@ -34,6 +34,4 @@ type DB interface {
 	FindRevision(ctx context.Context, fileID string, id int64) (*snips.Revision, error)
 	// CountRevisionsByFileID returns the number of revisions for a file.
 	CountRevisionsByFileID(ctx context.Context, fileID string) (int64, error)
-	// DeleteRevisionsByFileID deletes all revisions for a file.
-	DeleteRevisionsByFileID(ctx context.Context, fileID string) error
 }

@@ -483,19 +483,6 @@ func (s *Sqlite) CountRevisionsByFileID(ctx context.Context, fileID string) (int
 	return count, nil
 }
 
-func (s *Sqlite) DeleteRevisionsByFileID(ctx context.Context, fileID string) error {
-	const query = `
-		DELETE FROM revisions
-		WHERE file_id = ?
-	`
-
-	if _, err := s.ExecContext(ctx, query, fileID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 	const query = `
 		SELECT

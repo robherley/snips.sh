@@ -355,63 +355,6 @@ func (_c *MockDB_DeleteFile_Call) RunAndReturn(run func(ctx context.Context, id 
 	return _c
 }
 
-// DeleteRevisionsByFileID provides a mock function for the type MockDB
-func (_mock *MockDB) DeleteRevisionsByFileID(ctx context.Context, fileID string) error {
-	ret := _mock.Called(ctx, fileID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteRevisionsByFileID")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, fileID)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockDB_DeleteRevisionsByFileID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRevisionsByFileID'
-type MockDB_DeleteRevisionsByFileID_Call struct {
-	*mock.Call
-}
-
-// DeleteRevisionsByFileID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - fileID string
-func (_e *MockDB_Expecter) DeleteRevisionsByFileID(ctx interface{}, fileID interface{}) *MockDB_DeleteRevisionsByFileID_Call {
-	return &MockDB_DeleteRevisionsByFileID_Call{Call: _e.mock.On("DeleteRevisionsByFileID", ctx, fileID)}
-}
-
-func (_c *MockDB_DeleteRevisionsByFileID_Call) Run(run func(ctx context.Context, fileID string)) *MockDB_DeleteRevisionsByFileID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockDB_DeleteRevisionsByFileID_Call) Return(err error) *MockDB_DeleteRevisionsByFileID_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockDB_DeleteRevisionsByFileID_Call) RunAndReturn(run func(ctx context.Context, fileID string) error) *MockDB_DeleteRevisionsByFileID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // FindFile provides a mock function for the type MockDB
 func (_mock *MockDB) FindFile(ctx context.Context, id string) (*snips.File, error) {
 	ret := _mock.Called(ctx, id)
