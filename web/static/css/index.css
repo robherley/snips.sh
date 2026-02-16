@@ -181,7 +181,7 @@ svg.lucide {
   border-radius: var(--border-radius);
   z-index: 999;
   background-color: var(--color-surface-1);
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 .file-header .file-details {
