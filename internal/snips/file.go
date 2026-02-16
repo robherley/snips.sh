@@ -1,7 +1,6 @@
 package snips
 
 import (
-	"encoding/binary"
 	"fmt"
 	"net/url"
 	"time"
@@ -56,7 +55,7 @@ func (f *File) Visibility() string {
 }
 
 func (f *File) GetContent() ([]byte, error) {
-	if !f.isCompressed() {
+	if !IsZSTDCompressed(f.RawContent) {
 		return f.RawContent, nil
 	}
 
@@ -84,10 +83,4 @@ func (f *File) SetContent(in []byte, compress bool) error {
 
 	f.RawContent = encoder.EncodeAll(in, nil)
 	return encoder.Close()
-}
-
-func (f *File) isCompressed() bool {
-	// check if first 4 bytes are ZSTD magic number
-	// https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md#zstandard-frames
-	return len(f.RawContent) > 4 && binary.BigEndian.Uint32(f.RawContent) == 0x28B52FFD
 }

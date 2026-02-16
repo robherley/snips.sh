@@ -1,7 +1,6 @@
 package snips
 
 import (
-	"encoding/binary"
 	"time"
 
 	"github.com/klauspost/compress/zstd"
@@ -17,7 +16,7 @@ type Revision struct {
 }
 
 func (r *Revision) GetDiff() ([]byte, error) {
-	if !r.isCompressed() {
+	if !IsZSTDCompressed(r.RawDiff) {
 		return r.RawDiff, nil
 	}
 
@@ -45,8 +44,4 @@ func (r *Revision) SetDiff(in []byte, compress bool) error {
 
 	r.RawDiff = encoder.EncodeAll(in, nil)
 	return encoder.Close()
-}
-
-func (r *Revision) isCompressed() bool {
-	return len(r.RawDiff) > 4 && binary.BigEndian.Uint32(r.RawDiff) == 0x28B52FFD
 }
