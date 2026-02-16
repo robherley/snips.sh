@@ -8,8 +8,12 @@ import (
 	"time"
 
 	"github.com/armon/go-metrics"
+	"github.com/robherley/snips.sh/internal/config"
+	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
+	"github.com/robherley/snips.sh/internal/signer"
+	"github.com/robherley/snips.sh/internal/snips"
 )
 
 type Middleware func(next http.Handler) http.Handler
@@ -37,7 +41,7 @@ func WithRequestID(next http.Handler) http.Handler {
 		requestID := id.New()
 		r.Header.Set(RequestIDHeader, requestID)
 
-		ctx := context.WithValue(r.Context(), RequestIDContextKey, requestID)
+		ctx := context.WithValue(r.Context(), requestIDContextKey, requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -97,4 +101,55 @@ func Pattern(r *http.Request) string {
 		pattern = "*"
 	}
 	return pattern
+}
+
+// WithFile is a per-route middleware that extracts a file from the {fileID} path
+// parameter, verifies access for private files via URL signature, and stores
+// the file in the request context for downstream handlers.
+func WithFile(cfg *config.Config, database db.DB, next http.HandlerFunc) http.HandlerFunc {
+	sgnr := signer.New(cfg.HMACKey)
+	return func(w http.ResponseWriter, r *http.Request) {
+		log := logger.From(r.Context())
+
+		fileID := r.PathValue("fileID")
+		if fileID == "" {
+			http.NotFound(w, r)
+			return
+		}
+
+		file, err := database.FindFile(r.Context(), fileID)
+		if err != nil {
+			log.Error("unable to lookup file", "err", err)
+			http.NotFound(w, r)
+			return
+		}
+
+		if file == nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		isSigned := sgnr.VerifyURLAndNotExpired(*r.URL)
+
+		if file.Private && !isSigned {
+			http.NotFound(w, r)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), fileContextKey, file)
+		ctx = context.WithValue(ctx, signedContextKey, isSigned)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+}
+
+// FileFrom retrieves the *snips.File stored in the context by WithFile.
+func FileFrom(ctx context.Context) *snips.File {
+	file, _ := ctx.Value(fileContextKey).(*snips.File)
+	return file
+}
+
+// IsSignedRequest returns whether the request had a valid, non-expired URL signature.
+func IsSignedRequest(ctx context.Context) bool {
+	signed, _ := ctx.Value(signedContextKey).(bool)
+	return signed
 }

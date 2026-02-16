@@ -1,9 +1,11 @@
 package web
 
-type ContextKey string
+type ctxKey int
 
 const (
-	RequestIDContextKey ContextKey = "request_id"
-
-	RequestIDHeader = "X-Request-ID"
+	requestIDContextKey ctxKey = iota
+	fileContextKey
+	signedContextKey
 )
+
+const RequestIDHeader = "X-Request-ID"

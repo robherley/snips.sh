@@ -178,35 +178,11 @@ func DocOGImageHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 }
 
 func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
-	signer := signer.New(cfg.HMACKey)
+	sgnr := signer.New(cfg.HMACKey)
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
-
-		fileID := r.PathValue("fileID")
-		if fileID == "" {
-			http.NotFound(w, r)
-			return
-		}
-
-		file, err := database.FindFile(r.Context(), fileID)
-		if err != nil {
-			log.Error("unable to lookup file", "err", err)
-			http.NotFound(w, r)
-			return
-		}
-
-		if file == nil {
-			http.NotFound(w, r)
-			return
-		}
-
-		isSignedAndNotExpired := signer.VerifyURLAndNotExpired(*r.URL)
-
-		if file.Private && !isSignedAndNotExpired {
-			log.Warn("attempted to access private file")
-			http.NotFound(w, r)
-			return
-		}
+		file := FileFrom(r.Context())
+		isSigned := IsSignedRequest(r.Context())
 
 		content, err := file.GetContent()
 		if err != nil {
@@ -231,7 +207,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 		}
 
 		rawHref := "?r=1"
-		if isSignedAndNotExpired {
+		if isSigned {
 			q := r.URL.Query()
 			q.Del("sig")
 			q.Add("r", "1")
@@ -241,7 +217,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 				RawQuery: q.Encode(),
 			}
 
-			signedRawURL := signer.SignURL(rawPathURL)
+			signedRawURL := sgnr.SignURL(rawPathURL)
 			rawHref = signedRawURL.String()
 		}
 
@@ -338,35 +314,12 @@ func newOGRenderer(assets Assets) *opengraph.Renderer {
 	return renderer
 }
 
-func OGImageHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
-	sgnr := signer.New(cfg.HMACKey)
+func OGImageHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 	renderer := newOGRenderer(assets)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
-
-		fileID := r.PathValue("fileID")
-		if fileID == "" {
-			http.NotFound(w, r)
-			return
-		}
-
-		file, err := database.FindFile(r.Context(), fileID)
-		if err != nil {
-			log.Error("unable to lookup file", "err", err)
-			http.NotFound(w, r)
-			return
-		}
-
-		if file == nil {
-			http.NotFound(w, r)
-			return
-		}
-
-		if file.Private && !sgnr.VerifyURLAndNotExpired(*r.URL) {
-			http.NotFound(w, r)
-			return
-		}
+		file := FileFrom(r.Context())
 
 		imgBytes, err := renderer.GenerateImage(&opengraph.FileInfo{
 			ID:        file.ID,
@@ -388,35 +341,9 @@ func OGImageHandler(cfg *config.Config, database db.DB, assets Assets) http.Hand
 }
 
 func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
-	sgnr := signer.New(cfg.HMACKey)
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
-
-		fileID := r.PathValue("fileID")
-		if fileID == "" {
-			http.NotFound(w, r)
-			return
-		}
-
-		file, err := database.FindFile(r.Context(), fileID)
-		if err != nil {
-			log.Error("unable to lookup file", "err", err)
-			http.NotFound(w, r)
-			return
-		}
-
-		if file == nil {
-			http.NotFound(w, r)
-			return
-		}
-
-		isSignedAndNotExpired := sgnr.VerifyURLAndNotExpired(*r.URL)
-
-		if file.Private && !isSignedAndNotExpired {
-			log.Warn("attempted to access private file revisions")
-			http.NotFound(w, r)
-			return
-		}
+		file := FileFrom(r.Context())
 
 		revisions, err := database.FindRevisionsByFileID(r.Context(), file.ID)
 		if err != nil {
@@ -462,40 +389,19 @@ func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.Ha
 	}
 }
 
-func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
-	sgnr := signer.New(cfg.HMACKey)
+func RevisionDiffHandler(database db.DB, assets Assets) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
+		file := FileFrom(r.Context())
 
-		fileID := r.PathValue("fileID")
 		seqStr := r.PathValue("revisionID")
-		if fileID == "" || seqStr == "" {
+		if seqStr == "" {
 			http.NotFound(w, r)
 			return
 		}
 
 		seq, err := strconv.ParseInt(seqStr, 10, 64)
 		if err != nil {
-			http.NotFound(w, r)
-			return
-		}
-
-		file, err := database.FindFile(r.Context(), fileID)
-		if err != nil {
-			log.Error("unable to lookup file", "err", err)
-			http.NotFound(w, r)
-			return
-		}
-
-		if file == nil {
-			http.NotFound(w, r)
-			return
-		}
-
-		isSignedAndNotExpired := sgnr.VerifyURLAndNotExpired(*r.URL)
-
-		if file.Private && !isSignedAndNotExpired {
-			log.Warn("attempted to access private file revision")
 			http.NotFound(w, r)
 			return
 		}
