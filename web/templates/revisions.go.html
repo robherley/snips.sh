@@ -1,0 +1,45 @@
+{{ define "title" }}{{ .FileID }} revisions - snips.sh{{ end }} {{ define "nav"
+}}
+<div class="file-details text-sm">
+    <div class="file-detail">
+        <i data-lucide="terminal"></i>
+        <a href="/f/{{ .FileID }}">{{ .FileID }}</a>
+    </div>
+</div>
+{{ end }} {{ define "content" }}
+<div class="file-content">
+    <div class="revision-list">
+        <a class="revision-item" href="/f/{{ .FileID }}">
+            <div class="revision-item-details">
+                <span class="revision-item-id">
+                    <i data-lucide="file-code"></i>
+                    current
+                </span>
+                <span class="revision-item-meta muted">
+                    <span>{{ .FileType }}</span>
+                    <span>{{ .FileSize }}</span>
+                </span>
+            </div>
+            <span class="revision-item-time muted"> {{ .UpdatedAt }} </span>
+        </a>
+        {{ range .Revisions }}
+        <a class="revision-item" href="/f/{{ $.FileID }}/rev/{{ .Sequence }}">
+            <div class="revision-item-details">
+                <span class="revision-item-id">
+                    <i data-lucide="git-commit-horizontal"></i>
+                    {{ .Sequence }}
+                </span>
+                <span class="revision-item-meta muted">
+                    <span>{{ .Type }}</span>
+                    <span>{{ .Size }}</span>
+                </span>
+            </div>
+            <span class="revision-item-time muted"> {{ .CreatedAt }} </span>
+        </a>
+        {{ end }}
+    </div>
+    <div class="revision-note muted text-sm">
+        note: only the past {{ .MaxRevisions }} revisions are retained
+    </div>
+</div>
+{{ end }}

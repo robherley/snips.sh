@@ -77,6 +77,7 @@ ssh snips.sh
 
 ## Docs
 
+- [Usage](/docs/usage.md): How to upload, download, edit, delete, and share snippets
 - [Contributing](/docs/contributing.md): How you can contribute to snips.sh
 - [Database](/docs/database.md): How snips.sh stores it's data
 - [Self Hosting](/docs/self-hosting.md): How to host your own instance of snips.sh
@@ -96,7 +97,8 @@ The technology behind snips.sh is powered by these amazing projects:
 - [`charmbracelet`](https://github.com/charmbracelet)
   - [`charmbracelet/wish`](https://github.com/charmbracelet/wish): SSH server
   - [`charmbracelet/bubbletea`](https://github.com/charmbracelet/bubbletea): TUI framework
-- [`robherley/magika-go`](https://github.com/robherley/magika-go): AI-powered file type detection
+- [`google/magika`](https://github.com/google/magika): AI-powered file type detection
+  - [`robherley/magika-go`](https://github.com/robherley/magika-go)
 - [`alecthomas/chroma`](https://github.com/alecthomas/chroma): Syntax Highlighter
 - [`yuin/goldmark`](https://github.com/yuin/goldmark): Markdown Parser
 - [`microcosm-cc/bluemonday`](https://github.com/microcosm-cc/bluemonday): HTML Sanitizer

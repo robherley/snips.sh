@@ -1,6 +1,7 @@
 #!/bin/sh
 
-BINDIR="$(git rev-parse --show-toplevel)"/bin
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+BINDIR="${REPO_ROOT}/bin"
 BINARY=$BINDIR/gotestsum
 GOTESTSUM_VERSION=v1.10.0
 
@@ -8,4 +9,5 @@ if [ ! -f "$BINARY" ]; then
   GOBIN=$BINDIR go install gotest.tools/gotestsum@${GOTESTSUM_VERSION}
 fi
 
-$BINARY "$@"
+source "${REPO_ROOT}/script/env"
+$BINARY --raw-command -- go test -json -ldflags "-extldflags \"${GO_EXTLDFLAGS}\"" ./...

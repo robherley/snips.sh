@@ -1,0 +1,38 @@
+{{ define "title" }}{{ .FileID }} revision {{ .RevisionSequence }} - snips.sh{{ end }}
+{{ define "nav" }}
+<div class="file-details text-sm">
+    <div class="file-detail">
+        <i data-lucide="terminal"></i>
+        <a href="/f/{{ .FileID }}">{{ .FileID }}</a>
+    </div>
+    <div class="file-detail">
+        <i data-lucide="git-commit-horizontal"></i>
+        {{ .RevisionSequence }}
+    </div>
+    <div class="file-detail">
+        <i data-lucide="file-code"></i>
+        {{ .RevType }}
+    </div>
+    <div class="file-detail">
+        <i data-lucide="hard-drive"></i>
+        {{ .RevSize }}
+    </div>
+    <div class="file-detail">
+        <i data-lucide="clock"></i>
+        {{ .CreatedAt }}
+    </div>
+    {{ if .Private }}
+    <div class="file-detail danger">
+        <i data-lucide="hat-glasses"></i>
+        private
+    </div>
+    {{ end }}
+</div>
+{{ end }} {{ define "content" }}
+<article class="file-content">
+    <pre
+        class="diff-content"
+    ><code>{{ range .DiffLines }}<span class="diff-line {{ .Class }}">{{ .Content }}</span>
+{{ end }}</code></pre>
+</article>
+{{ end }}

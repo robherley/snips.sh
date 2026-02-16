@@ -26,4 +26,12 @@ type DB interface {
 	CreateUserWithPublicKey(ctx context.Context, publickey *snips.PublicKey) (*snips.User, error)
 	// FindUser returns a user by its ID.
 	FindUser(ctx context.Context, id string) (*snips.User, error)
+	// CreateRevision creates a new file revision. If maxRevisions > 0, prunes oldest revisions exceeding the limit.
+	CreateRevision(ctx context.Context, revision *snips.Revision, maxRevisions uint64) error
+	// FindRevisionsByFileID returns all revisions for a file, ordered by sequence DESC. Does not include diff content.
+	FindRevisionsByFileID(ctx context.Context, fileID string) ([]*snips.Revision, error)
+	// FindRevisionByFileIDAndSequence returns a revision by file ID and sequence number, including diff content.
+	FindRevisionByFileIDAndSequence(ctx context.Context, fileID string, sequence int64) (*snips.Revision, error)
+	// CountRevisionsByFileID returns the number of revisions for a file.
+	CountRevisionsByFileID(ctx context.Context, fileID string) (int64, error)
 }

@@ -156,19 +156,6 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 	return nil
 }
 
-func (s *Sqlite) DeleteFile(ctx context.Context, id string) error {
-	const query = `
-		DELETE FROM files
-		WHERE id = ?
-	`
-
-	if _, err := s.ExecContext(ctx, query, id); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error) {
 	// note that content is _not_ included
 	const query = `
@@ -309,6 +296,197 @@ func (s *Sqlite) CreateUserWithPublicKey(ctx context.Context, publickey *snips.P
 	}
 
 	return user, nil
+}
+
+func (s *Sqlite) DeleteFile(ctx context.Context, id string) error {
+	tx, err := s.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	const deleteRevisionsQuery = `
+		DELETE FROM revisions
+		WHERE file_id = ?
+	`
+
+	if _, err := tx.ExecContext(ctx, deleteRevisionsQuery, id); err != nil {
+		return err
+	}
+
+	const deleteFileQuery = `
+		DELETE FROM files
+		WHERE id = ?
+	`
+
+	if _, err := tx.ExecContext(ctx, deleteFileQuery, id); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (s *Sqlite) CreateRevision(ctx context.Context, revision *snips.Revision, maxRevisions uint64) error {
+	tx, err := s.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	const nextSeqQuery = `
+		SELECT COALESCE(MAX(sequence), 0) + 1
+		FROM revisions
+		WHERE file_id = ?
+	`
+
+	var nextSeq int64
+	row := tx.QueryRowContext(ctx, nextSeqQuery, revision.FileID)
+	if err := row.Scan(&nextSeq); err != nil {
+		return err
+	}
+
+	revision.ID = id.New()
+	revision.Sequence = nextSeq
+	revision.CreatedAt = time.Now().UTC()
+
+	const insertQuery = `
+		INSERT INTO revisions (
+			id,
+			sequence,
+			file_id,
+			created_at,
+			diff,
+			size,
+			type
+		) VALUES (?, ?, ?, ?, ?, ?, ?)
+	`
+
+	if _, err := tx.ExecContext(ctx, insertQuery,
+		revision.ID,
+		revision.Sequence,
+		revision.FileID,
+		revision.CreatedAt,
+		revision.RawDiff,
+		revision.Size,
+		revision.Type,
+	); err != nil {
+		return err
+	}
+
+	// Prune oldest revisions if over the limit
+	if maxRevisions > 0 {
+		const pruneQuery = `
+			DELETE FROM revisions
+			WHERE file_id = ? AND id NOT IN (
+				SELECT id FROM revisions
+				WHERE file_id = ?
+				ORDER BY sequence DESC
+				LIMIT ?
+			)
+		`
+
+		if _, err := tx.ExecContext(ctx, pruneQuery, revision.FileID, revision.FileID, maxRevisions); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (s *Sqlite) FindRevisionsByFileID(ctx context.Context, fileID string) ([]*snips.Revision, error) {
+	const query = `
+		SELECT
+			id,
+			sequence,
+			file_id,
+			created_at,
+			size,
+			type
+		FROM revisions
+		WHERE file_id = ?
+		ORDER BY sequence DESC
+	`
+
+	rows, err := s.QueryContext(ctx, query, fileID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	revisions := []*snips.Revision{}
+	for rows.Next() {
+		rev := &snips.Revision{}
+		if err := rows.Scan(
+			&rev.ID,
+			&rev.Sequence,
+			&rev.FileID,
+			&rev.CreatedAt,
+			&rev.Size,
+			&rev.Type,
+		); err != nil {
+			return nil, err
+		}
+
+		revisions = append(revisions, rev)
+	}
+
+	return revisions, nil
+}
+
+func (s *Sqlite) FindRevisionByFileIDAndSequence(ctx context.Context, fileID string, sequence int64) (*snips.Revision, error) {
+	const query = `
+		SELECT
+			id,
+			sequence,
+			file_id,
+			created_at,
+			diff,
+			size,
+			type
+		FROM revisions
+		WHERE file_id = ? AND sequence = ?
+	`
+
+	rev := &snips.Revision{}
+	row := s.QueryRowContext(ctx, query, fileID, sequence)
+
+	if err := row.Scan(
+		&rev.ID,
+		&rev.Sequence,
+		&rev.FileID,
+		&rev.CreatedAt,
+		&rev.RawDiff,
+		&rev.Size,
+		&rev.Type,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return rev, nil
+}
+
+func (s *Sqlite) CountRevisionsByFileID(ctx context.Context, fileID string) (int64, error) {
+	const query = `
+		SELECT COUNT(*)
+		FROM revisions
+		WHERE file_id = ?
+	`
+
+	var count int64
+	row := s.QueryRowContext(ctx, query, fileID)
+	if err := row.Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {

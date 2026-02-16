@@ -24,7 +24,8 @@ import (
 )
 
 const (
-	tmplPattern = "web/templates/*"
+	tmplBase    = "web/templates/base.go.html"
+	tmplPattern = "web/templates/*.go.html"
 
 	docsPath = "docs/"
 	readme   = "README.md"
@@ -51,7 +52,7 @@ var (
 type Assets interface {
 	Doc(filename string) ([]byte, error)
 	StaticFile(name string) ([]byte, bool)
-	Template() *template.Template
+	Template(name string) *template.Template
 	Serve(w http.ResponseWriter, r *http.Request)
 }
 
@@ -76,7 +77,7 @@ type StaticAssets struct {
 	readme []byte
 	css    *compressedAsset
 	js     *compressedAsset
-	tmpl   *template.Template
+	tmpls  map[string]*template.Template
 	mini   *minify.M
 
 	// assetPaths maps logical names (e.g. "index.css") to hashed paths (e.g. "/assets/index.a1b2c3d4.css")
@@ -182,8 +183,7 @@ func NewAssets(webFS fs.FS, docsFS fs.FS, readme []byte, extendHeadFile string) 
 		}
 	}
 
-	tmpl := template.New("file")
-	tmpl.Funcs(template.FuncMap{
+	funcMap := template.FuncMap{
 		"ExtendedHeadContent": func() template.HTML {
 			return template.HTML(extendHeadContent)
 		},
@@ -193,10 +193,32 @@ func NewAssets(webFS fs.FS, docsFS fs.FS, readme []byte, extendHeadFile string) 
 			}
 			return "/assets/" + name
 		},
-	})
+	}
 
-	if assets.tmpl, err = tmpl.ParseFS(webFS, tmplPattern); err != nil {
-		return nil, err
+	base, err := template.New("base.go.html").Funcs(funcMap).ParseFS(webFS, tmplBase)
+	if err != nil {
+		return nil, fmt.Errorf("parsing base template: %w", err)
+	}
+
+	pageFiles, err := fs.Glob(webFS, tmplPattern)
+	if err != nil {
+		return nil, fmt.Errorf("globbing page templates: %w", err)
+	}
+
+	assets.tmpls = make(map[string]*template.Template, len(pageFiles))
+	for _, pf := range pageFiles {
+		if pf == tmplBase {
+			continue
+		}
+		clone, err := base.Clone()
+		if err != nil {
+			return nil, fmt.Errorf("cloning base for %s: %w", pf, err)
+		}
+		if _, err = clone.ParseFS(webFS, pf); err != nil {
+			return nil, fmt.Errorf("parsing page template %s: %w", pf, err)
+		}
+		name := path.Base(pf)
+		assets.tmpls[name] = clone
 	}
 
 	return assets, nil
@@ -224,8 +246,8 @@ func (a *StaticAssets) StaticFile(name string) ([]byte, bool) {
 	return nil, false
 }
 
-func (a *StaticAssets) Template() *template.Template {
-	return a.tmpl
+func (a *StaticAssets) Template(name string) *template.Template {
+	return a.tmpls[name]
 }
 
 func (a *StaticAssets) Serve(w http.ResponseWriter, r *http.Request) {
