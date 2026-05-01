@@ -19,6 +19,6 @@ jobs:
         go-version-file: go.mod
     - run: script/vendor-onnxruntime && source script/env
     - name: Test
-      uses: robherley/go-test-action@v0.7.1
+      uses: robherley/go-test-action@v1.0.1
       with:
         omit: untested

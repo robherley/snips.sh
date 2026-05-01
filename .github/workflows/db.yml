@@ -31,7 +31,7 @@ jobs:
         git diff --name-only "origin/${BASE_REF}...HEAD" -- 'internal/db/migrations/*.sql' >> diff-output.md
         echo '```' >> diff-output.md
     - name: Add comment and label
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
