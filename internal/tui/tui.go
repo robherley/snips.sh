@@ -28,8 +28,8 @@ var topLevelTabs = []struct {
 	key   string
 	label string
 }{
-	{views.Browser, "f1", "files"},
-	{views.Settings, "f2", "settings"},
+	{views.Browser, "f1", "Files"},
+	{views.Settings, "f2", "Settings"},
 }
 
 type TUI struct {
@@ -174,7 +174,7 @@ func (t TUI) titleBar() string {
 		Background(styles.Colors.Primary).
 		Padding(0, 1).
 		Bold(true).
-		Render("snips")
+		Render("snips.sh")
 	tabs := t.tabs()
 
 	count := t.width - lipgloss.Width(brand) - lipgloss.Width(tabs)
@@ -182,30 +182,29 @@ func (t TUI) titleBar() string {
 		count = 0
 	}
 
-	return brand + strings.Repeat(styles.BC(styles.Colors.Primary, "╱"), count) + tabs
+	return brand + tabs + strings.Repeat(styles.BC(styles.Colors.Primary, "╱"), count)
 }
 
 func (t TUI) tabs() string {
 	active := t.views[0]
 
-	activeStyle := lipgloss.NewStyle().
-		Foreground(styles.Colors.Primary).
-		Padding(0, 1).
-		Bold(true)
-	tabStyle := lipgloss.NewStyle().
-		Foreground(styles.Colors.Muted).
-		Padding(0, 1)
+	activeStyle := lipgloss.NewStyle().Foreground(styles.Colors.Primary).Bold(true)
+	inactiveStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted)
+	sep := styles.C(styles.Colors.Primary, " ╱ ")
 
-	parts := make([]string, 0, len(topLevelTabs))
-	for _, tab := range topLevelTabs {
-		label := fmt.Sprintf("[%s] %s", tab.key, tab.label)
+	out := sep // initial separator between brand and tabs
+	for i, tab := range topLevelTabs {
+		if i > 0 {
+			out += sep
+		}
+		label := fmt.Sprintf("[%s] %s", strings.ToUpper(tab.key), tab.label)
 		if tab.kind == active {
-			parts = append(parts, activeStyle.Render(label))
+			out += activeStyle.Render(label)
 		} else {
-			parts = append(parts, tabStyle.Render(label))
+			out += inactiveStyle.Render(label)
 		}
 	}
-	return strings.Join(parts, "")
+	return out + " " // breathing room before the slashes
 }
 
 // switchTopLevel resets the view stack so that the given kind becomes the

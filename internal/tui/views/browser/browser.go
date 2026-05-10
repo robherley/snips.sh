@@ -29,17 +29,18 @@ type Browser struct {
 
 func New(cfg *config.Config, width, height int, files []*snips.File) Browser {
 	l := list.New(toItems(files), newItemDelegate(), width, height)
-	l.SetShowTitle(false) // the F1 tab in the title bar already labels this view
+	l.SetShowTitle(false)      // the F1 tab in the title bar already labels this view
+	l.SetShowHelp(false)       // help is rendered at the TUI level
+	l.SetShowStatusBar(false)  // we render our own combined status + pagination row
+	l.SetShowPagination(false) // ditto
 	l.SetStatusBarItemName("file", "files")
-	l.SetShowHelp(false) // help is rendered at the TUI level
-
-	// unify the status bar grays so "Nothing matched • 48 filtered" is one tone
-	l.Styles.StatusBar = l.Styles.StatusBar.Foreground(styles.Colors.Muted)
-	l.Styles.StatusEmpty = l.Styles.StatusEmpty.Foreground(styles.Colors.Muted)
-	l.Styles.StatusBarFilterCount = l.Styles.StatusBarFilterCount.Foreground(styles.Colors.Muted)
 
 	// breathing room above the filter input
 	l.Styles.TitleBar = l.Styles.TitleBar.PaddingTop(1)
+
+	// bigger pagination glyphs (• → ● / ○)
+	l.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(styles.Colors.Primary).Render("●")
+	l.Paginator.InactiveDot = lipgloss.NewStyle().Foreground(styles.Colors.Muted).Render("○")
 
 	return Browser{
 		cfg:    cfg,
@@ -94,7 +95,8 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		bwsr.width, bwsr.height = msg.Width, msg.Height
-		bwsr.list.SetSize(msg.Width, msg.Height)
+		// reserve 1 row at the bottom for our combined status + pagination
+		bwsr.list.SetSize(msg.Width, msg.Height-1)
 	case msgs.ReloadFiles:
 		bwsr.list.SetItems(toItems(msg.Files))
 		bwsr.options.focused = false
@@ -122,7 +124,52 @@ func (bwsr Browser) viewContent() string {
 	if bwsr.options.focused {
 		return bwsr.renderModal()
 	}
-	return bwsr.list.View()
+	return lipgloss.JoinVertical(lipgloss.Top, bwsr.list.View(), bwsr.statusBar())
+}
+
+// statusBar renders the file count, optional filter info, and pagination dots
+// on a single line below the list.
+func (bwsr Browser) statusBar() string {
+	visible := bwsr.list.VisibleItems()
+	total := len(bwsr.list.Items())
+
+	itemName := "files"
+	if len(visible) == 1 {
+		itemName = "file"
+	}
+
+	var status string
+	switch bwsr.list.FilterState() {
+	case list.Filtering:
+		if len(visible) == 0 {
+			status = "Nothing matched"
+		} else {
+			status = fmt.Sprintf("%d %s", len(visible), itemName)
+		}
+	case list.FilterApplied:
+		f := bwsr.list.FilterInput.Value()
+		status = fmt.Sprintf("%q  %d %s", f, len(visible), itemName)
+	default:
+		if total == 0 {
+			status = "No files"
+		} else {
+			status = fmt.Sprintf("%d %s", len(visible), itemName)
+		}
+	}
+
+	if filtered := total - len(visible); filtered > 0 {
+		status += fmt.Sprintf("  •  %d filtered", filtered)
+	}
+
+	pagination := ""
+	if bwsr.list.Paginator.TotalPages > 1 {
+		pagination = "  " + bwsr.list.Paginator.View()
+	}
+
+	return lipgloss.NewStyle().
+		Padding(0, 2).
+		Foreground(styles.Colors.Muted).
+		Render(status + pagination)
 }
 
 func (bwsr Browser) Keys() help.KeyMap {
