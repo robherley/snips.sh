@@ -65,9 +65,7 @@ func (f *File) GetContent() ([]byte, error) {
 	}
 
 	defer decoder.Close()
-	decodedBytes, err := decoder.DecodeAll(f.RawContent, nil)
-
-	return decodedBytes, err
+	return decoder.DecodeAll(f.RawContent, nil)
 }
 
 func (f *File) SetContent(in []byte, compress bool) error {

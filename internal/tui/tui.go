@@ -31,10 +31,10 @@ type TUI struct {
 	width  int
 	height int
 
-	file      *snips.File
-	viewStack []views.Kind
-	views     map[views.Kind]views.Model
-	help      help.Model
+	file   *snips.File
+	views  []views.Kind  // navigation stack
+	models []views.Model // indexed by views.Kind; deterministic iteration order
+	help   help.Model
 }
 
 func New(ctx context.Context, cfg *config.Config, width, height int, userID string, fingerprint string, database db.DB, files []*snips.File) TUI {
@@ -43,16 +43,16 @@ func New(ctx context.Context, cfg *config.Config, width, height int, userID stri
 		Fingerprint: fingerprint,
 		DB:          database,
 
-		ctx:       ctx,
-		cfg:       cfg,
-		width:     width,
-		height:    height,
-		file:      nil,
-		viewStack: []views.Kind{views.Browser},
-		help:      help.New(),
+		ctx:    ctx,
+		cfg:    cfg,
+		width:  width,
+		height: height,
+		file:   nil,
+		views:  []views.Kind{views.Browser},
+		help:   help.New(),
 	}
 
-	t.views = map[views.Kind]views.Model{
+	t.models = []views.Model{
 		views.Browser: browser.New(cfg, width, t.innerViewHeight(), files),
 		views.Code:    code.New(width, t.innerViewHeight()),
 		views.Prompt:  prompt.New(ctx, cfg, database, width),
@@ -64,11 +64,10 @@ func New(ctx context.Context, cfg *config.Config, width, height int, userID stri
 }
 
 func (t TUI) Init() tea.Cmd {
-	var cmds []tea.Cmd
-	for _, view := range t.views {
-		vcmd := view.Init()
-		if vcmd != nil {
-			cmds = append(cmds, vcmd)
+	cmds := make([]tea.Cmd, 0, len(t.models))
+	for _, model := range t.models {
+		if mcmd := model.Init(); mcmd != nil {
+			cmds = append(cmds, mcmd)
 		}
 	}
 
@@ -76,10 +75,6 @@ func (t TUI) Init() tea.Cmd {
 }
 
 func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var (
-		batchedCmds []tea.Cmd
-	)
-
 	switch msg := msg.(type) {
 	case msgs.Error:
 		slog.Error("encountered error", "err", msg)
@@ -88,7 +83,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "?":
 			t.help.ShowAll = !t.help.ShowAll
-			t.updateViewSize()
+			return t, tea.Batch(t.updateViewSize()...)
 		case "q":
 			if !t.inPrompt() {
 				return t, tea.Quit
@@ -96,58 +91,53 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return t, tea.Quit
 		case "esc":
-			if t.currentViewKind() == views.Browser && t.views[views.Browser].(browser.Browser).IsOptionsFocused() {
+			if t.currentViewKind() == views.Browser && t.models[views.Browser].(browser.Browser).IsOptionsFocused() {
 				// special case where options focused, also allow escape to unfocus too
 				// allows browser to capture the escape key
 				break
 			}
 
-			if len(t.viewStack) == 1 {
+			if len(t.views) == 1 {
 				return t, tea.Quit
 			}
 
-			batchedCmds = append(batchedCmds, cmds.PopView())
+			batched := []tea.Cmd{cmds.PopView()}
 			if t.currentViewKind() == views.Browser {
-				batchedCmds = append(batchedCmds, cmds.DeselectFile())
+				batched = append(batched, cmds.DeselectFile())
 			}
-			return t, tea.Batch(batchedCmds...)
+			return t, tea.Batch(batched...)
 		}
 
 		// otherwise, send key msgs to the current view
-		view, cmd := t.views[t.currentViewKind()].Update(msg)
-		t.views[t.currentViewKind()] = view.(views.Model)
-		return t, cmd
-	case msgs.PushView:
-		t.pushView(msg.View)
-	case msgs.PopView:
-		t.popView()
+		return t, t.updateCurrent(msg)
 	case tea.WindowSizeMsg:
 		t.width = msg.Width
 		t.height = msg.Height
-
-		batchedCmds = append(batchedCmds, t.updateViewSize()...)
 		t.help.SetWidth(msg.Width)
-
-		return t, tea.Batch(batchedCmds...)
+		return t, tea.Batch(t.updateViewSize()...)
 	case msgs.FileSelected:
 		return t, cmds.LoadFile(t.DB, msg.ID)
-	case msgs.FileDeselected, msgs.ReloadFiles:
-		t.file = nil
 	case msgs.FileLoaded:
 		t.file = msg.File
+		return t, t.broadcast(msg)
+	case msgs.FileDeselected, msgs.ReloadFiles:
+		t.file = nil
+		return t, t.broadcast(msg)
+	case msgs.PushView:
+		t.pushView(msg.View)
+		return t, t.broadcast(msg)
+	case msgs.PopView:
+		t.popView()
+		return t, t.broadcast(msg)
 	}
 
-	for key, view := range t.views {
-		newView, cmd := view.Update(msg)
-		t.views[key] = newView.(views.Model)
-		batchedCmds = append(batchedCmds, cmd)
-	}
-
-	return t, tea.Batch(batchedCmds...)
+	// fall-through messages (cursor blink, etc.) only need the active view
+	return t, t.updateCurrent(msg)
 }
 
 func (t TUI) View() tea.View {
-	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), t.currentViewModel().View().Content, t.helpBar()))
+	v := t.currentViewModel().View()
+	v.Content = lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), v.Content, t.helpBar())
 	v.AltScreen = true
 	return v
 }
@@ -166,7 +156,7 @@ func (t TUI) titleBar() string {
 }
 
 func (t TUI) helpBar() string {
-	if len(t.views) == 0 {
+	if len(t.models) == 0 {
 		return ""
 	}
 
@@ -174,19 +164,19 @@ func (t TUI) helpBar() string {
 }
 
 func (t TUI) currentViewKind() views.Kind {
-	return t.viewStack[len(t.viewStack)-1]
+	return t.views[len(t.views)-1]
 }
 
 func (t TUI) currentViewModel() views.Model {
-	return t.views[t.currentViewKind()]
+	return t.models[t.currentViewKind()]
 }
 
 func (t *TUI) pushView(view views.Kind) {
-	t.viewStack = append(t.viewStack, view)
+	t.views = append(t.views, view)
 }
 
 func (t *TUI) popView() {
-	t.viewStack = t.viewStack[:len(t.viewStack)-1]
+	t.views = t.views[:len(t.views)-1]
 }
 
 func (t TUI) inPrompt() bool {
@@ -202,17 +192,34 @@ func (t TUI) innerViewHeight() int {
 	return height
 }
 
-func (t *TUI) updateViewSize() []tea.Cmd {
-	batchedCmds := make([]tea.Cmd, 0, len(t.views))
+// updateCurrent forwards a message to the active view only.
+func (t *TUI) updateCurrent(msg tea.Msg) tea.Cmd {
+	kind := t.currentViewKind()
+	model, cmd := t.models[kind].Update(msg)
+	t.models[kind] = model.(views.Model)
+	return cmd
+}
 
-	for key, view := range t.views {
-		newView, cmd := view.Update(tea.WindowSizeMsg{
+// broadcast forwards a message to every view in deterministic order.
+func (t *TUI) broadcast(msg tea.Msg) tea.Cmd {
+	batched := make([]tea.Cmd, 0, len(t.models))
+	for i, model := range t.models {
+		newModel, cmd := model.Update(msg)
+		t.models[i] = newModel.(views.Model)
+		batched = append(batched, cmd)
+	}
+	return tea.Batch(batched...)
+}
+
+func (t *TUI) updateViewSize() []tea.Cmd {
+	batched := make([]tea.Cmd, 0, len(t.models))
+	for i, model := range t.models {
+		newModel, cmd := model.Update(tea.WindowSizeMsg{
 			Width:  t.width,
 			Height: t.innerViewHeight(),
 		})
-		t.views[key] = newView.(views.Model)
-		batchedCmds = append(batchedCmds, cmd)
+		t.models[i] = newModel.(views.Model)
+		batched = append(batched, cmd)
 	}
-
-	return batchedCmds
+	return batched
 }

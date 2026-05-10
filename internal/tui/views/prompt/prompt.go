@@ -56,7 +56,7 @@ func New(ctx context.Context, cfg *config.Config, db db.DB, width int) Prompt {
 }
 
 func (p Prompt) Init() tea.Cmd {
-	return tea.Batch(textinput.Blink)
+	return textinput.Blink
 }
 
 func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -81,7 +81,11 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case msgs.FileLoaded:
 		p.file = msg.File
 	case msgs.PopView:
-		p.reset()
+		p.textInput.Reset()
+		p.extensionSelector.ResetFilter()
+		p.extensionSelector.ResetSelected()
+		p.feedback = ""
+		p.finished = false
 		return p, nil
 	case tea.WindowSizeMsg:
 		p.width = msg.Width
@@ -116,14 +120,6 @@ func (p Prompt) View() tea.View {
 
 func (p Prompt) Keys() help.KeyMap {
 	return newKeyMap(p.finished)
-}
-
-func (p *Prompt) reset() {
-	p.textInput.Reset()
-	p.extensionSelector.ResetFilter()
-	p.extensionSelector.ResetSelected()
-	p.feedback = ""
-	p.finished = false
 }
 
 func (p Prompt) renderPrompt() string {
