@@ -16,27 +16,22 @@ import (
 )
 
 type Code struct {
-	viewport *viewport.Model
+	viewport viewport.Model
 	file     *snips.File
 	content  string
 }
 
-func New(width, height int) *Code {
-	vp := viewport.New(viewport.WithWidth(width), viewport.WithHeight(height))
-	return &Code{
-		viewport: &vp,
+func New(width, height int) Code {
+	return Code{
+		viewport: viewport.New(viewport.WithWidth(width), viewport.WithHeight(height)),
 	}
 }
 
-func (m *Code) Init() tea.Cmd {
-	m.viewport.GotoTop()
-	m.viewport.SetContent(m.content)
+func (m Code) Init() tea.Cmd {
 	return nil
 }
 
-func (m *Code) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-
+func (m Code) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.viewport.SetWidth(msg.Width)
@@ -44,19 +39,18 @@ func (m *Code) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case msgs.FileLoaded:
 		m.file = msg.File
 		m.content = m.renderContent(msg.File)
-		m.Init()
+		m.viewport.GotoTop()
+		m.viewport.SetContent(m.content)
 	case msgs.FileDeselected:
 		m.file = nil
 	}
 
-	vp, cmd := m.viewport.Update(msg)
-	m.viewport = &vp
-	cmds = append(cmds, cmd)
-
-	return m, tea.Batch(cmds...)
+	var cmd tea.Cmd
+	m.viewport, cmd = m.viewport.Update(msg)
+	return m, cmd
 }
 
-func (m *Code) View() tea.View {
+func (m Code) View() tea.View {
 	return tea.NewView(m.viewport.View())
 }
 
@@ -64,7 +58,7 @@ func (m Code) Keys() help.KeyMap {
 	return keys
 }
 
-func (m *Code) renderContent(file *snips.File) string {
+func (m Code) renderContent(file *snips.File) string {
 	if file == nil {
 		return ""
 	}
