@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"time"
 
+	"charm.land/wish/v2"
 	"github.com/armon/go-metrics"
 	"github.com/charmbracelet/ssh"
-	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"

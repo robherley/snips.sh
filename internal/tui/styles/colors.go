@@ -1,20 +1,24 @@
 package styles
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"image/color"
+
+	"charm.land/lipgloss/v2"
+)
 
 var (
 	Colors = struct {
-		Primary lipgloss.TerminalColor
-		Green   lipgloss.TerminalColor
-		Red     lipgloss.TerminalColor
-		Cyan    lipgloss.TerminalColor
-		Yellow  lipgloss.TerminalColor
-		Blue    lipgloss.TerminalColor
-		Pink    lipgloss.TerminalColor
-		Purple  lipgloss.TerminalColor
-		White   lipgloss.TerminalColor
-		Muted   lipgloss.TerminalColor
-		Black   lipgloss.TerminalColor
+		Primary color.Color
+		Green   color.Color
+		Red     color.Color
+		Cyan    color.Color
+		Yellow  color.Color
+		Blue    color.Color
+		Pink    color.Color
+		Purple  color.Color
+		White   color.Color
+		Muted   color.Color
+		Black   color.Color
 	}{
 		Primary: lipgloss.Color("#0ac5b2"),
 		Green:   lipgloss.Color("#63c174"),
@@ -29,7 +33,7 @@ var (
 	}
 )
 
-func C(c lipgloss.TerminalColor, s string) string {
+func C(c color.Color, s string) string {
 	return lipgloss.NewStyle().Foreground(c).Render(s)
 }
 
@@ -37,7 +41,7 @@ func B(s string) string {
 	return lipgloss.NewStyle().Bold(true).Render(s)
 }
 
-func BC(c lipgloss.TerminalColor, s string) string {
+func BC(c color.Color, s string) string {
 	return lipgloss.NewStyle().Foreground(c).Bold(true).Render(s)
 }
 
@@ -45,6 +49,6 @@ func U(s string) string {
 	return lipgloss.NewStyle().Underline(true).Render(s)
 }
 
-func UC(c lipgloss.TerminalColor, s string) string {
+func UC(c color.Color, s string) string {
 	return lipgloss.NewStyle().Foreground(c).Underline(true).Render(s)
 }

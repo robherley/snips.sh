@@ -2,15 +2,16 @@ package ssh
 
 import (
 	"fmt"
+	"image/color"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/wish/v2"
 	"github.com/charmbracelet/ssh"
-	"github.com/charmbracelet/wish"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 
 type Notification struct {
-	Color     lipgloss.TerminalColor
+	Color     color.Color
 	Title     string
 	Message   string
 	WithStyle func(s *lipgloss.Style)

@@ -5,10 +5,11 @@ import (
 	"io"
 	"strings"
 
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 
@@ -44,7 +45,11 @@ func NewExtensionSelector(width int) list.Model {
 	li.SetShowPagination(false)
 	li.SetShowHelp(false)
 	li.SetShowStatusBar(false)
-	li.FilterInput.PromptStyle = lipgloss.NewStyle().Foreground(styles.Colors.Yellow)
+
+	tiStyles := textinput.DefaultDarkStyles()
+	tiStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Colors.Yellow)
+	tiStyles.Blurred.Prompt = lipgloss.NewStyle().Foreground(styles.Colors.Yellow)
+	li.FilterInput.SetStyles(tiStyles)
 
 	return li
 }

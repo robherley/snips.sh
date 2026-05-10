@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/snips"
@@ -84,7 +84,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case msgs.Error:
 		slog.Error("encountered error", "err", msg)
 		return t, tea.Quit
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "?":
 			t.help.ShowAll = !t.help.ShowAll
@@ -126,7 +126,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		t.height = msg.Height
 
 		batchedCmds = append(batchedCmds, t.updateViewSize()...)
-		t.help.Width = msg.Width
+		t.help.SetWidth(msg.Width)
 
 		return t, tea.Batch(batchedCmds...)
 	case msgs.FileSelected:
@@ -146,8 +146,10 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return t, tea.Batch(batchedCmds...)
 }
 
-func (t TUI) View() string {
-	return lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), t.currentViewModel().View(), t.helpBar())
+func (t TUI) View() tea.View {
+	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), t.currentViewModel().View().Content, t.helpBar()))
+	v.AltScreen = true
+	return v
 }
 
 func (t TUI) titleBar() string {

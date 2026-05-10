@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/wish/v2"
+	wishtea "charm.land/wish/v2/bubbletea"
 	"github.com/armon/go-metrics"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
-	"github.com/charmbracelet/wish"
 	"github.com/dustin/go-humanize"
-	"github.com/muesli/termenv"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
@@ -33,8 +33,6 @@ type SessionHandler struct {
 }
 
 func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
-	lipgloss.SetColorProfile(termenv.ANSI256)
-
 	return func(sesh ssh.Session) {
 		userSesh := &UserSession{sesh}
 
@@ -78,9 +76,7 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 			h.DB,
 			files,
 		),
-		tea.WithInput(sesh),
-		tea.WithOutput(sesh),
-		tea.WithAltScreen(),
+		wishtea.MakeOptions(sesh)...,
 	)
 	if program == nil {
 		sesh.Error(ErrNilProgram, "Failed to create program", "There was an error establishing a connection. Please try again.")

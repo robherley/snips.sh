@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/styles"
@@ -40,7 +40,7 @@ var options = []option{
 	},
 }
 
-func (bwsr Browser) handleOptionsNavigation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (bwsr Browser) handleOptionsNavigation(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	opts := bwsr.getOptions()
 	numOpts := len(opts)
 

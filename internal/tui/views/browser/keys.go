@@ -1,6 +1,6 @@
 package browser
 
-import "github.com/charmbracelet/bubbles/key"
+import "charm.land/bubbles/v2/key"
 
 func getKeyMap(isOptsFocused bool) keyMap {
 	km := keys

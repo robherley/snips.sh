@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
@@ -55,7 +55,7 @@ var columns = []column{
 	},
 }
 
-func (bwsr Browser) handleTableNavigation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (bwsr Browser) handleTableNavigation(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	numRows := bwsr.numRowsToRender()
 
 	switch msg.String() {
@@ -178,7 +178,7 @@ func (bwsr Browser) renderRow(i int) string {
 
 func (bwsr Browser) numRowsToRender() int {
 	padding := lipgloss.Height(bwsr.renderHeader()) + lipgloss.Height(bwsr.renderFooter())
-	return min(bwsr.height-padding, len(bwsr.files))
+	return max(0, min(bwsr.height-padding, len(bwsr.files)))
 }
 
 func (bwsr *Browser) preRender() {

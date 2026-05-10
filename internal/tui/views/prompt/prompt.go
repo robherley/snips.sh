@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/armon/go-metrics"
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wrap"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
@@ -42,7 +42,7 @@ func New(ctx context.Context, cfg *config.Config, db db.DB, width int) Prompt {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 255
-	ti.Width = 20
+	ti.SetWidth(20)
 	ti.Prompt = styles.BC(styles.Colors.Yellow, "> ")
 
 	return Prompt{
@@ -66,8 +66,8 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	)
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.Type == tea.KeyEnter {
+	case tea.KeyPressMsg:
+		if msg.Code == tea.KeyEnter {
 			return p, p.handleSubmit()
 		}
 	case FeedbackMsg:
@@ -88,9 +88,9 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		p.extensionSelector.SetWidth(msg.Width)
 	case SelectorInitMsg:
 		// bit of a hack to get the extension selector to filter on init
-		p.extensionSelector, cmd = p.extensionSelector.Update(tea.KeyMsg{
-			Type:  tea.KeyRunes,
-			Runes: []rune{'/'},
+		p.extensionSelector, cmd = p.extensionSelector.Update(tea.KeyPressMsg{
+			Code: '/',
+			Text: "/",
 		})
 		return p, cmd
 	}
@@ -106,12 +106,12 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return p, tea.Batch(commands...)
 }
 
-func (p Prompt) View() string {
+func (p Prompt) View() tea.View {
 	if p.file == nil || p.kind == None {
-		return ""
+		return tea.NewView("")
 	}
 
-	return p.renderPrompt()
+	return tea.NewView(p.renderPrompt())
 }
 
 func (p Prompt) Keys() help.KeyMap {
