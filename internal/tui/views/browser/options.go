@@ -14,6 +14,8 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/views/prompt"
 )
 
+const Selector = "→ "
+
 type option struct {
 	name   string
 	prompt prompt.Kind
@@ -45,39 +47,43 @@ func (bwsr Browser) handleOptionsNavigation(msg tea.KeyPressMsg) (tea.Model, tea
 	numOpts := len(opts)
 
 	switch msg.String() {
-	// move down
 	case "down", "j":
 		if bwsr.options.index < numOpts-1 {
 			bwsr.options.index++
 		}
-	// move up
 	case "up", "k":
 		if bwsr.options.index > 0 {
 			bwsr.options.index--
 		}
-	case "enter":
-		if numOpts == 0 {
-			return bwsr, nil
-		}
-
-		selected := opts[bwsr.options.index]
-
-		return bwsr, tea.Batch(
-			cmds.SelectFile(bwsr.files[bwsr.table.index].ID),
-			prompt.SetPromptKindCmd(selected.prompt),
-			cmds.PushView(views.Prompt),
-		)
 	}
 
 	return bwsr, nil
 }
 
-func (bwsr Browser) getOptions() []option {
-	if len(bwsr.files) == 0 {
-		return nil
+func (bwsr Browser) handleOptionsEnter() (tea.Model, tea.Cmd) {
+	opts := bwsr.getOptions()
+	if len(opts) == 0 {
+		return bwsr, nil
 	}
 
-	file := bwsr.files[bwsr.table.index]
+	file := bwsr.selectedFile()
+	if file == nil {
+		return bwsr, nil
+	}
+
+	selected := opts[bwsr.options.index]
+	return bwsr, tea.Batch(
+		cmds.SelectFile(file.ID),
+		prompt.SetPromptKindCmd(selected.prompt),
+		cmds.PushView(views.Prompt),
+	)
+}
+
+func (bwsr Browser) getOptions() []option {
+	file := bwsr.selectedFile()
+	if file == nil {
+		return nil
+	}
 
 	var opts []option
 	for _, o := range options {
@@ -97,13 +103,25 @@ func (bwsr Browser) getOptions() []option {
 	return opts
 }
 
-func (bwsr Browser) renderOptions() string {
-	return lipgloss.NewStyle().
-		PaddingLeft(1).
-		Render(lipgloss.JoinVertical(lipgloss.Top,
-			bwsr.renderDetails(),
-			bwsr.renderSelector(),
-		))
+func (bwsr Browser) renderModal() string {
+	body := lipgloss.JoinVertical(lipgloss.Top,
+		bwsr.renderDetails(),
+		bwsr.renderSelector(),
+	)
+
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(styles.Colors.Muted).
+		Padding(0, 2).
+		Render(body)
+
+	return lipgloss.Place(
+		bwsr.width, bwsr.height,
+		lipgloss.Center, lipgloss.Center,
+		box,
+		lipgloss.WithWhitespaceChars("╱"),
+		lipgloss.WithWhitespaceStyle(lipgloss.NewStyle().Foreground(styles.Colors.Muted)),
+	)
 }
 
 func (bwsr Browser) renderSelector() string {
@@ -129,16 +147,15 @@ func (bwsr Browser) renderSelector() string {
 }
 
 func (bwsr Browser) renderDetails() string {
-	// only render has files
-	if len(bwsr.files) == 0 {
+	file := bwsr.selectedFile()
+	if file == nil {
 		return ""
 	}
 
 	details := strings.Builder{}
 
-	file := bwsr.files[bwsr.table.index]
-
-	httpAddr := bwsr.cfg.HTTPAddressForFile(file.ID)
+	rawHTTPAddr := bwsr.cfg.HTTPAddressForFile(file.ID)
+	httpAddr := lipgloss.NewStyle().Hyperlink(rawHTTPAddr).Render(rawHTTPAddr)
 	visibility := "public"
 	if file.Private {
 		httpAddr = styles.C(styles.Colors.Muted, "<none> (requires a signed URL)")

@@ -19,7 +19,18 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/views/browser"
 	"github.com/robherley/snips.sh/internal/tui/views/code"
 	"github.com/robherley/snips.sh/internal/tui/views/prompt"
+	"github.com/robherley/snips.sh/internal/tui/views/settings"
 )
+
+// topLevelTabs lists the F-key navigable top-level views, in tab-bar order.
+var topLevelTabs = []struct {
+	kind  views.Kind
+	key   string
+	label string
+}{
+	{views.Browser, "f1", "files"},
+	{views.Settings, "f2", "settings"},
+}
 
 type TUI struct {
 	UserID      string
@@ -53,9 +64,10 @@ func New(ctx context.Context, cfg *config.Config, width, height int, userID stri
 	}
 
 	t.models = []views.Model{
-		views.Browser: browser.New(cfg, width, t.innerViewHeight(), files),
-		views.Code:    code.New(width, t.innerViewHeight()),
-		views.Prompt:  prompt.New(ctx, cfg, database, width),
+		views.Browser:  browser.New(cfg, width, t.innerViewHeight(), files),
+		views.Code:     code.New(width, t.innerViewHeight()),
+		views.Prompt:   prompt.New(ctx, cfg, database, width),
+		views.Settings: settings.New(width, t.innerViewHeight(), userID, fingerprint),
 	}
 
 	t.help.Styles = styles.Help
@@ -80,6 +92,22 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		slog.Error("encountered error", "err", msg)
 		return t, tea.Quit
 	case tea.KeyPressMsg:
+		// ctrl+c always quits, even when a view is capturing input
+		if msg.String() == "ctrl+c" {
+			return t, tea.Quit
+		}
+		// F-key top-level navigation always wins (function keys aren't typeable)
+		for _, tab := range topLevelTabs {
+			if msg.String() == tab.key {
+				t.switchTopLevel(tab.kind)
+				return t, nil
+			}
+		}
+		// when a view is consuming raw input (filter, text field), skip our shortcuts
+		if t.currentViewModel().IsCapturing() {
+			return t, t.updateCurrent(msg)
+		}
+
 		switch msg.String() {
 		case "?":
 			t.help.ShowAll = !t.help.ShowAll
@@ -88,8 +116,6 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if !t.inPrompt() {
 				return t, tea.Quit
 			}
-		case "ctrl+c":
-			return t, tea.Quit
 		case "esc":
 			if t.currentViewKind() == views.Browser && t.models[views.Browser].(browser.Browser).IsOptionsFocused() {
 				// special case where options focused, also allow escape to unfocus too
@@ -143,16 +169,49 @@ func (t TUI) View() tea.View {
 }
 
 func (t TUI) titleBar() string {
-	textStyle := lipgloss.NewStyle().Foreground(styles.Colors.Black).Background(styles.Colors.Primary).Padding(0, 1).Bold(true)
-	title := textStyle.Render("snips.sh")
-	user := textStyle.Render(fmt.Sprintf("u:%s", t.UserID))
+	brand := lipgloss.NewStyle().
+		Foreground(styles.Colors.Black).
+		Background(styles.Colors.Primary).
+		Padding(0, 1).
+		Bold(true).
+		Render("snips")
+	tabs := t.tabs()
 
-	count := t.width - lipgloss.Width(title) - lipgloss.Width(user)
+	count := t.width - lipgloss.Width(brand) - lipgloss.Width(tabs)
 	if count < 0 {
 		count = 0
 	}
 
-	return title + strings.Repeat(styles.BC(styles.Colors.Primary, "╱"), count) + user
+	return brand + strings.Repeat(styles.BC(styles.Colors.Primary, "╱"), count) + tabs
+}
+
+func (t TUI) tabs() string {
+	active := t.views[0]
+
+	activeStyle := lipgloss.NewStyle().
+		Foreground(styles.Colors.Primary).
+		Padding(0, 1).
+		Bold(true)
+	tabStyle := lipgloss.NewStyle().
+		Foreground(styles.Colors.Muted).
+		Padding(0, 1)
+
+	parts := make([]string, 0, len(topLevelTabs))
+	for _, tab := range topLevelTabs {
+		label := fmt.Sprintf("[%s] %s", tab.key, tab.label)
+		if tab.kind == active {
+			parts = append(parts, activeStyle.Render(label))
+		} else {
+			parts = append(parts, tabStyle.Render(label))
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+// switchTopLevel resets the view stack so that the given kind becomes the
+// active top-level view (and any nested views are popped).
+func (t *TUI) switchTopLevel(kind views.Kind) {
+	t.views = []views.Kind{kind}
 }
 
 func (t TUI) helpBar() string {
@@ -160,7 +219,15 @@ func (t TUI) helpBar() string {
 		return ""
 	}
 
-	return t.help.View(t.currentViewModel().Keys())
+	help := t.help.View(t.currentViewModel().Keys())
+	user := styles.C(styles.Colors.Muted, fmt.Sprintf("u:%s", t.UserID))
+
+	count := t.width - lipgloss.Width(help) - lipgloss.Width(user) - 2 // gap on each side of the slashes
+	if count < 0 {
+		return help + " " + user
+	}
+
+	return help + " " + strings.Repeat(styles.C(styles.Colors.Muted, "╱"), count) + " " + user
 }
 
 func (t TUI) currentViewKind() views.Kind {

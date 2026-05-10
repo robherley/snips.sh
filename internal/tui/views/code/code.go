@@ -58,6 +58,10 @@ func (m Code) Keys() help.KeyMap {
 	return keys
 }
 
+func (m Code) IsCapturing() bool {
+	return false
+}
+
 func (m Code) renderContent(file *snips.File) string {
 	if file == nil {
 		return ""

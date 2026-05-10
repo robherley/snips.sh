@@ -29,6 +29,7 @@ type Prompt struct {
 	cfg      *config.Config
 	db       db.DB
 	width    int
+	height   int
 	finished bool
 
 	file              *snips.File
@@ -89,6 +90,7 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return p, nil
 	case tea.WindowSizeMsg:
 		p.width = msg.Width
+		p.height = msg.Height
 		p.extensionSelector.SetWidth(msg.Width)
 	case SelectorInitMsg:
 		// bit of a hack to get the extension selector to filter on init
@@ -112,14 +114,21 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (p Prompt) View() tea.View {
 	if p.file == nil || p.kind == None {
-		return tea.NewView("")
+		return tea.NewView(lipgloss.Place(p.width, p.height, lipgloss.Left, lipgloss.Top, ""))
 	}
 
-	return tea.NewView(p.renderPrompt())
+	// fill the allocated height so the surrounding TUI's bottom bar stays anchored
+	return tea.NewView(lipgloss.Place(p.width, p.height, lipgloss.Left, lipgloss.Top, p.renderPrompt()))
 }
 
 func (p Prompt) Keys() help.KeyMap {
 	return newKeyMap(p.finished)
+}
+
+func (p Prompt) IsCapturing() bool {
+	// existing TUI shortcut handling already routes correctly while a prompt is
+	// active (q falls through to the textinput, esc pops the view, etc.)
+	return false
 }
 
 func (p Prompt) renderPrompt() string {

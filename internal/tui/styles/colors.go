@@ -6,6 +6,7 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+// Colors mirror the web theme's HSL palette (web/static/css/index.css).
 var (
 	Colors = struct {
 		Primary color.Color
@@ -20,16 +21,17 @@ var (
 		Muted   color.Color
 		Black   color.Color
 	}{
-		Primary: lipgloss.Color("#0ac5b2"),
-		Green:   lipgloss.Color("#63c174"),
-		Red:     lipgloss.Color("#ff6368"),
-		Yellow:  lipgloss.Color("#f1a10d"),
-		Blue:    lipgloss.Color("#52a9ff"),
-		Pink:    lipgloss.Color("#f76191"),
-		Purple:  lipgloss.Color("#bf7af0"),
-		White:   lipgloss.Color("7"),
-		Muted:   lipgloss.Color("8"),
-		Black:   lipgloss.Color("16"),
+		Primary: lipgloss.Color("#65adff"), // blue
+		Green:   lipgloss.Color("#6fcc85"),
+		Red:     lipgloss.Color("#ff7079"),
+		Cyan:    lipgloss.Color("#11d4b7"), // teal
+		Yellow:  lipgloss.Color("#f5b41d"), // amber
+		Blue:    lipgloss.Color("#65adff"),
+		Pink:    lipgloss.Color("#f67396"),
+		Purple:  lipgloss.Color("#ca8aef"),
+		White:   lipgloss.Color("#ffffff"),
+		Muted:   lipgloss.Color("#868a91"), // gray
+		Black:   lipgloss.Color("#111317"), // surface-0
 	}
 )
 
