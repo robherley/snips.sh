@@ -64,6 +64,14 @@ ssh snips.sh
     </td>
   </tr>
   <tr align="center">
+    <td>Update an existing snip in place, each diff is saved as a revision.</td>
+  </tr>
+  <tr align="center">
+    <td>
+      <img alt="update" width="600" src="https://vhs.charm.sh/vhs-6yGrRFMOMNtl8zzzkZXdPl.gif" />
+    </td>
+  </tr>
+  <tr align="center">
     <td>Something secret to share? Create a temporary, time-bound URL for restricted access.</td>
   </tr>
   <tr align="center">
