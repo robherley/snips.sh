@@ -876,3 +876,60 @@ func (_c *MockDB_UpdateFile_Call) RunAndReturn(run func(ctx context.Context, fil
 	_c.Call.Return(run)
 	return _c
 }
+
+// UpdateUser provides a mock function for the type MockDB
+func (_mock *MockDB) UpdateUser(ctx context.Context, user *snips.User) error {
+	ret := _mock.Called(ctx, user)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUser")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *snips.User) error); ok {
+		r0 = returnFunc(ctx, user)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockDB_UpdateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUser'
+type MockDB_UpdateUser_Call struct {
+	*mock.Call
+}
+
+// UpdateUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - user *snips.User
+func (_e *MockDB_Expecter) UpdateUser(ctx interface{}, user interface{}) *MockDB_UpdateUser_Call {
+	return &MockDB_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, user)}
+}
+
+func (_c *MockDB_UpdateUser_Call) Run(run func(ctx context.Context, user *snips.User)) *MockDB_UpdateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *snips.User
+		if args[1] != nil {
+			arg1 = args[1].(*snips.User)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_UpdateUser_Call) Return(err error) *MockDB_UpdateUser_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockDB_UpdateUser_Call) RunAndReturn(run func(ctx context.Context, user *snips.User) error) *MockDB_UpdateUser_Call {
+	_c.Call.Return(run)
+	return _c
+}

@@ -26,6 +26,8 @@ type DB interface {
 	CreateUserWithPublicKey(ctx context.Context, publickey *snips.PublicKey) (*snips.User, error)
 	// FindUser returns a user by its ID.
 	FindUser(ctx context.Context, id string) (*snips.User, error)
+	// UpdateUser updates a user's mutable fields (currently theme color and updated_at).
+	UpdateUser(ctx context.Context, user *snips.User) error
 	// CreateRevision creates a new file revision. If maxRevisions > 0, prunes oldest revisions exceeding the limit.
 	CreateRevision(ctx context.Context, revision *snips.Revision, maxRevisions uint64) error
 	// FindRevisionsByFileID returns all revisions for a file, ordered by sequence DESC. Does not include diff content.

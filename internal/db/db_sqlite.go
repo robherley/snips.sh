@@ -494,7 +494,8 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 		SELECT
 			id,
 			created_at,
-			updated_at
+			updated_at,
+			theme_color
 		FROM users
 		WHERE id = ?
 	`
@@ -506,6 +507,7 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 		&user.ID,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.ThemeColor,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -515,4 +517,19 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *Sqlite) UpdateUser(ctx context.Context, user *snips.User) error {
+	user.UpdatedAt = time.Now().UTC()
+
+	const query = `
+		UPDATE users
+		SET
+			updated_at = ?,
+			theme_color = ?
+		WHERE id = ?
+	`
+
+	_, err := s.ExecContext(ctx, query, user.UpdatedAt, user.ThemeColor, user.ID)
+	return err
 }

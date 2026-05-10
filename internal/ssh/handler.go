@@ -65,13 +65,19 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 		return
 	}
 
+	user, err := h.DB.FindUser(sesh.Context(), sesh.UserID())
+	if err != nil || user == nil {
+		sesh.Error(err, "Failed to load user", "There was an error loading your user. Please try again.")
+		return
+	}
+
 	program := tea.NewProgram(
 		tui.New(
 			sesh.Context(),
 			h.Config,
 			pty.Window.Width,
 			pty.Window.Height,
-			sesh.UserID(),
+			user,
 			sesh.PublicKeyFingerprint(),
 			h.DB,
 			files,

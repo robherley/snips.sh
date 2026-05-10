@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"image/color"
 	"log/slog"
 	"strings"
 
@@ -46,11 +47,12 @@ type TUI struct {
 	views  []views.Kind  // navigation stack
 	models []views.Model // indexed by views.Kind; deterministic iteration order
 	help   help.Model
+	theme  color.Color
 }
 
-func New(ctx context.Context, cfg *config.Config, width, height int, userID string, fingerprint string, database db.DB, files []*snips.File) TUI {
+func New(ctx context.Context, cfg *config.Config, width, height int, user *snips.User, fingerprint string, database db.DB, files []*snips.File) TUI {
 	t := TUI{
-		UserID:      userID,
+		UserID:      user.ID,
 		Fingerprint: fingerprint,
 		DB:          database,
 
@@ -63,11 +65,14 @@ func New(ctx context.Context, cfg *config.Config, width, height int, userID stri
 		help:   help.New(),
 	}
 
+	theme := styles.Theme(user.ThemeColor)
+	t.theme = theme
+
 	t.models = []views.Model{
-		views.Browser:  browser.New(cfg, width, t.innerViewHeight(), files),
+		views.Browser:  browser.New(cfg, width, t.innerViewHeight(), files, theme),
 		views.Code:     code.New(width, t.innerViewHeight()),
 		views.Prompt:   prompt.New(ctx, cfg, database, width),
-		views.Settings: settings.New(width, t.innerViewHeight(), userID, fingerprint),
+		views.Settings: settings.New(width, t.innerViewHeight(), database, user, fingerprint),
 	}
 
 	t.help.Styles = styles.Help
@@ -155,6 +160,9 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case msgs.PopView:
 		t.popView()
 		return t, t.broadcast(msg)
+	case msgs.ThemeChanged:
+		t.theme = msg.Color
+		return t, t.broadcast(msg)
 	}
 
 	// fall-through messages (cursor blink, etc.) only need the active view
@@ -171,7 +179,7 @@ func (t TUI) View() tea.View {
 func (t TUI) titleBar() string {
 	brand := lipgloss.NewStyle().
 		Foreground(styles.Colors.Black).
-		Background(styles.Colors.Primary).
+		Background(t.theme).
 		Padding(0, 1).
 		Bold(true).
 		Render("snips.sh")
@@ -182,15 +190,15 @@ func (t TUI) titleBar() string {
 		count = 0
 	}
 
-	return brand + tabs + strings.Repeat(styles.BC(styles.Colors.Primary, "╱"), count)
+	return brand + tabs + strings.Repeat(styles.BC(t.theme, "╱"), count)
 }
 
 func (t TUI) tabs() string {
 	active := t.views[0]
 
-	activeStyle := lipgloss.NewStyle().Foreground(styles.Colors.Primary).Bold(true)
+	activeStyle := lipgloss.NewStyle().Foreground(t.theme).Bold(true)
 	inactiveStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted)
-	sep := styles.C(styles.Colors.Primary, " ╱ ")
+	sep := styles.C(t.theme, " ╱ ")
 
 	out := sep // initial separator between brand and tabs
 	for i, tab := range topLevelTabs {

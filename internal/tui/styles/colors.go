@@ -54,3 +54,46 @@ func U(s string) string {
 func UC(c color.Color, s string) string {
 	return lipgloss.NewStyle().Foreground(c).Underline(true).Render(s)
 }
+
+// ThemeOption is a named selectable accent color. The set mirrors the web
+// theme palette in web/static/css/index.css.
+type ThemeOption struct {
+	Name  string
+	Color color.Color
+}
+
+// ThemeOptions is the ordered list of named accent colors users can choose from.
+var ThemeOptions = []ThemeOption{
+	{"blue", Colors.Blue},
+	{"red", Colors.Red},
+	{"amber", Colors.Yellow},
+	{"green", Colors.Green},
+	{"teal", Colors.Cyan},
+	{"purple", Colors.Purple},
+	{"pink", Colors.Pink},
+}
+
+// Theme resolves a stored theme name to its color.Color. Unknown / empty names
+// fall back to the default Primary color.
+func Theme(name string) color.Color {
+	for _, opt := range ThemeOptions {
+		if opt.Name == name {
+			return opt.Color
+		}
+	}
+	return Colors.Primary
+}
+
+// IsValidTheme reports whether s is empty (use default) or one of the named
+// ThemeOptions.
+func IsValidTheme(s string) bool {
+	if s == "" {
+		return true
+	}
+	for _, opt := range ThemeOptions {
+		if opt.Name == s {
+			return true
+		}
+	}
+	return false
+}

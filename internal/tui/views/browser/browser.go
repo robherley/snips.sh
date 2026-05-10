@@ -2,6 +2,7 @@ package browser
 
 import (
 	"fmt"
+	"image/color"
 
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/list"
@@ -20,6 +21,7 @@ type Browser struct {
 	list   list.Model
 	height int
 	width  int
+	theme  color.Color
 
 	options struct {
 		focused bool
@@ -27,8 +29,8 @@ type Browser struct {
 	}
 }
 
-func New(cfg *config.Config, width, height int, files []*snips.File) Browser {
-	l := list.New(toItems(files), newItemDelegate(), width, height)
+func New(cfg *config.Config, width, height int, files []*snips.File, theme color.Color) Browser {
+	l := list.New(toItems(files), newItemDelegate(theme), width, height)
 	l.SetShowTitle(false)      // the F1 tab in the title bar already labels this view
 	l.SetShowHelp(false)       // help is rendered at the TUI level
 	l.SetShowStatusBar(false)  // we render our own combined status + pagination row
@@ -39,7 +41,7 @@ func New(cfg *config.Config, width, height int, files []*snips.File) Browser {
 	l.Styles.TitleBar = l.Styles.TitleBar.PaddingTop(1)
 
 	// bigger pagination glyphs (• → ● / ○)
-	l.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(styles.Colors.Primary).Render("●")
+	l.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(theme).Render("●")
 	l.Paginator.InactiveDot = lipgloss.NewStyle().Foreground(styles.Colors.Muted).Render("○")
 
 	return Browser{
@@ -47,6 +49,7 @@ func New(cfg *config.Config, width, height int, files []*snips.File) Browser {
 		list:   l,
 		width:  width,
 		height: height,
+		theme:  theme,
 	}
 }
 
@@ -101,6 +104,10 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		bwsr.list.SetItems(toItems(msg.Files))
 		bwsr.options.focused = false
 		bwsr.options.index = 0
+	case msgs.ThemeChanged:
+		bwsr.theme = msg.Color
+		bwsr.list.SetDelegate(newItemDelegate(msg.Color))
+		bwsr.list.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(msg.Color).Render("●")
 	}
 
 	var cmd tea.Cmd
@@ -117,7 +124,7 @@ func (bwsr Browser) viewContent() string {
 		return lipgloss.NewStyle().
 			PaddingTop(1).
 			PaddingBottom(1).
-			Foreground(styles.Colors.Primary).
+			Foreground(bwsr.theme).
 			Render(fmt.Sprintf("No files found!\nLearn how to get started at: %s", bwsr.cfg.HTTP.External.String()))
 	}
 
