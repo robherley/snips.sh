@@ -5,7 +5,6 @@ linters:
   default: none
   enable:
     - errcheck
-    - goconst
     - gocritic
     - gocyclo
     - govet

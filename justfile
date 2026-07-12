@@ -38,8 +38,8 @@ test: _check-onnx
 lint: lint-go lint-web
 
 # Lint Go code
-lint-go: _check-onnx
-    golangci-lint run
+lint-go *args: _check-onnx
+    golangci-lint run "$@"
 
 # Lint web code
 lint-web:
