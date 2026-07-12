@@ -152,13 +152,12 @@ In order to "guess" what language a snippet is, snips.sh uses [magika-go](https:
 For local development, you can build as so:
 
 ```bash
-script/build
+just build
 ```
 
-When running, be sure to setup the environment so everything is linked properly:
+The resulting binary contains the runtime library path, so it can be run directly:
 
 ```bash
-source script/env
 bin/snips.sh
 ```
 
