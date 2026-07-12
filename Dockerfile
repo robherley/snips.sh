@@ -7,24 +7,23 @@ WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
-COPY script/ script/
 COPY . .
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    jq \
+    jq just \
     gcc-aarch64-linux-gnu \
     && rm -rf /var/lib/apt/lists/*
 
 ENV VENDOR_DIR=/opt
 ENV TARGETOS=linux
-RUN script/vendor-onnxruntime
+RUN just vendor-onnxruntime
 
 ENV ONNX_DIR=/opt/onnxruntime
 ENV OUTPUT=/build/snips.sh
 RUN if [ "${TARGETARCH}" = "arm64" ]; then \
         export CC=aarch64-linux-gnu-gcc; \
     fi && \
-    script/build
+    just build
 
 FROM gcr.io/distroless/cc-debian12
 

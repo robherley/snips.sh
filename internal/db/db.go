@@ -6,7 +6,6 @@ import (
 	"github.com/robherley/snips.sh/internal/snips"
 )
 
-//go:generate ../../script/mocks
 type DB interface {
 	// Migrate migrates the database.
 	Migrate(ctx context.Context) error

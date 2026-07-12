@@ -18,15 +18,12 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - run: script/vendor-onnxruntime
-      - run: source script/env
-      - uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.9.0
+      - run: apt install just
+      - run: just vendor-onnxruntime
+      - run: just lint-go
   biome:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: biomejs/setup-biome@v2
-        with:
-          version: v2.3.15
+      - run: apt install just
+      - run: just lint-web

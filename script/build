@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-OUTPUT="${OUTPUT:-${REPO_ROOT}/bin/snips.sh}"
-
-source "${REPO_ROOT}/script/env"
-
-go build -ldflags "-extldflags \"${GO_EXTLDFLAGS}\"" -o "${OUTPUT}" . "$@"
