@@ -30,6 +30,10 @@ build *args: _check-onnx
     mkdir -p "$(dirname "{{ output }}")"
     go build -ldflags '-extldflags "{{ extldflags }}"' -o "{{ output }}" . "$@"
 
+# Run the application in development mode (with live reload)
+dev: _check-onnx
+    air
+
 # Run all tests
 test: _check-onnx
     gotestsum --raw-command -- go test -json -ldflags '-extldflags "{{ extldflags }}"' ./...

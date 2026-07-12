@@ -118,12 +118,21 @@ func descTypeMatchIdx(matched []int, id, typ string) []int {
 }
 
 // itemHint is the right-aligned shortcut text shown on the highlighted item.
-func (d fileDelegate) itemHint() string {
-	sep := styles.C(styles.Colors.Muted, "  ")
-	return styles.BC(d.theme, "[tab]") + " " +
-		styles.C(styles.Colors.Muted, "options") + sep +
-		styles.BC(d.theme, "[↵]") + " " +
-		styles.C(styles.Colors.Muted, "view")
+func (d fileDelegate) itemHint(file *snips.File) string {
+	hints := [][2]string{
+		{"[tab]", "options"},
+		{"[↵]", "view"},
+	}
+	if file.Private {
+		hints = append(hints, [2]string{"[s]", "sign"})
+	}
+	hints = append(hints, [2]string{"[x]", "delete"})
+
+	parts := make([]string, len(hints))
+	for i, h := range hints {
+		parts[i] = styles.BC(d.theme, h[0]) + " " + styles.C(styles.Colors.Muted, h[1])
+	}
+	return strings.Join(parts, styles.C(styles.Colors.Muted, "  "))
 }
 
 func (d fileDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
@@ -165,7 +174,7 @@ func (d fileDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 			unmatched := d.styles.SelectedTitle.Inline(true)
 			title = lipgloss.StyleRunes(title, titleMatchIdx(matchedRunes, file.file.ID), d.matchHighlight(), unmatched)
 		}
-		hint := d.itemHint()
+		hint := d.itemHint(file.file)
 		gap := contentWidth - lipgloss.Width(title) - lipgloss.Width(hint)
 		if gap >= 1 {
 			title = title + strings.Repeat(" ", gap) + hint

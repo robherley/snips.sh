@@ -23,14 +23,13 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/views/settings"
 )
 
-// topLevelTabs lists the F-key navigable top-level views, in tab-bar order.
+// topLevelTabs lists the top-level views cycled with shift+tab, in tab-bar order.
 var topLevelTabs = []struct {
 	kind  views.Kind
-	key   string
 	label string
 }{
-	{views.Browser, "f1", "Files"},
-	{views.Settings, "f2", "Settings"},
+	{views.Browser, "Files"},
+	{views.Settings, "Settings"},
 }
 
 type TUI struct {
@@ -101,12 +100,10 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return t, tea.Quit
 		}
-		// F-key top-level navigation always wins (function keys aren't typeable)
-		for _, tab := range topLevelTabs {
-			if msg.String() == tab.key {
-				t.switchTopLevel(tab.kind)
-				return t, nil
-			}
+		// shift+tab top-level navigation always wins (it isn't typeable)
+		if msg.String() == "shift+tab" {
+			t.cycleTopLevel()
+			return t, nil
 		}
 		// when a view is consuming raw input (filter, text field), skip our shortcuts
 		if t.currentViewModel().IsCapturing() {
@@ -196,7 +193,7 @@ func (t TUI) titleBar() string {
 func (t TUI) tabs() string {
 	active := t.views[0]
 
-	activeStyle := lipgloss.NewStyle().Foreground(t.theme).Bold(true)
+	activeStyle := lipgloss.NewStyle().Foreground(t.theme).Bold(true).Underline(true)
 	inactiveStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted)
 	sep := styles.C(t.theme, " ╱ ")
 
@@ -205,7 +202,7 @@ func (t TUI) tabs() string {
 		if i > 0 {
 			out += sep
 		}
-		label := fmt.Sprintf("[%s] %s", strings.ToUpper(tab.key), tab.label)
+		label := tab.label
 		if tab.kind == active {
 			out += activeStyle.Render(label)
 		} else {
@@ -215,10 +212,16 @@ func (t TUI) tabs() string {
 	return out + " " // breathing room before the slashes
 }
 
-// switchTopLevel resets the view stack so that the given kind becomes the
-// active top-level view (and any nested views are popped).
-func (t *TUI) switchTopLevel(kind views.Kind) {
-	t.views = []views.Kind{kind}
+// cycleTopLevel resets the view stack so that the next top-level tab becomes
+// the active view (and any nested views are popped).
+func (t *TUI) cycleTopLevel() {
+	active := t.views[0]
+	for i, tab := range topLevelTabs {
+		if tab.kind == active {
+			t.views = []views.Kind{topLevelTabs[(i+1)%len(topLevelTabs)].kind}
+			return
+		}
+	}
 }
 
 func (t TUI) helpBar() string {

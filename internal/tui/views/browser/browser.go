@@ -14,6 +14,7 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/robherley/snips.sh/internal/tui/views"
+	"github.com/robherley/snips.sh/internal/tui/views/prompt"
 )
 
 type Browser struct {
@@ -41,8 +42,8 @@ func New(cfg *config.Config, width, height int, files []*snips.File, theme color
 	l.Styles.TitleBar = l.Styles.TitleBar.PaddingTop(1)
 
 	// bigger pagination glyphs (• → ● / ○)
-	l.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(theme).Render("●")
-	l.Paginator.InactiveDot = lipgloss.NewStyle().Foreground(styles.Colors.Muted).Render("○")
+	l.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(theme).Render("■")
+	l.Paginator.InactiveDot = lipgloss.NewStyle().Foreground(styles.Colors.Muted).Render("▪")
 
 	return Browser{
 		cfg:    cfg,
@@ -91,6 +92,27 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds.SelectFile(file.ID),
 				cmds.PushView(views.Code),
 			)
+		case "x":
+			file := bwsr.selectedFile()
+			if file == nil {
+				return bwsr, nil
+			}
+			return bwsr, tea.Batch(
+				cmds.SelectFile(file.ID),
+				prompt.SetPromptKindCmd(prompt.DeleteFile),
+				cmds.PushView(views.Prompt),
+			)
+		case "s":
+			file := bwsr.selectedFile()
+			if file == nil || !file.Private {
+				// signed urls only make sense for private files
+				return bwsr, nil
+			}
+			return bwsr, tea.Batch(
+				cmds.SelectFile(file.ID),
+				prompt.SetPromptKindCmd(prompt.GenerateSignedURL),
+				cmds.PushView(views.Prompt),
+			)
 		}
 
 		if bwsr.options.focused {
@@ -98,8 +120,9 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		bwsr.width, bwsr.height = msg.Width, msg.Height
-		// reserve 1 row at the bottom for our combined status + pagination
-		bwsr.list.SetSize(msg.Width, msg.Height-1)
+		// reserve 2 rows at the bottom: our combined status + pagination,
+		// and a gap above the help bar
+		bwsr.list.SetSize(msg.Width, max(msg.Height-2, 0))
 	case msgs.ReloadFiles:
 		bwsr.list.SetItems(toItems(msg.Files))
 		bwsr.options.focused = false
@@ -107,7 +130,7 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case msgs.ThemeChanged:
 		bwsr.theme = msg.Color
 		bwsr.list.SetDelegate(newItemDelegate(msg.Color))
-		bwsr.list.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(msg.Color).Render("●")
+		bwsr.list.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(msg.Color).Render("■")
 	}
 
 	var cmd tea.Cmd
@@ -131,7 +154,7 @@ func (bwsr Browser) viewContent() string {
 	if bwsr.options.focused {
 		return bwsr.renderModal()
 	}
-	return lipgloss.JoinVertical(lipgloss.Top, bwsr.list.View(), bwsr.statusBar())
+	return lipgloss.JoinVertical(lipgloss.Top, bwsr.list.View(), bwsr.statusBar(), "")
 }
 
 // statusBar renders the file count, optional filter info, and pagination dots
