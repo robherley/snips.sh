@@ -18,12 +18,12 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - run: sudo apt install just
+      - uses: jdx/mise-action@v3
       - run: just vendor-onnxruntime
       - run: just lint-go
   biome:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: sudo apt install just
+      - uses: jdx/mise-action@v3
       - run: just lint-web
