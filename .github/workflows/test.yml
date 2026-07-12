@@ -17,6 +17,6 @@ jobs:
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
-    - run: apt install just
+    - run: sudo apt install just
     - run: just vendor-onnxruntime
     - run: just test
