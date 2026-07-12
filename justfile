@@ -2,18 +2,12 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 set positional-arguments
 
 root := justfile_directory()
-bin_dir := root / "bin"
 onnx_dir := env("ONNX_DIR", root / "third_party/onnxruntime")
 onnx_lib := onnx_dir / "lib"
-output := env("OUTPUT", bin_dir / "snips.sh")
+output := env("OUTPUT", root / "bin/snips.sh")
 extldflags := if os() == "macos" { "-Wl,-rpath," + onnx_lib + " -Wl,-no_warn_duplicate_libraries" } else { "-Wl,-rpath," + onnx_lib }
 
 onnx_version := "1.23.2"
-golangci_lint_version := "v2.9.0"
-biome_version := "2.3.15"
-gotestsum_version := "v1.10.0"
-goose_version := "v3.26.3"
-mockery_version := "v3.6.3"
 
 export CGO_ENABLED := "1"
 export CGO_CFLAGS := "-I" + onnx_dir / "include"
@@ -27,10 +21,6 @@ default:
 _check-onnx:
     @test -d "{{ onnx_dir }}" || { echo "ONNX runtime not found at {{ onnx_dir }}" >&2; echo "Run: just vendor-onnxruntime" >&2; exit 1; }
 
-_tool binary package version:
-    mkdir -p "{{ bin_dir }}"
-    test -x "{{ bin_dir }}/{{ binary }}" || GOBIN="{{ bin_dir }}" go install "{{ package }}@{{ version }}"
-
 # Run the application locally
 run *args: _check-onnx
     go run -ldflags '-extldflags "{{ extldflags }}"' . "$@"
@@ -41,35 +31,31 @@ build *args: _check-onnx
     go build -ldflags '-extldflags "{{ extldflags }}"' -o "{{ output }}" . "$@"
 
 # Run all tests
-test: _check-onnx (_tool "gotestsum" "gotest.tools/gotestsum" gotestsum_version)
-    "{{ bin_dir }}/gotestsum" --raw-command -- go test -json -ldflags '-extldflags "{{ extldflags }}"' ./...
+test: _check-onnx
+    gotestsum --raw-command -- go test -json -ldflags '-extldflags "{{ extldflags }}"' ./...
 
 # Run all linters
 lint: lint-go lint-web
 
 # Lint Go code
-lint-go: _check-onnx (_tool "golangci-lint" "github.com/golangci/golangci-lint/v2/cmd/golangci-lint" golangci_lint_version)
-    "{{ bin_dir }}/golangci-lint" run
+lint-go *args: _check-onnx
+    golangci-lint run "$@"
 
 # Lint web code
 lint-web:
-    #!/usr/bin/env bash
-    mkdir -p "{{ bin_dir }}"
-    if [[ ! -x "{{ bin_dir }}/biome" ]]; then case "$(uname -s)-$(uname -m)" in Darwin-arm64) target=biome-darwin-arm64;; Darwin-x86_64) target=biome-darwin-x64;; Linux-x86_64) target=biome-linux-x64;; Linux-aarch64) target=biome-linux-arm64;; *) echo "Unsupported platform: $(uname -s)-$(uname -m)"; exit 1;; esac; curl -sSfL "https://github.com/biomejs/biome/releases/download/@biomejs/biome@{{ biome_version }}/$target" -o "{{ bin_dir }}/biome"; chmod +x "{{ bin_dir }}/biome"; fi
-    "{{ bin_dir }}/biome" check
+    biome check
 
 # Run goose with the supplied arguments
-migrate *args: (_tool "goose" "github.com/pressly/goose/v3/cmd/goose" goose_version)
-    "{{ bin_dir }}/goose" "$@"
+migrate *args:
+    goose "$@"
 
 # Generate mocks with mockery
-mocks *args: (_tool "mockery" "github.com/vektra/mockery/v3" mockery_version)
-    "{{ bin_dir }}/mockery" "$@"
+mocks *args:
+    mockery "$@"
 
 # Record one or more tapes from docs/tapes
 record-tape tape *tapes:
     #!/usr/bin/env bash
-    command -v vhs >/dev/null || { echo "vhs not found: https://github.com/charmbracelet/vhs#installation"; exit 1; }
     for tape in "$@"; do
       vhs "{{ root }}/docs/tapes/$tape.tape" -o "{{ root }}/docs/tapes/$tape.gif"
     done
