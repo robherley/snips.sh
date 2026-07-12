@@ -1,10 +1,11 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
+set positional-arguments
 
 root := justfile_directory()
 bin_dir := root / "bin"
-onnx_dir := env_var_or_default("ONNX_DIR", root / "third_party/onnxruntime")
+onnx_dir := env("ONNX_DIR", root / "third_party/onnxruntime")
 onnx_lib := onnx_dir / "lib"
-output := env_var_or_default("OUTPUT", bin_dir / "snips.sh")
+output := env("OUTPUT", bin_dir / "snips.sh")
 extldflags := if os() == "macos" { "-Wl,-rpath," + onnx_lib + " -Wl,-no_warn_duplicate_libraries" } else { "-Wl,-rpath," + onnx_lib }
 
 onnx_version := "1.23.2"
@@ -17,8 +18,8 @@ mockery_version := "v3.6.3"
 export CGO_ENABLED := "1"
 export CGO_CFLAGS := "-I" + onnx_dir / "include"
 export CGO_LDFLAGS := "-L" + onnx_lib + " -lonnxruntime"
-export DYLD_LIBRARY_PATH := if os() == "macos" { onnx_lib + if env_var_or_default("DYLD_LIBRARY_PATH", "") == "" { "" } else { ":" + env_var("DYLD_LIBRARY_PATH") } } else { env_var_or_default("DYLD_LIBRARY_PATH", "") }
-export LD_LIBRARY_PATH := if os() == "linux" { onnx_lib + if env_var_or_default("LD_LIBRARY_PATH", "") == "" { "" } else { ":" + env_var("LD_LIBRARY_PATH") } } else { env_var_or_default("LD_LIBRARY_PATH", "") }
+export DYLD_LIBRARY_PATH := onnx_lib + replace_regex(env("DYLD_LIBRARY_PATH", ""), "^(.+)$", ":$1")
+export LD_LIBRARY_PATH := onnx_lib + replace_regex(env("LD_LIBRARY_PATH", ""), "^(.+)$", ":$1")
 
 default:
     @just --list
@@ -32,12 +33,12 @@ _tool binary package version:
 
 # Run the application locally
 run *args: _check-onnx
-    go run -ldflags '-extldflags "{{ extldflags }}"' . {{ args }}
+    go run -ldflags '-extldflags "{{ extldflags }}"' . "$@"
 
 # Build bin/snips.sh (override with OUTPUT=/path)
 build *args: _check-onnx
     mkdir -p "$(dirname "{{ output }}")"
-    go build -ldflags '-extldflags "{{ extldflags }}"' -o "{{ output }}" . {{ args }}
+    go build -ldflags '-extldflags "{{ extldflags }}"' -o "{{ output }}" . "$@"
 
 # Run all tests
 test: _check-onnx (_tool "gotestsum" "gotest.tools/gotestsum" gotestsum_version)
@@ -59,26 +60,26 @@ lint-web:
 
 # Run goose with the supplied arguments
 migrate *args: (_tool "goose" "github.com/pressly/goose/v3/cmd/goose" goose_version)
-    "{{ bin_dir }}/goose" {{ args }}
+    "{{ bin_dir }}/goose" "$@"
 
 # Generate mocks with mockery
 mocks *args: (_tool "mockery" "github.com/vektra/mockery/v3" mockery_version)
-    "{{ bin_dir }}/mockery" {{ args }}
+    "{{ bin_dir }}/mockery" "$@"
 
 # Record one or more tapes from docs/tapes
-record-tape *tapes:
+record-tape tape *tapes:
     #!/usr/bin/env bash
     command -v vhs >/dev/null || { echo "vhs not found: https://github.com/charmbracelet/vhs#installation"; exit 1; }
-    [[ -n "{{ tapes }}" ]] || { echo "specify a tape name to record"; exit 1; }
-    for tape in {{ tapes }}; do vhs "{{ root }}/docs/tapes/$tape.tape" -o "{{ root }}/docs/tapes/$tape.gif"; done
+    for tape in "$@"; do
+      vhs "{{ root }}/docs/tapes/$tape.tape" -o "{{ root }}/docs/tapes/$tape.gif"
+    done
 
 # Connect with a fresh temporary SSH key
-ssh-tmp *args:
+ssh-tmp destination *args:
     #!/usr/bin/env bash
-    [[ -n "{{ args }}" ]] || { echo "usage: just ssh-tmp user@host"; exit 1; }
     tmpdir="$(mktemp -d)"; trap 'rm -rf "$tmpdir"' EXIT
     ssh-keygen -t ecdsa -f "$tmpdir/id_ecdsa" -q -N ""
-    ssh -F /dev/null -i "$tmpdir/id_ecdsa" -o IdentitiesOnly=yes {{ args }}
+    ssh -F /dev/null -i "$tmpdir/id_ecdsa" -o IdentitiesOnly=yes "$@"
 
 # Download ONNX Runtime for the current or TARGETOS/TARGETARCH platform
 vendor-onnxruntime:
