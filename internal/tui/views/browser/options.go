@@ -181,13 +181,13 @@ func (bwsr Browser) renderDetails() string {
 		Bold(true)
 
 	for _, v := range values {
-		details.WriteString(fmt.Sprintf("%s  %s\n", keyStyle.Width(10).Render(v[0]), v[1]))
+		fmt.Fprintf(&details, "%s  %s\n", keyStyle.Width(10).Render(v[0]), v[1])
 	}
 
 	details.WriteRune('\n')
 
 	for _, v := range access {
-		details.WriteString(fmt.Sprintf("%s  %s\n", keyStyle.Width(3).Foreground(styles.Colors.Purple).Render(v[0]), v[1]))
+		fmt.Fprintf(&details, "%s  %s\n", keyStyle.Width(3).Foreground(styles.Colors.Purple).Render(v[0]), v[1])
 	}
 
 	return lipgloss.NewStyle().

@@ -13,12 +13,11 @@ jobs:
   gotest:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
-    - run: script/vendor-onnxruntime && source script/env
-    - name: Test
-      uses: robherley/go-test-action@v1.0.1
-      with:
-        omit: untested
+    - run: sudo apt install just
+    - uses: jdx/mise-action@v4
+    - run: just vendor-onnxruntime
+    - run: just test

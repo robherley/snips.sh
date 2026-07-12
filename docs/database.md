@@ -10,10 +10,10 @@ Database migrations are managed using [goose](https://github.com/pressly/goose).
 
 ### Creating a New Migration
 
-Use `script/migrator` to create a new migration file:
+Use `just migrate` to create a new migration file:
 
 ```bash
-script/migrator -s -dir internal/db/migrations create add_user_nickname sql
+just migrate -s -dir internal/db/migrations create add_user_nickname sql
 ```
 
 This creates a new file like `internal/db/migrations/00002_add_user_nickname.sql` with the goose annotations. Edit it to add your up and down SQL:
@@ -36,22 +36,22 @@ To run migrations manually via CLI:
 
 ```bash
 # Apply all pending migrations
-script/migrator -dir internal/db/migrations sqlite3 <db-path> up
+just migrate -dir internal/db/migrations sqlite3 <db-path> up
 
 # Roll back the last migration
-script/migrator -dir internal/db/migrations sqlite3 <db-path> down
+just migrate -dir internal/db/migrations sqlite3 <db-path> down
 
 # Check current migration status
-script/migrator -dir internal/db/migrations sqlite3 <db-path> status
+just migrate -dir internal/db/migrations sqlite3 <db-path> status
 
 # Migrate to a specific version
-script/migrator -dir internal/db/migrations sqlite3 <db-path> up-to 2
+just migrate -dir internal/db/migrations sqlite3 <db-path> up-to 2
 ```
 
 For a full list of goose commands, run:
 
 ```bash
-script/migrator --help
+just migrate --help
 ```
 
 ## Replication and Backups

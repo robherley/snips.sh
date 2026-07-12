@@ -1,9 +1,0 @@
-#!/bin/sh
-
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-
-echo "linting go code..."
-"${REPO_ROOT}/script/lint-go"
-
-echo "linting web code..."
-"${REPO_ROOT}/script/lint-web"

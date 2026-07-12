@@ -8,46 +8,68 @@ Please use [Issues](https://github.com/robherley/snips.sh/issues) to report bugs
 
 ## Local Development
 
-To get started, you'll need to have [Go installed](https://go.dev/doc/install).
+### Development Toolchain
 
-AI-powered file type detection is provided by [magika-go](https://github.com/robherley/magika-go), which embeds the model and ONNX runtime at build time. No additional setup is required.
+This repository uses [mise](https://mise.jdx.dev/) to install and activate the pinned versions of Go, `just`, and the other development tools declared in [`mise.toml`](/mise.toml).
+
+Install mise using [one of its supported installation methods](https://mise.jdx.dev/installing-mise.html).
+
+You can confirm which versions are active with:
+
+```bash
+mise current
+```
+
+Once mise is activated, use the development commands normally, such as `just test`. Without shell activation, run them through mise explicitly:
+
+```bash
+mise exec -- just test
+```
+
+After installing the toolchain, download the ONNX runtime required by local builds:
+
+```bash
+just vendor-onnxruntime
+```
+
+AI-powered file type detection is provided by [magika-go](https://github.com/robherley/magika-go), which embeds the model and links the downloaded ONNX runtime at build time.
+
+### Running Locally
 
 To run locally:
 
 ```bash
-script/run
+just run
 ```
 
 There are some nice defaults for local development. To see all the available configuration options, run:
 
 ```
-script/run -usage
+just run -usage
 ```
 
 Taking a look at the [`database.md`](/docs/database.md) and [`self-hosting.md`](/docs/self-hosting.md) documents may be useful too.
 
 If you are working on the web UI, I recommend installing [air](https://github.com/cosmtrek/air) so the application recompiles when the files change. Otherwise, the assets won't update while the binary is running.
 
-### Scripts
+### Recipes
 
-This repository follows [scripts-to-rule-them-all](https://github.com/github/scripts-to-rule-them-all), here's a brief description of each:
+Run `just` to list the available development recipes. The main recipes are:
 
-`script/build`: builds the snips.sh binary, supports cross-compilation via `CC` and `TARGETARCH` environment variables
+`just build`: builds the snips.sh binary; set `OUTPUT` to change its destination
 
-`script/env`: sets CGO/linker flags for ONNX runtime, source this file before building (e.g., `source script/env`)
+`just run`: runs the application locally with the required ONNX runtime configuration
 
-`script/lint`: locally installs [golangci-lint](https://github.com/golangci/golangci-lint) and runs the linter
+`just lint`: runs the Go and web linters
 
-`script/migrator`: wrapper for [goose](https://github.com/pressly/goose) to manage database migrations (see [`database.md`](/docs/database.md))
+`just migrate`: wrapper for [goose](https://github.com/pressly/goose) to manage database migrations (see [`database.md`](/docs/database.md))
 
-`script/mocks`: generates mock interfaces using [mockery](https://github.com/vektra/mockery) for testing
+`just mocks`: generates mock interfaces using [mockery](https://github.com/vektra/mockery) for testing
 
-`script/record-tape`: runs [vhs](https://github.com/charmbracelet/vhs) on `docs/tapes/` to generate gifs for readme
+`just record-tape`: runs [vhs](https://github.com/charmbracelet/vhs) on `docs/tapes/` to generate gifs for the README
 
-`script/run`: runs the application locally with proper environment runtime configuration
+`just ssh-tmp`: runs SSH with a new temporary public key, useful for testing new user access
 
-`script/ssh-tmp`: helper to run ssh with a new (temporary) public key, useful for testing new user access
+`just test`: runs the tests with [gotestsum](https://github.com/gotestyourself/gotestsum)
 
-`script/test`: runs go tests with [gotestsum](https://github.com/gotestyourself/gotestsum)
-
-`script/vendor-onnxruntime`: downloads and installs the [ONNX runtime](https://github.com/microsoft/onnxruntime) for the current platform
+`just vendor-onnxruntime`: downloads and installs the [ONNX runtime](https://github.com/microsoft/onnxruntime) for the current platform
