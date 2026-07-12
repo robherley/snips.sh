@@ -1,15 +1,21 @@
 import {
   ArrowLeft,
+  Brain,
   Clock,
+  Copy,
   createIcons,
   FileCode,
   FileText,
   Folder,
   GitCommitHorizontal,
+  Globe,
   HardDrive,
   HatGlasses,
+  KeyRound,
+  Package,
   SquarePen,
   Terminal,
+  Zap,
 } from "lucide";
 
 // getSelectedLines will return the lines specified in the hash.
@@ -136,15 +142,21 @@ const initIcons = () => {
   createIcons({
     icons: {
       ArrowLeft,
+      Brain,
       Clock,
+      Copy,
       FileCode,
       FileText,
       Folder,
       GitCommitHorizontal,
+      Globe,
       HardDrive,
       HatGlasses,
+      KeyRound,
+      Package,
       SquarePen,
       Terminal,
+      Zap,
     },
   });
 };

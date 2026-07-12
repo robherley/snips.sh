@@ -81,6 +81,54 @@ func MetaHandler(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
+func LandingHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
+	sshHost := cfg.SSH.External.Hostname()
+	sshPort := cfg.SSH.External.Port()
+
+	portFlag := ""
+	if sshPort != "" && sshPort != "22" {
+		portFlag = fmt.Sprintf("-p %s ", sshPort)
+	}
+
+	httpAddr := fmt.Sprintf("%s://%s", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host)
+
+	vars := map[string]interface{}{
+		"SSHHost":                  sshHost,
+		"SSHPort":                  sshPort,
+		"HTTPAddr":                 httpAddr,
+		"SSHCommand":               fmt.Sprintf("ssh %s%s", portFlag, sshHost),
+		"SSHCommandForFile":        fmt.Sprintf("ssh %sf:<id>@%s", portFlag, sshHost),
+		"SSHCommandForFileContent": fmt.Sprintf("ssh %sf:<id>:content@%s", portFlag, sshHost),
+		"CommitSHA":                config.BuildCommit(),
+		"OGImageURL":               httpAddr + "/og.png",
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		log := logger.From(r.Context())
+
+		if AcceptsMarkdown(r) {
+			content, err := assets.Doc(readme)
+			if err != nil {
+				log.Error("unable to load readme", "err", err)
+				http.Error(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+			w.Header().Set("Vary", "Accept")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(DocToMarkdown(cfg, readme, content))
+			return
+		}
+
+		err := assets.Template("landing.go.html").Execute(w, vars)
+		if err != nil {
+			log.Error("unable to render template", "err", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
 func DocHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
