@@ -23,15 +23,6 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/views/settings"
 )
 
-// topLevelTabs lists the top-level views cycled with shift+tab, in tab-bar order.
-var topLevelTabs = []struct {
-	kind  views.Kind
-	label string
-}{
-	{views.Browser, "Files"},
-	{views.Settings, "Settings"},
-}
-
 type TUI struct {
 	UserID      string
 	Fingerprint string
@@ -70,7 +61,7 @@ func New(ctx context.Context, cfg *config.Config, width, height int, user *snips
 	t.models = []views.Model{
 		views.Browser:  browser.New(cfg, width, t.innerViewHeight(), files, theme),
 		views.Code:     code.New(width, t.innerViewHeight()),
-		views.Prompt:   prompt.New(ctx, cfg, database, width),
+		views.Prompt:   prompt.New(ctx, cfg, database, width, t.innerViewHeight(), theme),
 		views.Settings: settings.New(width, t.innerViewHeight(), database, user, fingerprint),
 	}
 
@@ -100,10 +91,12 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return t, tea.Quit
 		}
-		// shift+tab top-level navigation always wins (it isn't typeable)
-		if msg.String() == "shift+tab" {
-			t.cycleTopLevel()
-			return t, nil
+		// ctrl+p toggles the settings menu from anywhere (it isn't typeable)
+		if msg.String() == "ctrl+p" {
+			if t.currentViewKind() == views.Settings {
+				return t, cmds.PopView()
+			}
+			return t, cmds.PushView(views.Settings)
 		}
 		// when a view is consuming raw input (filter, text field), skip our shortcuts
 		if t.currentViewModel().IsCapturing() {
@@ -180,48 +173,13 @@ func (t TUI) titleBar() string {
 		Padding(0, 1).
 		Bold(true).
 		Render("snips.sh")
-	tabs := t.tabs()
 
-	count := t.width - lipgloss.Width(brand) - lipgloss.Width(tabs)
+	count := t.width - lipgloss.Width(brand) - 1
 	if count < 0 {
 		count = 0
 	}
 
-	return brand + tabs + strings.Repeat(styles.BC(t.theme, "╱"), count)
-}
-
-func (t TUI) tabs() string {
-	active := t.views[0]
-
-	activeStyle := lipgloss.NewStyle().Foreground(t.theme).Bold(true).Underline(true)
-	inactiveStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted)
-	sep := styles.C(t.theme, " ╱ ")
-
-	out := sep // initial separator between brand and tabs
-	for i, tab := range topLevelTabs {
-		if i > 0 {
-			out += sep
-		}
-		label := tab.label
-		if tab.kind == active {
-			out += activeStyle.Render(label)
-		} else {
-			out += inactiveStyle.Render(label)
-		}
-	}
-	return out + " " // breathing room before the slashes
-}
-
-// cycleTopLevel resets the view stack so that the next top-level tab becomes
-// the active view (and any nested views are popped).
-func (t *TUI) cycleTopLevel() {
-	active := t.views[0]
-	for i, tab := range topLevelTabs {
-		if tab.kind == active {
-			t.views = []views.Kind{topLevelTabs[(i+1)%len(topLevelTabs)].kind}
-			return
-		}
-	}
+	return brand + " " + strings.Repeat(styles.BC(t.theme, "╱"), count)
 }
 
 func (t TUI) helpBar() string {

@@ -2,39 +2,42 @@ package settings
 
 import (
 	"context"
+	"fmt"
+	"image/color"
 
 	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/snips"
+	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
+	"github.com/robherley/snips.sh/internal/tui/views"
 )
 
-type itemKind int
+// page is a level of the settings menu; the root lists entries that drill
+// into deeper pages.
+type page int
 
 const (
-	// themePicker expands into the styles.ThemeOptions list when entered.
-	themePicker itemKind = iota
+	rootPage page = iota
+	themePage
+	deletePage
 )
 
-// item is a single navigable row in the settings view.
-type item struct {
-	kind itemKind
+// entry is a selectable row on the root page that opens a deeper page.
+type entry struct {
+	label  string
+	page   page
+	danger bool
 }
 
-// section groups related items under a header.
-type section struct {
-	title string
-	items []item
-}
-
-// newSections lists every setting; add new sections (or items) here.
-func newSections() []section {
-	return []section{
-		{title: "theme color", items: []item{{kind: themePicker}}},
-	}
+// entries lists the root menu; add new settings pages here.
+var entries = []entry{
+	{label: "theme color", page: themePage},
+	{label: "delete all my data", page: deletePage, danger: true},
 }
 
 type Settings struct {
@@ -45,32 +48,29 @@ type Settings struct {
 	width  int
 	height int
 
-	sections   []section
-	cursor     int  // top-level item index, flat across all sections
-	focused    bool // navigating inside the theme picker
-	themeIndex int  // selection within the theme picker while focused
+	page       page
+	cursor     int             // selected entry on the root page
+	themeIndex int             // selection within the theme page
+	confirm    textinput.Model // typed confirmation on the delete page
+	fileCount  int             // user's file count, fetched when the delete page opens
 	feedback   string
 	feedbackOK bool
 }
 
 func New(width, height int, database db.DB, user *snips.User, fingerprint string) Settings {
+	ti := textinput.New()
+	ti.CharLimit = 255
+	ti.SetWidth(30)
+	ti.Prompt = styles.BC(styles.Colors.Red, "> ")
+
 	return Settings{
 		db:          database,
 		user:        user,
 		fingerprint: fingerprint,
 		width:       width,
 		height:      height,
-		sections:    newSections(),
+		confirm:     ti,
 	}
-}
-
-// items flattens all sections' items in display order.
-func (s Settings) items() []item {
-	items := []item{}
-	for _, sec := range s.sections {
-		items = append(items, sec.items...)
-	}
-	return items
 }
 
 // themeIndexOf returns the index of the named theme option, defaulting to the
@@ -93,9 +93,20 @@ func (s Settings) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		s.width, s.height = msg.Width, msg.Height
 		return s, nil
+	case msgs.PushView:
+		if msg.View == views.Settings {
+			// opened fresh: start back at the root with stale feedback cleared
+			s.page = rootPage
+			s.cursor = 0
+			s.feedback = ""
+		}
+		return s, nil
 	case tea.KeyPressMsg:
-		if s.focused {
-			return s.updateThemePicker(msg)
+		switch s.page {
+		case themePage:
+			return s.updateThemePage(msg)
+		case deletePage:
+			return s.updateDeletePage(msg)
 		}
 
 		switch msg.String() {
@@ -104,27 +115,79 @@ func (s Settings) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				s.cursor--
 			}
 		case "down", "j":
-			if s.cursor < len(s.items())-1 {
+			if s.cursor < len(entries)-1 {
 				s.cursor++
 			}
 		case "enter":
-			return s.activate()
+			return s.open(entries[s.cursor].page)
 		}
 	}
 	return s, nil
 }
 
-// activate enters the item under the cursor.
-func (s Settings) activate() (tea.Model, tea.Cmd) {
-	if s.items()[s.cursor].kind == themePicker {
-		s.focused = true
+// open drills into a deeper page.
+func (s Settings) open(p page) (tea.Model, tea.Cmd) {
+	s.page = p
+	s.feedback = ""
+	switch p {
+	case themePage:
 		s.themeIndex = themeIndexOf(s.user.ThemeColor)
-		s.feedback = ""
+	case deletePage:
+		files, err := s.db.FindFilesByUser(context.Background(), s.user.ID)
+		if err != nil {
+			s.page = rootPage
+			s.feedback = "failed to count files: " + err.Error()
+			s.feedbackOK = false
+			return s, nil
+		}
+		s.fileCount = len(files)
+		s.confirm.Reset()
+		s.confirm.Focus()
+		return s, textinput.Blink
 	}
 	return s, nil
 }
 
-func (s Settings) updateThemePicker(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+func (s Settings) updateDeletePage(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		if s.confirm.Value() != s.user.ID {
+			s.feedback = "please type your user id to confirm"
+			s.feedbackOK = false
+			return s, nil
+		}
+		return s.deleteEverything()
+	case "esc":
+		s.page = rootPage
+		s.feedback = ""
+		return s, nil
+	}
+
+	// everything else is typed into the confirmation input
+	var cmd tea.Cmd
+	s.confirm, cmd = s.confirm.Update(msg)
+	return s, cmd
+}
+
+func (s Settings) deleteEverything() (tea.Model, tea.Cmd) {
+	count, err := s.db.DeleteFilesByUser(context.Background(), s.user.ID)
+	if err != nil {
+		s.feedback = "failed to delete: " + err.Error()
+		s.feedbackOK = false
+		return s, nil
+	}
+
+	s.page = rootPage
+	s.feedback = fmt.Sprintf("deleted %d files", count)
+	if count == 1 {
+		s.feedback = "deleted 1 file"
+	}
+	s.feedbackOK = true
+
+	return s, cmds.ReloadFiles(s.db, s.user.ID)
+}
+
+func (s Settings) updateThemePage(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "up", "k":
 		if s.themeIndex > 0 {
@@ -135,12 +198,12 @@ func (s Settings) updateThemePicker(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			s.themeIndex++
 		}
 	case "enter":
-		s.focused = false
+		s.page = rootPage
 		return s.saveTheme(s.themeIndex)
 	case "esc":
-		s.focused = false
+		s.page = rootPage
 	case "q":
-		// the view captures input while focused, so quit needs handling here
+		// the view captures input on deeper pages, so quit needs handling here
 		return s, tea.Quit
 	}
 	return s, nil
@@ -162,29 +225,41 @@ func (s Settings) saveTheme(index int) (tea.Model, tea.Cmd) {
 }
 
 func (s Settings) View() tea.View {
-	labelStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted).Bold(true)
+	var title string
+	var rows []string
+	switch s.page {
+	case themePage:
+		title = "settings > theme color"
+		rows = s.themeRows()
+	case deletePage:
+		title = "settings > delete all my data"
+		rows = s.deleteRows()
+	default:
+		title = "settings"
+		rows = s.rootRows()
+	}
+
+	body := styles.ModalBody(s.accent(), title, rows...)
+	return tea.NewView(styles.Modal(s.width, s.height, body))
+}
+
+// accent is the user's chosen theme color, used to highlight the modal.
+func (s Settings) accent() color.Color {
+	return styles.Theme(s.user.ThemeColor)
+}
+
+func (s Settings) rootRows() []string {
+	labelStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted).Bold(true).Width(13)
 	valueStyle := lipgloss.NewStyle().Foreground(styles.Colors.White)
-	helpStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted)
 
 	rows := []string{
-		labelStyle.Render("user id"),
-		valueStyle.Render(s.user.ID),
+		labelStyle.Render("user id") + valueStyle.Render(s.user.ID),
+		labelStyle.Render("fingerprint") + valueStyle.Render(s.fingerprint),
 		"",
-		labelStyle.Render("fingerprint"),
-		valueStyle.Render(s.fingerprint),
 	}
 
-	flat := 0
-	for _, sec := range s.sections {
-		rows = append(rows, "", labelStyle.Render(sec.title))
-		for _, it := range sec.items {
-			rows = append(rows, s.renderItem(it, flat == s.cursor)...)
-			flat++
-		}
-	}
-
-	if s.focused {
-		rows = append(rows, "", helpStyle.Render("↑/↓ navigate · ↵ apply · esc back"))
+	for i, e := range entries {
+		rows = append(rows, s.entryRow(e, i == s.cursor))
 	}
 
 	if s.feedback != "" {
@@ -192,42 +267,35 @@ func (s Settings) View() tea.View {
 		if !s.feedbackOK {
 			c = styles.Colors.Red
 		}
-		rows = append(rows, "", lipgloss.NewStyle().Foreground(c).Render(s.feedback))
+		rows = append(rows, "", styles.C(c, s.feedback))
 	}
 
-	body := lipgloss.NewStyle().
-		Padding(1, 2).
-		Render(lipgloss.JoinVertical(lipgloss.Top, rows...))
-
-	return tea.NewView(lipgloss.Place(s.width, s.height, lipgloss.Left, lipgloss.Top, body))
+	return rows
 }
 
-// renderItem renders an item's rows. Items render a single collapsed row
-// until entered; the theme picker expands into the full option list while
-// focused.
-func (s Settings) renderItem(it item, selected bool) []string {
-	if it.kind != themePicker {
-		return nil
-	}
-
-	if s.focused && selected {
-		return s.renderThemeOptions()
-	}
-
-	opt := styles.ThemeOptions[themeIndexOf(s.user.ThemeColor)]
-	swatch := lipgloss.NewStyle().Background(opt.Color).Render("   ")
+// entryRow renders a root menu entry with its current value.
+func (s Settings) entryRow(e entry, selected bool) string {
 	cursor := "  "
 	nameStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted)
-	hint := ""
 	if selected {
-		cursor = lipgloss.NewStyle().Foreground(opt.Color).Bold(true).Render("→ ")
+		cursor = styles.BC(s.accent(), "→ ")
 		nameStyle = lipgloss.NewStyle().Foreground(styles.Colors.White).Bold(true)
-		hint = lipgloss.NewStyle().Foreground(styles.Colors.Muted).Render("  ↵ change")
+		if e.danger {
+			nameStyle = nameStyle.Foreground(styles.Colors.Red)
+		}
 	}
-	return []string{cursor + swatch + "  " + nameStyle.Render(opt.Name) + hint}
+
+	value := ""
+	if e.page == themePage {
+		opt := styles.ThemeOptions[themeIndexOf(s.user.ThemeColor)]
+		swatch := lipgloss.NewStyle().Background(opt.Color).Render("   ")
+		value = "  " + swatch + "  " + styles.C(styles.Colors.Muted, opt.Name)
+	}
+
+	return cursor + nameStyle.Render(e.label) + value
 }
 
-func (s Settings) renderThemeOptions() []string {
+func (s Settings) themeRows() []string {
 	rows := make([]string, 0, len(styles.ThemeOptions))
 	for i, opt := range styles.ThemeOptions {
 		swatch := lipgloss.NewStyle().Background(opt.Color).Render("   ")
@@ -242,15 +310,46 @@ func (s Settings) renderThemeOptions() []string {
 	return rows
 }
 
-func (s Settings) Keys() help.KeyMap {
-	if s.focused {
-		return pickerKeys
+// deleteRows renders the delete confirmation page.
+func (s Settings) deleteRows() []string {
+	warnStyle := lipgloss.NewStyle().Foreground(styles.Colors.Red)
+	mutedStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted)
+
+	things := fmt.Sprintf("all %d of your files", s.fileCount)
+	switch s.fileCount {
+	case 0:
+		things = "your files (you have none)"
+	case 1:
+		things = "your only file"
 	}
-	return keys
+
+	rows := []string{
+		warnStyle.Render(fmt.Sprintf("this permanently deletes %s.", things)),
+		mutedStyle.Render("type your user id (" + s.user.ID + ") to confirm"),
+		"",
+		s.confirm.View(),
+	}
+
+	if s.feedback != "" && !s.feedbackOK {
+		rows = append(rows, "", styles.C(styles.Colors.Red, s.feedback))
+	}
+
+	return rows
+}
+
+func (s Settings) Keys() help.KeyMap {
+	switch s.page {
+	case themePage:
+		return themeKeys
+	case deletePage:
+		return deleteKeys
+	default:
+		return keys
+	}
 }
 
 func (s Settings) IsCapturing() bool {
-	// while inside the theme picker, keys (esc, q, ...) belong to this view
-	// rather than the surrounding TUI
-	return s.focused
+	// on deeper pages, keys (esc, q, ...) belong to this view rather than the
+	// surrounding TUI; on the root page esc closes the modal at the TUI level
+	return s.page != rootPage
 }

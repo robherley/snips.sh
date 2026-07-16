@@ -328,6 +328,42 @@ func (s *Sqlite) DeleteFile(ctx context.Context, id string) error {
 	return tx.Commit()
 }
 
+func (s *Sqlite) DeleteFilesByUser(ctx context.Context, userID string) (int64, error) {
+	tx, err := s.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	const deleteRevisionsQuery = `
+		DELETE FROM revisions
+		WHERE file_id IN (SELECT id FROM files WHERE user_id = ?)
+	`
+
+	if _, err := tx.ExecContext(ctx, deleteRevisionsQuery, userID); err != nil {
+		return 0, err
+	}
+
+	const deleteFilesQuery = `
+		DELETE FROM files
+		WHERE user_id = ?
+	`
+
+	result, err := tx.ExecContext(ctx, deleteFilesQuery, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return count, tx.Commit()
+}
+
 func (s *Sqlite) CreateRevision(ctx context.Context, revision *snips.Revision, maxRevisions uint64) error {
 	tx, err := s.BeginTx(ctx, nil)
 	if err != nil {

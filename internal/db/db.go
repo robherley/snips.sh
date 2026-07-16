@@ -17,6 +17,8 @@ type DB interface {
 	UpdateFile(ctx context.Context, file *snips.File) error
 	// DeleteFile deletes a file by its ID.
 	DeleteFile(ctx context.Context, id string) error
+	// DeleteFilesByUser deletes all of a user's files and their revisions, returning the number of files deleted.
+	DeleteFilesByUser(ctx context.Context, userID string) (int64, error)
 	// FindFilesByUser returns all files for a user. Does not include file content.
 	FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error)
 	// FindPublicKeyByFingerprint returns a public key by its fingerprint.

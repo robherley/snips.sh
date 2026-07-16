@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image/color"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +31,7 @@ type Prompt struct {
 	db       db.DB
 	width    int
 	height   int
+	theme    color.Color
 	finished bool
 
 	file              *snips.File
@@ -39,7 +41,13 @@ type Prompt struct {
 	feedback          string
 }
 
-func New(ctx context.Context, cfg *config.Config, db db.DB, width int) Prompt {
+// contentWidth caps modal content so long feedback and the extension selector
+// wrap sensibly instead of stretching the window across the terminal.
+func contentWidth(width int) int {
+	return max(styles.ModalMinWidth, min(width-10, 76))
+}
+
+func New(ctx context.Context, cfg *config.Config, db db.DB, width, height int, theme color.Color) Prompt {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 255
@@ -51,8 +59,10 @@ func New(ctx context.Context, cfg *config.Config, db db.DB, width int) Prompt {
 		cfg:               cfg,
 		db:                db,
 		textInput:         ti,
-		extensionSelector: NewExtensionSelector(width),
+		extensionSelector: NewExtensionSelector(contentWidth(width)),
 		width:             width,
+		height:            height,
+		theme:             theme,
 	}
 }
 
@@ -70,6 +80,19 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		if msg.Code == tea.KeyEnter {
 			return p, p.handleSubmit()
+		}
+		// while its filter input is focused, the extension selector routes
+		// every key to the filter, so move the cursor ourselves to keep the
+		// arrow keys working
+		if p.kind == ChangeExtension {
+			switch msg.Code {
+			case tea.KeyUp:
+				p.extensionSelector.CursorUp()
+				return p, nil
+			case tea.KeyDown:
+				p.extensionSelector.CursorDown()
+				return p, nil
+			}
 		}
 	case FeedbackMsg:
 		p.feedback = msg.Feedback
@@ -91,7 +114,9 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		p.width = msg.Width
 		p.height = msg.Height
-		p.extensionSelector.SetWidth(msg.Width)
+		p.extensionSelector.SetWidth(contentWidth(msg.Width))
+	case msgs.ThemeChanged:
+		p.theme = msg.Color
 	case SelectorInitMsg:
 		// bit of a hack to get the extension selector to filter on init
 		p.extensionSelector, cmd = p.extensionSelector.Update(tea.KeyPressMsg{
@@ -117,8 +142,8 @@ func (p Prompt) View() tea.View {
 		return tea.NewView(lipgloss.Place(p.width, p.height, lipgloss.Left, lipgloss.Top, ""))
 	}
 
-	// fill the allocated height so the surrounding TUI's bottom bar stays anchored
-	return tea.NewView(lipgloss.Place(p.width, p.height, lipgloss.Left, lipgloss.Top, p.renderPrompt()))
+	body := styles.ModalBody(p.theme, "options > "+p.kind.title(), p.renderPrompt())
+	return tea.NewView(styles.Modal(p.width, p.height, body))
 }
 
 func (p Prompt) Keys() help.KeyMap {
@@ -170,16 +195,17 @@ func (p Prompt) renderPrompt() string {
 
 	if !p.finished {
 		pieces = append(pieces,
-			"",
 			question,
 			"",
 			prompt,
-			"",
 		)
 	}
 
 	if p.feedback != "" {
-		pieces = append(pieces, "", wrap.String(p.feedback, p.width), "")
+		if !p.finished {
+			pieces = append(pieces, "")
+		}
+		pieces = append(pieces, wrap.String(p.feedback, contentWidth(p.width)))
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Top, pieces...)

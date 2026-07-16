@@ -306,6 +306,86 @@ func (s *SqliteSuite) TestDeleteFile() {
 	s.Require().Equal(sql.ErrNoRows, err)
 }
 
+func (s *SqliteSuite) TestDeleteFilesByUser() {
+	database := s.getTestDB(true)
+
+	userID := id.New()
+	otherUserID := id.New()
+
+	const insertFileQuery = `
+		INSERT INTO files (
+			id,
+			created_at,
+			updated_at,
+			size,
+			content,
+			private,
+			type,
+			user_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+
+	const insertRevisionQuery = `
+		INSERT INTO revisions (
+			id,
+			sequence,
+			file_id,
+			created_at,
+			diff,
+			size,
+			type
+		) VALUES (?, ?, ?, ?, ?, ?, ?)`
+
+	insertFile := func(ownerID string) string {
+		fileID := id.New()
+		_, err := s.testDB.Exec(
+			insertFileQuery,
+			fileID,
+			time.Now().UTC(),
+			time.Now().UTC(),
+			11,
+			[]byte("hello world"),
+			false,
+			"plaintext",
+			ownerID,
+		)
+		s.Require().NoError(err)
+
+		_, err = s.testDB.Exec(
+			insertRevisionQuery,
+			id.New(),
+			1,
+			fileID,
+			time.Now().UTC(),
+			[]byte("diff"),
+			4,
+			"create",
+		)
+		s.Require().NoError(err)
+
+		return fileID
+	}
+
+	numFiles := 3
+	for range numFiles {
+		insertFile(userID)
+	}
+	otherFileID := insertFile(otherUserID)
+
+	count, err := database.DeleteFilesByUser(context.TODO(), userID)
+	s.Require().NoError(err)
+	s.Require().Equal(int64(numFiles), count)
+
+	var remainingFiles int
+	err = s.testDB.QueryRow("SELECT COUNT(*) FROM files").Scan(&remainingFiles)
+	s.Require().NoError(err)
+	s.Require().Equal(1, remainingFiles)
+
+	var remainingRevisions int
+	err = s.testDB.QueryRow("SELECT COUNT(*) FROM revisions WHERE file_id != ?", otherFileID).Scan(&remainingRevisions)
+	s.Require().NoError(err)
+	s.Require().Equal(0, remainingRevisions)
+}
+
 func (s *SqliteSuite) TestFindFilesByUser() {
 	database := s.getTestDB(true)
 

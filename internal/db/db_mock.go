@@ -72,7 +72,7 @@ type MockDB_CountRevisionsByFileID_Call struct {
 // CountRevisionsByFileID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - fileID string
-func (_e *MockDB_Expecter) CountRevisionsByFileID(ctx interface{}, fileID interface{}) *MockDB_CountRevisionsByFileID_Call {
+func (_e *MockDB_Expecter) CountRevisionsByFileID(ctx any, fileID any) *MockDB_CountRevisionsByFileID_Call {
 	return &MockDB_CountRevisionsByFileID_Call{Call: _e.mock.On("CountRevisionsByFileID", ctx, fileID)}
 }
 
@@ -130,7 +130,7 @@ type MockDB_CreateFile_Call struct {
 //   - ctx context.Context
 //   - file *snips.File
 //   - maxFiles uint64
-func (_e *MockDB_Expecter) CreateFile(ctx interface{}, file interface{}, maxFiles interface{}) *MockDB_CreateFile_Call {
+func (_e *MockDB_Expecter) CreateFile(ctx any, file any, maxFiles any) *MockDB_CreateFile_Call {
 	return &MockDB_CreateFile_Call{Call: _e.mock.On("CreateFile", ctx, file, maxFiles)}
 }
 
@@ -193,7 +193,7 @@ type MockDB_CreateRevision_Call struct {
 //   - ctx context.Context
 //   - revision *snips.Revision
 //   - maxRevisions uint64
-func (_e *MockDB_Expecter) CreateRevision(ctx interface{}, revision interface{}, maxRevisions interface{}) *MockDB_CreateRevision_Call {
+func (_e *MockDB_Expecter) CreateRevision(ctx any, revision any, maxRevisions any) *MockDB_CreateRevision_Call {
 	return &MockDB_CreateRevision_Call{Call: _e.mock.On("CreateRevision", ctx, revision, maxRevisions)}
 }
 
@@ -266,7 +266,7 @@ type MockDB_CreateUserWithPublicKey_Call struct {
 // CreateUserWithPublicKey is a helper method to define mock.On call
 //   - ctx context.Context
 //   - publickey *snips.PublicKey
-func (_e *MockDB_Expecter) CreateUserWithPublicKey(ctx interface{}, publickey interface{}) *MockDB_CreateUserWithPublicKey_Call {
+func (_e *MockDB_Expecter) CreateUserWithPublicKey(ctx any, publickey any) *MockDB_CreateUserWithPublicKey_Call {
 	return &MockDB_CreateUserWithPublicKey_Call{Call: _e.mock.On("CreateUserWithPublicKey", ctx, publickey)}
 }
 
@@ -323,7 +323,7 @@ type MockDB_DeleteFile_Call struct {
 // DeleteFile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockDB_Expecter) DeleteFile(ctx interface{}, id interface{}) *MockDB_DeleteFile_Call {
+func (_e *MockDB_Expecter) DeleteFile(ctx any, id any) *MockDB_DeleteFile_Call {
 	return &MockDB_DeleteFile_Call{Call: _e.mock.On("DeleteFile", ctx, id)}
 }
 
@@ -351,6 +351,72 @@ func (_c *MockDB_DeleteFile_Call) Return(err error) *MockDB_DeleteFile_Call {
 }
 
 func (_c *MockDB_DeleteFile_Call) RunAndReturn(run func(ctx context.Context, id string) error) *MockDB_DeleteFile_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteFilesByUser provides a mock function for the type MockDB
+func (_mock *MockDB) DeleteFilesByUser(ctx context.Context, userID string) (int64, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteFilesByUser")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (int64, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) int64); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDB_DeleteFilesByUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteFilesByUser'
+type MockDB_DeleteFilesByUser_Call struct {
+	*mock.Call
+}
+
+// DeleteFilesByUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockDB_Expecter) DeleteFilesByUser(ctx any, userID any) *MockDB_DeleteFilesByUser_Call {
+	return &MockDB_DeleteFilesByUser_Call{Call: _e.mock.On("DeleteFilesByUser", ctx, userID)}
+}
+
+func (_c *MockDB_DeleteFilesByUser_Call) Run(run func(ctx context.Context, userID string)) *MockDB_DeleteFilesByUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_DeleteFilesByUser_Call) Return(n int64, err error) *MockDB_DeleteFilesByUser_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockDB_DeleteFilesByUser_Call) RunAndReturn(run func(ctx context.Context, userID string) (int64, error)) *MockDB_DeleteFilesByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -391,7 +457,7 @@ type MockDB_FindFile_Call struct {
 // FindFile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockDB_Expecter) FindFile(ctx interface{}, id interface{}) *MockDB_FindFile_Call {
+func (_e *MockDB_Expecter) FindFile(ctx any, id any) *MockDB_FindFile_Call {
 	return &MockDB_FindFile_Call{Call: _e.mock.On("FindFile", ctx, id)}
 }
 
@@ -459,7 +525,7 @@ type MockDB_FindFilesByUser_Call struct {
 // FindFilesByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockDB_Expecter) FindFilesByUser(ctx interface{}, userID interface{}) *MockDB_FindFilesByUser_Call {
+func (_e *MockDB_Expecter) FindFilesByUser(ctx any, userID any) *MockDB_FindFilesByUser_Call {
 	return &MockDB_FindFilesByUser_Call{Call: _e.mock.On("FindFilesByUser", ctx, userID)}
 }
 
@@ -527,7 +593,7 @@ type MockDB_FindPublicKeyByFingerprint_Call struct {
 // FindPublicKeyByFingerprint is a helper method to define mock.On call
 //   - ctx context.Context
 //   - fingerprint string
-func (_e *MockDB_Expecter) FindPublicKeyByFingerprint(ctx interface{}, fingerprint interface{}) *MockDB_FindPublicKeyByFingerprint_Call {
+func (_e *MockDB_Expecter) FindPublicKeyByFingerprint(ctx any, fingerprint any) *MockDB_FindPublicKeyByFingerprint_Call {
 	return &MockDB_FindPublicKeyByFingerprint_Call{Call: _e.mock.On("FindPublicKeyByFingerprint", ctx, fingerprint)}
 }
 
@@ -596,7 +662,7 @@ type MockDB_FindRevisionByFileIDAndSequence_Call struct {
 //   - ctx context.Context
 //   - fileID string
 //   - sequence int64
-func (_e *MockDB_Expecter) FindRevisionByFileIDAndSequence(ctx interface{}, fileID interface{}, sequence interface{}) *MockDB_FindRevisionByFileIDAndSequence_Call {
+func (_e *MockDB_Expecter) FindRevisionByFileIDAndSequence(ctx any, fileID any, sequence any) *MockDB_FindRevisionByFileIDAndSequence_Call {
 	return &MockDB_FindRevisionByFileIDAndSequence_Call{Call: _e.mock.On("FindRevisionByFileIDAndSequence", ctx, fileID, sequence)}
 }
 
@@ -669,7 +735,7 @@ type MockDB_FindRevisionsByFileID_Call struct {
 // FindRevisionsByFileID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - fileID string
-func (_e *MockDB_Expecter) FindRevisionsByFileID(ctx interface{}, fileID interface{}) *MockDB_FindRevisionsByFileID_Call {
+func (_e *MockDB_Expecter) FindRevisionsByFileID(ctx any, fileID any) *MockDB_FindRevisionsByFileID_Call {
 	return &MockDB_FindRevisionsByFileID_Call{Call: _e.mock.On("FindRevisionsByFileID", ctx, fileID)}
 }
 
@@ -737,7 +803,7 @@ type MockDB_FindUser_Call struct {
 // FindUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockDB_Expecter) FindUser(ctx interface{}, id interface{}) *MockDB_FindUser_Call {
+func (_e *MockDB_Expecter) FindUser(ctx any, id any) *MockDB_FindUser_Call {
 	return &MockDB_FindUser_Call{Call: _e.mock.On("FindUser", ctx, id)}
 }
 
@@ -793,7 +859,7 @@ type MockDB_Migrate_Call struct {
 
 // Migrate is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockDB_Expecter) Migrate(ctx interface{}) *MockDB_Migrate_Call {
+func (_e *MockDB_Expecter) Migrate(ctx any) *MockDB_Migrate_Call {
 	return &MockDB_Migrate_Call{Call: _e.mock.On("Migrate", ctx)}
 }
 
@@ -845,7 +911,7 @@ type MockDB_UpdateFile_Call struct {
 // UpdateFile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - file *snips.File
-func (_e *MockDB_Expecter) UpdateFile(ctx interface{}, file interface{}) *MockDB_UpdateFile_Call {
+func (_e *MockDB_Expecter) UpdateFile(ctx any, file any) *MockDB_UpdateFile_Call {
 	return &MockDB_UpdateFile_Call{Call: _e.mock.On("UpdateFile", ctx, file)}
 }
 
@@ -902,7 +968,7 @@ type MockDB_UpdateUser_Call struct {
 // UpdateUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - user *snips.User
-func (_e *MockDB_Expecter) UpdateUser(ctx interface{}, user interface{}) *MockDB_UpdateUser_Call {
+func (_e *MockDB_Expecter) UpdateUser(ctx any, user any) *MockDB_UpdateUser_Call {
 	return &MockDB_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, user)}
 }
 
