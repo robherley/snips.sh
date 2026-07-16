@@ -14,7 +14,7 @@ type Service struct {
 func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /{$}", DocHandler(cfg, assets))
+	mux.HandleFunc("GET /{$}", LandingHandler(cfg, assets))
 	mux.HandleFunc("GET /docs/{name}", DocHandler(cfg, assets))
 	mux.HandleFunc("GET /og.png", DocOGImageHandler(cfg, assets))
 	mux.HandleFunc("GET /docs/{name}/og.png", DocOGImageHandler(cfg, assets))

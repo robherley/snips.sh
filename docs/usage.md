@@ -21,14 +21,14 @@ snips.sh is an SSH-driven snippet manager. All interactions happen through your 
 | Action | Command |
 |--------|---------|
 | Upload | `echo "content" \| ssh snips.sh` |
-| Upload (private) | `echo "content" \| ssh snips.sh -private` |
-| Upload (with type hint) | `echo "content" \| ssh snips.sh -ext py` |
-| Upload (private + signed URL) | `echo "content" \| ssh snips.sh -private -ttl 24h` |
+| Upload (private) | `echo "content" \| ssh snips.sh -- -private` |
+| Upload (with type hint) | `echo "content" \| ssh snips.sh -- -ext py` |
+| Upload (private + signed URL) | `echo "content" \| ssh snips.sh -- -private -ttl 24h` |
 | Download | `ssh f:<id>@snips.sh` |
 | Update | `echo "new" \| ssh f:<id>:content@snips.sh` |
-| Delete | `ssh f:<id>@snips.sh rm` |
-| Force delete | `ssh f:<id>@snips.sh rm -f` |
-| Sign | `ssh f:<id>@snips.sh sign -ttl 1h` |
+| Delete | `ssh f:<id>@snips.sh -- rm` |
+| Force delete | `ssh f:<id>@snips.sh -- rm -f` |
+| Sign | `ssh f:<id>@snips.sh -- sign -ttl 1h` |
 | Interactive TUI | `ssh snips.sh` |
 
 ## Authentication

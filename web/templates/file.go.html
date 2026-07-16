@@ -16,6 +16,7 @@
     {{ .CSS }}
 </style>
 {{ end }} {{ end }} {{ define "nav" }}
+<nav class="file-header">
 <div class="file-details text-sm">
     <div class="file-detail">
         <i data-lucide="terminal"></i>
@@ -83,6 +84,7 @@
     </a>
     {{ end }}
 </div>
+</nav>
 {{ end }} {{ define "content" }}
 <article class="file-content">{{ .HTML }}</article>
 {{ if ne .FileType "binary" }}

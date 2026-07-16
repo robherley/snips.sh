@@ -1,0 +1,226 @@
+{{ define "title" }}snips.sh{{ end }} {{ define "head" }}
+<meta property="og:title" content="snips.sh" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="snips.sh" />
+<meta
+    property="og:description"
+    content="snips.sh is a free, anonymous, open source, snippet hosting service"
+/>
+{{ if .OGImageURL }}
+<meta property="og:image" content="{{ .OGImageURL }}" />
+{{ end }}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="snips.sh" />
+<meta
+    name="twitter:description"
+    content="snips.sh is a free, anonymous, open source, snippet hosting service"
+/>
+{{ if .OGImageURL }}
+<meta name="twitter:image" content="{{ .OGImageURL }}" />
+{{ end }} {{ end }} {{ define "body-class" }}landing{{ end }} {{ define "content" }}
+<section class="hero">
+    <div class="hero-pitch">
+        <p class="eyebrow muted">zero install · anonymous · open source</p>
+        <h2 class="hero-title">pipe anything,<br />get a link.</h2>
+        <p class="hero-sub">
+            SSH-powered pastebin with a human-friendly TUI and web UI. There's nothing to install, it works on any machine with a SSH client.
+        </p>
+        <div class="hero-try">
+            <code
+                id="hero-command"
+                data-ssh-host="{{ .SSHHost }}"
+                data-ssh-port="{{ .SSHPort }}"
+                data-http-addr="{{ .HTTPAddr }}"
+                >echo '{ "hello": "world" }' | {{ .SSHCommand }}</code
+            >
+            <button
+                class="hero-copy"
+                id="copy-hero-command"
+                aria-label="copy command to clipboard"
+            >
+                <i data-lucide="copy"></i>
+                <i data-lucide="check"></i>
+            </button>
+        </div>
+    </div>
+    <div class="hero-demo">
+        <div
+            class="terminal"
+            id="landing-terminal"
+            role="region"
+            aria-label="terminal demo"
+            aria-live="off"
+        >
+            <div class="terminal-bar">
+                <span class="terminal-dot"></span>
+                <span class="terminal-dot"></span>
+                <span class="terminal-dot"></span>
+                <span class="terminal-bar-title muted">{{ .SSHHost }}</span>
+            </div>
+            <pre class="terminal-screen" id="terminal-screen"></pre>
+        </div>
+        <div
+            class="terminal-tabs"
+            id="terminal-tabs"
+            role="group"
+            aria-label="usage examples"
+        ></div>
+    </div>
+</section>
+
+<section class="landing-section">
+    <h3 class="section-title"><span class="muted">#</span> features</h3>
+    <div class="feature-grid">
+        <div class="feature">
+            <h4><i data-lucide="zap"></i> zero install</h4>
+            <p class="muted">
+                works from any machine with an SSH client, no dependencies.
+            </p>
+        </div>
+        <div class="feature">
+            <h4><i data-lucide="key-round"></i> no passwords</h4>
+            <p class="muted">
+                all you need is your SSH key.
+            </p>
+        </div>
+        <div class="feature">
+            <h4><i data-lucide="hat-glasses"></i> anonymous</h4>
+            <p class="muted">no sign-ups, no logins, no email required.</p>
+        </div>
+        <div class="feature">
+            <h4><i data-lucide="globe"></i> web ui</h4>
+            <p class="muted">
+                syntax-highlighted short links and markdown rendering.
+            </p>
+        </div>
+        <div class="feature">
+            <h4><i data-lucide="terminal"></i> tui</h4>
+            <p class="muted">
+                browse, view, and manage snips without leaving the terminal.
+            </p>
+        </div>
+        <div class="feature">
+            <h4><i data-lucide="clock"></i> urls with ttl</h4>
+            <p class="muted">
+                time-limited signed urls for sensitive sharing.
+            </p>
+        </div>
+        <div class="feature">
+            <h4><i data-lucide="package"></i> self-hostable</h4>
+            <p class="muted">one small container, single binary and sqlite. light on resources.</p>
+        </div>
+        <div class="feature">
+            <h4><i data-lucide="brain"></i> ml detection</h4>
+            <p class="muted">
+                automatic language detection of code snippets.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="landing-section">
+    <h3 class="section-title"><span class="muted">#</span> cheatsheet</h3>
+    <div class="recipe-grid">
+        <div class="recipe">
+            <p class="muted text-sm">upload</p>
+            <div class="recipe-cmd">
+                <code>echo "content" | {{ .SSHCommand }}</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">upload (private)</p>
+            <div class="recipe-cmd">
+                <code>echo "content" | {{ .SSHCommand }} -- -private</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">upload (with type hint)</p>
+            <div class="recipe-cmd">
+                <code>echo "content" | {{ .SSHCommand }} -- -ext py</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">upload (private + signed url)</p>
+            <div class="recipe-cmd">
+                <code>echo "content" | {{ .SSHCommand }} -- -private -ttl 24h</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">download</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForFile }}</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">update</p>
+            <div class="recipe-cmd">
+                <code>echo "new" | {{ .SSHCommandForFileContent }}</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">delete</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForFile }} -- rm</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">force delete</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForFile }} -- rm -f</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">sign</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForFile }} -- sign -ttl 1h</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">interactive tui</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommand }}</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+{{ end }}
