@@ -144,11 +144,12 @@ func (bwsr Browser) View() tea.View {
 
 func (bwsr Browser) viewContent() string {
 	if len(bwsr.list.Items()) == 0 {
+		addr := bwsr.cfg.HTTP.External.String()
+		link := lipgloss.NewStyle().Foreground(bwsr.theme).Hyperlink(addr).Render(addr)
 		return lipgloss.NewStyle().
 			PaddingTop(1).
 			PaddingBottom(1).
-			Foreground(bwsr.theme).
-			Render(fmt.Sprintf("No files found!\nLearn how to get started at: %s", bwsr.cfg.HTTP.External.String()))
+			Render(styles.C(bwsr.theme, "No files found!\nLearn how to get started at: ") + link)
 	}
 
 	if bwsr.options.focused {

@@ -65,7 +65,7 @@ record-tape tape *tapes:
     done
 
 # Connect with a fresh temporary SSH key
-ssh-tmp destination *args:
+ssh-tmp *args:
     #!/usr/bin/env bash
     tmpdir="$(mktemp -d)"; trap 'rm -rf "$tmpdir"' EXIT
     ssh-keygen -t ecdsa -f "$tmpdir/id_ecdsa" -q -N ""

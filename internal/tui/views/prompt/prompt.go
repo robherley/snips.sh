@@ -2,43 +2,32 @@ package prompt
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"image/color"
-	"strconv"
-	"strings"
-	"time"
 
 	"charm.land/bubbles/v2/help"
-	"charm.land/bubbles/v2/list"
-	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/armon/go-metrics"
-	"github.com/muesli/reflow/wrap"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
-	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 
+// Prompt hosts the active dialog: it renders the modal frame, question, and
+// feedback, and routes input to the dialog in between.
 type Prompt struct {
-	ctx      context.Context
-	cfg      *config.Config
-	db       db.DB
-	width    int
-	height   int
-	theme    color.Color
-	finished bool
+	ctx    context.Context
+	cfg    *config.Config
+	db     db.DB
+	width  int
+	height int
+	theme  color.Color
 
-	file              *snips.File
-	kind              Kind
-	textInput         textinput.Model
-	extensionSelector list.Model
-	feedback          string
+	file     *snips.File
+	dialog   dialog
+	feedback string
+	finished bool
 }
 
 // contentWidth caps modal content so long feedback and the extension selector
@@ -48,101 +37,84 @@ func contentWidth(width int) int {
 }
 
 func New(ctx context.Context, cfg *config.Config, db db.DB, width, height int, theme color.Color) Prompt {
-	ti := textinput.New()
-	ti.Focus()
-	ti.CharLimit = 255
-	ti.SetWidth(20)
-	ti.Prompt = styles.BC(styles.Colors.Yellow, "> ")
-
 	return Prompt{
-		ctx:               ctx,
-		cfg:               cfg,
-		db:                db,
-		textInput:         ti,
-		extensionSelector: NewExtensionSelector(contentWidth(width)),
-		width:             width,
-		height:            height,
-		theme:             theme,
+		ctx:    ctx,
+		cfg:    cfg,
+		db:     db,
+		width:  width,
+		height: height,
+		theme:  theme,
 	}
 }
 
 func (p Prompt) Init() tea.Cmd {
-	return textinput.Blink
+	return nil
 }
 
 func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var (
-		cmd      tea.Cmd
-		commands []tea.Cmd
-	)
-
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		if msg.Code == tea.KeyEnter {
-			return p, p.handleSubmit()
-		}
-		// while its filter input is focused, the extension selector routes
-		// every key to the filter, so move the cursor ourselves to keep the
-		// arrow keys working
-		if p.kind == ChangeExtension {
-			switch msg.Code {
-			case tea.KeyUp:
-				p.extensionSelector.CursorUp()
-				return p, nil
-			case tea.KeyDown:
-				p.extensionSelector.CursorDown()
-				return p, nil
-			}
+			return p, p.submit()
 		}
 	case FeedbackMsg:
 		p.feedback = msg.Feedback
 		p.finished = msg.Finished
+		return p, nil
 	case KindSetMsg:
-		p.kind = msg.Kind
-		if msg.Kind == ChangeExtension {
-			commands = append(commands, SelectorInitCmd)
+		// each open gets a fresh dialog, so no input state leaks between uses
+		p.dialog = newDialog(msg.Kind, contentWidth(p.width))
+		if p.dialog != nil {
+			return p, p.dialog.init()
 		}
+		return p, nil
 	case msgs.FileLoaded:
 		p.file = msg.File
+		return p, nil
 	case msgs.PopView:
-		p.textInput.Reset()
-		p.extensionSelector.ResetFilter()
-		p.extensionSelector.ResetSelected()
+		p.dialog = nil
 		p.feedback = ""
 		p.finished = false
 		return p, nil
 	case tea.WindowSizeMsg:
 		p.width = msg.Width
 		p.height = msg.Height
-		p.extensionSelector.SetWidth(contentWidth(msg.Width))
+		if p.dialog != nil {
+			p.dialog.resize(contentWidth(msg.Width))
+		}
+		return p, nil
 	case msgs.ThemeChanged:
 		p.theme = msg.Color
-	case SelectorInitMsg:
-		// bit of a hack to get the extension selector to filter on init
-		p.extensionSelector, cmd = p.extensionSelector.Update(tea.KeyPressMsg{
-			Code: '/',
-			Text: "/",
-		})
-		return p, cmd
+		return p, nil
 	}
 
-	switch p.kind {
-	case GenerateSignedURL, DeleteFile, ChangeVisibility:
-		p.textInput, cmd = p.textInput.Update(msg)
-		commands = append(commands, cmd)
-	case ChangeExtension:
-		p.extensionSelector, cmd = p.extensionSelector.Update(msg)
-		commands = append(commands, cmd)
+	// everything else (keystrokes, blinks, filter matches) belongs to the
+	// active dialog's input model
+	if p.dialog == nil {
+		return p, nil
 	}
-	return p, tea.Batch(commands...)
+	return p, p.dialog.update(msg)
+}
+
+func (p Prompt) submit() tea.Cmd {
+	if p.finished || p.dialog == nil || p.file == nil {
+		return nil
+	}
+
+	return p.dialog.submit(env{
+		ctx:  p.ctx,
+		cfg:  p.cfg,
+		db:   p.db,
+		file: p.file,
+	})
 }
 
 func (p Prompt) View() tea.View {
-	if p.file == nil || p.kind == None {
+	if p.file == nil || p.dialog == nil {
 		return tea.NewView(lipgloss.Place(p.width, p.height, lipgloss.Left, lipgloss.Top, ""))
 	}
 
-	body := styles.ModalBody(p.theme, "options > "+p.kind.title(), p.renderPrompt())
+	body := styles.ModalBody(p.theme, "options > "+p.dialog.title(), p.renderPrompt())
 	return tea.NewView(styles.Modal(p.width, p.height, body))
 }
 
@@ -157,39 +129,13 @@ func (p Prompt) IsCapturing() bool {
 }
 
 func (p Prompt) renderPrompt() string {
-	var question string
-	switch p.kind {
-	case ChangeExtension:
-		question = "What extension do you want to change the file to?"
-	case ChangeVisibility:
-		question = fmt.Sprintf("Do you want to make the file %q ", p.file.ID)
-		if p.file.Private {
-			question += "public"
-		} else {
-			question += "private"
-		}
-		question += "?\n(y/n)"
-	case GenerateSignedURL:
-		question = fmt.Sprintf("How long do you want the signed url for %q to last for?\n%s", p.file.ID, styles.C(styles.Colors.Muted, "(e.g. 30s, 5m, 3h)"))
-	case DeleteFile:
-		question = fmt.Sprintf("Are you sure you want to delete %q?\nType the file ID to confirm.", p.file.ID)
-	}
-
-	question = lipgloss.NewStyle().
+	question := lipgloss.NewStyle().
 		Foreground(styles.Colors.White).
 		BorderLeft(true).
 		BorderStyle(lipgloss.ThickBorder()).
 		BorderLeftForeground(styles.Colors.Yellow).
 		PaddingLeft(1).
-		Render(question)
-
-	var prompt string
-	switch p.kind {
-	case GenerateSignedURL, DeleteFile, ChangeVisibility:
-		prompt = p.textInput.View()
-	case ChangeExtension:
-		prompt = p.extensionSelector.View()
-	}
+		Render(p.dialog.question(p.file))
 
 	pieces := []string{}
 
@@ -197,7 +143,7 @@ func (p Prompt) renderPrompt() string {
 		pieces = append(pieces,
 			question,
 			"",
-			prompt,
+			p.dialog.view(),
 		)
 	}
 
@@ -205,133 +151,8 @@ func (p Prompt) renderPrompt() string {
 		if !p.finished {
 			pieces = append(pieces, "")
 		}
-		pieces = append(pieces, wrap.String(p.feedback, contentWidth(p.width)))
+		pieces = append(pieces, p.feedback)
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Top, pieces...)
-}
-
-func (p Prompt) handleSubmit() tea.Cmd {
-	log := logger.From(p.ctx)
-
-	if p.finished {
-		return nil
-	}
-
-	var commands []tea.Cmd
-
-	switch p.kind {
-	case ChangeVisibility:
-		result := p.textInputYN()
-
-		if result == Undecided {
-			return SetPromptErrorCmd(errors.New("please specify yes or no"))
-		}
-
-		if result == No {
-			return cmds.PopView()
-		}
-
-		p.file.Private = !p.file.Private
-
-		err := p.db.UpdateFile(p.ctx, p.file)
-		if err != nil {
-			return SetPromptErrorCmd(err)
-		}
-
-		metrics.IncrCounterWithLabels([]string{"file", "change", "private"}, 1, []metrics.Label{
-			{Name: "new", Value: strconv.FormatBool(p.file.Private)},
-		})
-		log.Info("updated file visibility", "file", p.file.ID, "private", p.file.Private)
-
-		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q is now %s", p.file.ID, p.file.Visibility()))
-		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
-
-	case ChangeExtension:
-		item := p.extensionSelector.SelectedItem().(selectorItem)
-		old := p.file.Type
-		p.file.Type = item.name
-
-		err := p.db.UpdateFile(p.ctx, p.file)
-		if err != nil {
-			return SetPromptErrorCmd(err)
-		}
-
-		metrics.IncrCounterWithLabels([]string{"file", "change", "type"}, 1, []metrics.Label{
-			{Name: "old", Value: old},
-			{Name: "new", Value: p.file.Type},
-		})
-		log.Info("updated file type", "file", p.file.ID, "old_type", old, "new_type", p.file.Type)
-
-		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q extension set to %q", p.file.ID, item.name))
-		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
-	case GenerateSignedURL:
-		dur, err := time.ParseDuration(p.textInput.Value())
-		if err != nil {
-			return SetPromptErrorCmd(err)
-		}
-
-		if dur <= 0 {
-			return SetPromptErrorCmd(errors.New("duration must be greater than 0"))
-		}
-
-		url, expires := p.file.GetSignedURL(p.cfg, dur)
-
-		metrics.IncrCounter([]string{"file", "sign"}, 1)
-		log.Info("private file signed", "file_id", p.file.ID, "expires_at", expires)
-
-		msg := styles.C(styles.Colors.Green, fmt.Sprintf("%s\n\nexpires at: %s", url.String(), expires.Format(time.RFC3339)))
-		commands = append(commands, SetPromptFeedbackCmd(msg, true))
-	case DeleteFile:
-		if cmd := p.validateInputIsFileID(); cmd != nil {
-			return cmd
-		}
-
-		err := p.db.DeleteFile(p.ctx, p.file.ID)
-		if err != nil {
-			return SetPromptErrorCmd(err)
-		}
-
-		metrics.IncrCounter([]string{"file", "delete"}, 1)
-		log.Info("file deleted", "file_id", p.file.ID)
-
-		msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q deleted", p.file.ID))
-		commands = append(commands, cmds.ReloadFiles(p.db, p.file.UserID), SetPromptFeedbackCmd(msg, true))
-	default:
-		return nil
-	}
-
-	return tea.Batch(commands...)
-}
-
-func (p Prompt) validateInputIsFileID() tea.Cmd {
-	if p.textInput.Value() != p.file.ID {
-		return SetPromptErrorCmd(errors.New("please specify the file id to confirm"))
-	}
-
-	return nil
-}
-
-type YNResult int
-
-const (
-	Undecided YNResult = iota
-	Yes
-	No
-)
-
-func (p Prompt) textInputYN() YNResult {
-	lower := strings.ToLower(p.textInput.Value())
-	if len(lower) == 0 {
-		return Undecided
-	}
-
-	switch lower[0] {
-	case 'y':
-		return Yes
-	case 'n':
-		return No
-	default:
-		return Undecided
-	}
 }
