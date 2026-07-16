@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -33,6 +34,15 @@ func (m Code) Init() tea.Cmd {
 
 func (m Code) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.KeyPressMsg:
+		switch {
+		case key.Matches(msg, keys.Top):
+			m.viewport.GotoTop()
+			return m, nil
+		case key.Matches(msg, keys.Bottom):
+			m.viewport.GotoBottom()
+			return m, nil
+		}
 	case tea.WindowSizeMsg:
 		m.viewport.SetWidth(msg.Width)
 		m.viewport.SetHeight(msg.Height)
@@ -87,16 +97,13 @@ func (m Code) renderContent(file *snips.File) string {
 		lines = lines[:len(lines)-1]
 	}
 
-	borderStyle := lipgloss.NewStyle().
-		Foreground(styles.Colors.Muted).
-		Border(lipgloss.NormalBorder(), false).
-		BorderForeground(styles.Colors.Muted)
+	numberStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted)
+	separator := lipgloss.NewStyle().Foreground(styles.Colors.Muted).Render("▏")
 
 	renderedLines := make([]string, 0, len(lines))
 
-	lineStyle := borderStyle.BorderRight(true).MarginRight(1)
 	for i, line := range lines {
-		lineNumber := lineStyle.Render(fmt.Sprintf("%*d", maxDigits, i+1))
+		lineNumber := numberStyle.Render(fmt.Sprintf(" %*d ", maxDigits, i+1)) + separator
 
 		scrubbed := strings.ReplaceAll(line, "\t", "    ")
 		renderedLines = append(renderedLines, lineNumber+scrubbed)
