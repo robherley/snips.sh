@@ -185,8 +185,6 @@ func (s Settings) View() tea.View {
 
 	if s.focused {
 		rows = append(rows, "", helpStyle.Render("↑/↓ navigate · ↵ apply · esc back"))
-	} else {
-		rows = append(rows, "", helpStyle.Render("↑/↓ navigate · ↵ select"))
 	}
 
 	if s.feedback != "" {

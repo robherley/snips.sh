@@ -225,7 +225,7 @@ func (bwsr Browser) renderDetails() string {
 		{"ID", file.ID},
 		{"Size", humanize.Bytes(file.Size)},
 		{"Created", fmt.Sprintf("%s (%s)", file.CreatedAt.Format(time.RFC3339), humanize.Time(file.CreatedAt))},
-		{"Modified", fmt.Sprintf("%s (%s)", file.CreatedAt.Format(time.RFC3339), humanize.Time(file.UpdatedAt))},
+		{"Modified", fmt.Sprintf("%s (%s)", file.UpdatedAt.Format(time.RFC3339), humanize.Time(file.UpdatedAt))},
 		{"Type", strings.ToLower(file.Type)},
 		{"Visibility", visibility},
 	}
