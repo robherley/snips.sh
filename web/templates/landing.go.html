@@ -17,7 +17,7 @@
 />
 {{ if .OGImageURL }}
 <meta name="twitter:image" content="{{ .OGImageURL }}" />
-{{ end }} {{ end }} {{ define "content" }}
+{{ end }} {{ end }} {{ define "body-class" }}landing{{ end }} {{ define "content" }}
 <section class="hero">
     <div class="hero-pitch">
         <p class="eyebrow muted">free · anonymous · open source</p>
@@ -52,7 +52,8 @@
         <div
             class="terminal"
             id="landing-terminal"
-            role="tabpanel"
+            role="region"
+            aria-label="terminal demo"
             aria-live="off"
         >
             <div class="terminal-bar">
@@ -66,7 +67,7 @@
         <div
             class="terminal-tabs"
             id="terminal-tabs"
-            role="tablist"
+            role="group"
             aria-label="usage examples"
         ></div>
     </div>

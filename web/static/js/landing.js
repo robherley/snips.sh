@@ -142,7 +142,7 @@ const initLanding = () => {
     clearTimers();
     current = index;
     tabs.forEach((tab, i) => {
-      tab.setAttribute("aria-selected", i === index ? "true" : "false");
+      tab.setAttribute("aria-pressed", i === index ? "true" : "false");
     });
 
     const scene = scenes[index];
@@ -168,18 +168,18 @@ const initLanding = () => {
     typeChar();
   };
 
-  const tablist = document.querySelector("#terminal-tabs");
+  const tabContainer = document.querySelector("#terminal-tabs");
   scenes.forEach((scene, i) => {
     const tab = document.createElement("button");
     tab.className = "terminal-tab";
     tab.textContent = scene.label;
-    tab.setAttribute("role", "tab");
-    tab.setAttribute("aria-selected", "false");
+    tab.type = "button";
+    tab.setAttribute("aria-pressed", "false");
     tab.addEventListener("click", () => {
       autoCycle = false;
       showScene(i, !reducedMotion);
     });
-    tablist.appendChild(tab);
+    tabContainer.appendChild(tab);
     tabs.push(tab);
   });
 

@@ -25,7 +25,7 @@
         {{ ExtendedHeadContent }}
     </head>
 
-    <body>
+    <body class="{{ block "body-class" . }}{{ end }}">
         <div class="stripes"></div>
         <div class="container">
             <h1 class="header">
@@ -34,9 +34,7 @@
                 /></span>
                 <a class="title" href="/">snips</a>
             </h1>
-            <nav class="file-header">
-                {{ block "nav" . }}{{ end }}
-            </nav>
+            {{ block "nav" . }}{{ end }}
             {{ block "content" . }}{{ end }}
 
             <div class="footer-stripes-container">
@@ -95,7 +93,7 @@
             </div>
             <footer class="file-footer text-sm muted">
                 <div>
-                    <a href="/docs/README.md">about</a> /
+                    <a href="/">about</a> /
                     <a href="/docs/usage.md">usage</a> /
                     <a href="/docs/terms-of-service.md">terms</a> /
                     <a href="/docs/acceptable-use-policy.md">acceptable use</a>

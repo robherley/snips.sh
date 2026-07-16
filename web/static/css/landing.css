@@ -1,9 +1,22 @@
-/* landing page */
+.landing .header {
+  gap: 1.25rem;
+}
 
-/* the landing page renders no nav content; :empty won't match the
-   whitespace the template leaves behind */
-.file-header:not(:has(*)) {
-  display: none;
+.landing .header .title {
+  font-size: 5rem;
+  letter-spacing: 0.2rem;
+}
+
+.landing .header .title::after {
+  left: -0.4rem;
+}
+
+.landing .header .logo {
+  margin-top: 1rem;
+}
+
+.landing .header .logo img {
+  height: 3rem;
 }
 
 .hero-pitch .eyebrow {
@@ -21,7 +34,8 @@
 }
 
 .hero-title {
-  font-family: "GeistPixel-Square", monospace;
+  font-family: var(--font-pixel);
+  font-variation-settings: var(--pixel-square);
   font-weight: normal;
   font-size: 3rem;
   line-height: 1.15;
@@ -84,8 +98,6 @@
   gap: 0.75rem;
   flex-wrap: wrap;
 }
-
-/* animated terminal */
 
 .terminal {
   border: var(--border);
@@ -198,12 +210,10 @@
   color: var(--color-white);
 }
 
-.terminal-tab[aria-selected="true"] {
+.terminal-tab[aria-pressed="true"] {
   color: var(--color-primary);
   border-color: var(--color-primary);
 }
-
-/* sections */
 
 .landing-section {
   padding: 2rem 0;
@@ -308,6 +318,27 @@
 }
 
 @media (max-width: 768px) {
+  .landing .header {
+    gap: 0.75rem;
+  }
+
+  .landing .header .title {
+    font-size: 3.5rem;
+    letter-spacing: 0.1rem;
+  }
+
+  .landing .header .title::after {
+    left: -0.3rem;
+  }
+
+  .landing .header .logo {
+    margin-top: 0.5rem;
+  }
+
+  .landing .header .logo img {
+    height: 2.25rem;
+  }
+
   .hero {
     padding-top: 1.5rem;
   }
