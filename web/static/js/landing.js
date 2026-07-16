@@ -192,10 +192,9 @@ const initLandingCopyButtons = () => {
       const code = btn.parentElement.querySelector("code");
       if (!code) return;
       await navigator.clipboard.writeText(code.textContent);
-      const original = btn.innerHTML;
-      btn.innerHTML = "✓";
+      btn.classList.add("copied");
       setTimeout(() => {
-        btn.innerHTML = original;
+        btn.classList.remove("copied");
       }, 1200);
     });
   });

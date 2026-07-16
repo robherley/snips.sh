@@ -20,11 +20,10 @@
 {{ end }} {{ end }} {{ define "body-class" }}landing{{ end }} {{ define "content" }}
 <section class="hero">
     <div class="hero-pitch">
-        <p class="eyebrow muted">free · anonymous · open source</p>
+        <p class="eyebrow muted">zero install · anonymous · open source</p>
         <h2 class="hero-title">pipe anything,<br />get a link.</h2>
         <p class="hero-sub">
-            SSH-powered pastebin with a human-friendly TUI and web UI. Nothing
-            to install, no passwords, your key is your identity.
+            SSH-powered pastebin with a human-friendly TUI and web UI. There's nothing to install, it works on any machine with a SSH client.
         </p>
         <div class="hero-try">
             <code
@@ -40,13 +39,9 @@
                 aria-label="copy command to clipboard"
             >
                 <i data-lucide="copy"></i>
+                <i data-lucide="check"></i>
             </button>
         </div>
-        <p class="hero-links text-sm">
-            <a href="/docs/usage.md">docs</a>
-            <span class="muted">/</span>
-            <a href="https://github.com/robherley/snips.sh">source code</a>
-        </p>
     </div>
     <div class="hero-demo">
         <div
@@ -127,38 +122,102 @@
     <h3 class="section-title"><span class="muted">#</span> cheatsheet</h3>
     <div class="recipe-grid">
         <div class="recipe">
-            <p class="muted text-sm">upload, with a type hint</p>
+            <p class="muted text-sm">upload</p>
             <div class="recipe-cmd">
-                <code>cat config | {{ .SSHCommand }} -- -ext yaml</code>
+                <code>echo "content" | {{ .SSHCommand }}</code>
                 <button class="recipe-copy" aria-label="copy command">
                     <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
                 </button>
             </div>
         </div>
         <div class="recipe">
-            <p class="muted text-sm">download, pipe anywhere</p>
+            <p class="muted text-sm">upload (private)</p>
             <div class="recipe-cmd">
-                <code>{{ .SSHCommandForFile }} | less</code>
+                <code>echo "content" | {{ .SSHCommand }} -- -private</code>
                 <button class="recipe-copy" aria-label="copy command">
                     <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
                 </button>
             </div>
         </div>
         <div class="recipe">
-            <p class="muted text-sm">update in place, diffs saved</p>
+            <p class="muted text-sm">upload (with type hint)</p>
             <div class="recipe-cmd">
-                <code>cat new.go | {{ .SSHCommandForFileContent }}</code>
+                <code>echo "content" | {{ .SSHCommand }} -- -ext py</code>
                 <button class="recipe-copy" aria-label="copy command">
                     <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
                 </button>
             </div>
         </div>
         <div class="recipe">
-            <p class="muted text-sm">sign a private snip for 1 hour</p>
+            <p class="muted text-sm">upload (private + signed url)</p>
             <div class="recipe-cmd">
-                <code>{{ .SSHCommandForFile }} sign -ttl 1h</code>
+                <code>echo "content" | {{ .SSHCommand }} -- -private -ttl 24h</code>
                 <button class="recipe-copy" aria-label="copy command">
                     <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">download</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForFile }}</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">update</p>
+            <div class="recipe-cmd">
+                <code>echo "new" | {{ .SSHCommandForFileContent }}</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">delete</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForFile }} -- rm</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">force delete</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForFile }} -- rm -f</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">sign</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForFile }} -- sign -ttl 1h</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">interactive tui</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommand }}</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
                 </button>
             </div>
         </div>

@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   Brain,
+  Check,
   Clock,
   Copy,
   createIcons,
@@ -143,6 +144,7 @@ const initIcons = () => {
     icons: {
       ArrowLeft,
       Brain,
+      Check,
       Clock,
       Copy,
       FileCode,
