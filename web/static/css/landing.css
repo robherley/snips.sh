@@ -180,6 +180,17 @@
   color: var(--color-amber);
 }
 
+.terminal-screen .t-badge {
+  color: var(--color-surface-0);
+  background-color: var(--color-primary);
+  font-weight: 700;
+}
+
+.terminal-screen .t-primary-b {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
 .terminal-screen .t-cursor {
   display: inline-block;
   width: 0.55em;
