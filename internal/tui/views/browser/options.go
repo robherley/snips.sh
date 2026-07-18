@@ -140,8 +140,6 @@ func (bwsr Browser) renderDetails() string {
 		return ""
 	}
 
-	details := strings.Builder{}
-
 	rawHTTPAddr := bwsr.cfg.HTTPAddressForFile(file.ID)
 	httpAddr := lipgloss.NewStyle().Hyperlink(rawHTTPAddr).Render(rawHTTPAddr)
 	visibility := "public"
@@ -151,32 +149,55 @@ func (bwsr Browser) renderDetails() string {
 	}
 
 	values := [][2]string{
-		{"ID", file.ID},
-		{"Size", humanize.Bytes(file.Size)},
-		{"Created", fmt.Sprintf("%s (%s)", file.CreatedAt.Format(time.RFC3339), humanize.Time(file.CreatedAt))},
-		{"Modified", fmt.Sprintf("%s (%s)", file.UpdatedAt.Format(time.RFC3339), humanize.Time(file.UpdatedAt))},
-		{"Type", strings.ToLower(file.Type)},
-		{"Visibility", visibility},
+		{"id", file.ID},
+		{"size", humanize.Bytes(file.Size)},
+		{"created", fmt.Sprintf("%s (%s)", file.CreatedAt.Format(time.RFC3339), humanize.Time(file.CreatedAt))},
+		{"modified", fmt.Sprintf("%s (%s)", file.UpdatedAt.Format(time.RFC3339), humanize.Time(file.UpdatedAt))},
+		{"type", strings.ToLower(file.Type)},
+		{"visibility", visibility},
 	}
 
 	access := [][2]string{
-		{"URL", httpAddr},
-		{"SSH", bwsr.cfg.SSHCommandForFile(file.ID)},
+		{"url", httpAddr},
+		{"ssh", bwsr.cfg.SSHCommandForFile(file.ID)},
 	}
 
-	keyStyle := lipgloss.NewStyle().
-		Foreground(styles.Colors.Blue).
-		Bold(true)
+	return renderTable(values, access) + "\n"
+}
 
-	for _, v := range values {
-		fmt.Fprintf(&details, "%s  %s\n", keyStyle.Width(10).Render(v[0]), v[1])
+func renderTable(sections ...[][2]string) string {
+	labelWidth, valueWidth := 0, 0
+	for _, rows := range sections {
+		for _, row := range rows {
+			labelWidth = max(labelWidth, lipgloss.Width(row[0]))
+			valueWidth = max(valueWidth, lipgloss.Width(row[1]))
+		}
 	}
 
-	details.WriteRune('\n')
-
-	for _, v := range access {
-		fmt.Fprintf(&details, "%s  %s\n", keyStyle.Width(3).Foreground(styles.Colors.Purple).Render(v[0]), v[1])
+	border := lipgloss.NewStyle().Foreground(styles.Colors.Muted)
+	valueCell := lipgloss.NewStyle().Width(valueWidth)
+	labelStyles := []lipgloss.Style{
+		lipgloss.NewStyle().Foreground(styles.Colors.Blue).Bold(true).Width(labelWidth),
+		lipgloss.NewStyle().Foreground(styles.Colors.Purple).Bold(true).Width(labelWidth),
 	}
 
-	return details.String()
+	renderBorder := func(left, mid, right string) string {
+		return border.Render(left + strings.Repeat("─", labelWidth+2) + mid + strings.Repeat("─", valueWidth+2) + right)
+	}
+
+	lines := []string{renderBorder("╭", "┬", "╮")}
+	for i, rows := range sections {
+		if i > 0 {
+			lines = append(lines, renderBorder("├", "┼", "┤"))
+		}
+		labelStyle := labelStyles[min(i, len(labelStyles)-1)]
+		for _, row := range rows {
+			lines = append(lines,
+				border.Render("│ ")+labelStyle.Render(row[0])+
+					border.Render(" │ ")+valueCell.Render(row[1])+border.Render(" │"))
+		}
+	}
+	lines = append(lines, renderBorder("╰", "┴", "╯"))
+
+	return strings.Join(lines, "\n")
 }
