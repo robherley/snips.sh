@@ -1,11 +1,13 @@
 {{ define "title" }}{{ .FileID }} revisions - snips.sh{{ end }} {{ define "nav"
 }}
+<nav class="file-header">
 <div class="file-details text-sm">
     <div class="file-detail">
         <i data-lucide="terminal"></i>
         <a href="/f/{{ .FileID }}">{{ .FileID }}</a>
     </div>
 </div>
+</nav>
 {{ end }} {{ define "content" }}
 <div class="file-content">
     <div class="revision-list">

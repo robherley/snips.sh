@@ -25,7 +25,7 @@
         {{ ExtendedHeadContent }}
     </head>
 
-    <body>
+    <body class="{{ block "body-class" . }}{{ end }}">
         <div class="stripes"></div>
         <div class="container">
             <h1 class="header">
@@ -34,9 +34,7 @@
                 /></span>
                 <a class="title" href="/">snips</a>
             </h1>
-            <nav class="file-header">
-                {{ block "nav" . }}{{ end }}
-            </nav>
+            {{ block "nav" . }}{{ end }}
             {{ block "content" . }}{{ end }}
 
             <div class="footer-stripes-container">

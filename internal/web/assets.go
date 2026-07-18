@@ -42,10 +42,12 @@ var (
 		"index.css",
 		"code.css",
 		"markdown.css",
+		"landing.css",
 	}
 
 	jsFiles = []string{
 		"snips.js",
+		"landing.js",
 	}
 )
 

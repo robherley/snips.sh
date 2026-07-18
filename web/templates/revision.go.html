@@ -1,5 +1,6 @@
 {{ define "title" }}{{ .FileID }} revision {{ .RevisionSequence }} - snips.sh{{ end }}
 {{ define "nav" }}
+<nav class="file-header">
 <div class="file-details text-sm">
     <div class="file-detail">
         <i data-lucide="terminal"></i>
@@ -28,6 +29,7 @@
     </div>
     {{ end }}
 </div>
+</nav>
 {{ end }} {{ define "content" }}
 <article class="file-content">
     <pre
