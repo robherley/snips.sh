@@ -80,6 +80,13 @@ func TestUploadFlags(t *testing.T) {
 			},
 			err: ssh.ErrFlagRequired,
 		},
+		{
+			name: "name",
+			args: []string{"-name", "deploy-notes"},
+			want: ssh.UploadFlags{
+				Name: "deploy-notes",
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -92,7 +99,40 @@ func TestUploadFlags(t *testing.T) {
 			} else {
 				assert.Equal(t, tc.want.Extension, got.Extension)
 				assert.Equal(t, tc.want.Private, got.Private)
+				assert.Equal(t, tc.want.Name, got.Name)
 			}
+		})
+	}
+}
+
+func TestRenameFlags(t *testing.T) {
+	testcases := []struct {
+		name string
+		args []string
+		want ssh.RenameFlags
+		arg0 string
+	}{
+		{
+			name: "name argument",
+			args: []string{"deploy-notes"},
+			want: ssh.RenameFlags{Remove: false},
+			arg0: "deploy-notes",
+		},
+		{
+			name: "remove",
+			args: []string{"-rm"},
+			want: ssh.RenameFlags{Remove: true},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			var got ssh.RenameFlags
+			err := got.Parse(io.Discard, tc.args)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want.Remove, got.Remove)
+			assert.Equal(t, tc.arg0, got.Arg(0))
 		})
 	}
 }

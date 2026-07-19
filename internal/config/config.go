@@ -83,8 +83,23 @@ func (cfg *Config) HTTPAddressForFile(fileID string) string {
 	return httpAddr.String()
 }
 
+func (cfg *Config) HTTPAddressForNamedFile(fileID, name string) string {
+	httpAddr := cfg.HTTP.External
+	httpAddr.Path = fmt.Sprintf("/f/%s/n/%s", fileID, name)
+
+	return httpAddr.String()
+}
+
 func (cfg *Config) SSHCommandForFile(fileID string) string {
-	sshCommand := fmt.Sprintf("ssh f:%s@%s", fileID, cfg.SSH.External.Hostname())
+	return cfg.sshCommandFor("f:" + fileID)
+}
+
+func (cfg *Config) SSHCommandForNamedFile(name string) string {
+	return cfg.sshCommandFor("n:" + name)
+}
+
+func (cfg *Config) sshCommandFor(user string) string {
+	sshCommand := fmt.Sprintf("ssh %s@%s", user, cfg.SSH.External.Hostname())
 	if sshPort := cfg.SSH.External.Port(); sshPort != "" && sshPort != "22" {
 		sshCommand += fmt.Sprintf(" -p %s", sshPort)
 	}

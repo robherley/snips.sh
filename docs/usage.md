@@ -10,6 +10,7 @@ snips.sh is an SSH-driven snippet manager. All interactions happen through your 
     - [Limits](#limits)
   - [Downloading](#downloading)
   - [Updating content](#updating-content)
+  - [Naming](#naming)
   - [Deleting](#deleting)
   - [Signed URLs](#signed-urls)
     - [Duration format](#duration-format)
@@ -24,8 +25,12 @@ snips.sh is an SSH-driven snippet manager. All interactions happen through your 
 | Upload (private) | `echo "content" \| ssh snips.sh -- -private` |
 | Upload (with type hint) | `echo "content" \| ssh snips.sh -- -ext py` |
 | Upload (private + signed URL) | `echo "content" \| ssh snips.sh -- -private -ttl 24h` |
+| Upload (named) | `echo "content" \| ssh snips.sh -- -name my-notes` |
 | Download | `ssh f:<id>@snips.sh` |
+| Download (by name) | `ssh n:<name>@snips.sh` |
 | Update | `echo "new" \| ssh f:<id>:content@snips.sh` |
+| Rename | `ssh f:<id>@snips.sh -- rename my-notes` |
+| Remove name | `ssh f:<id>@snips.sh -- rename -rm` |
 | Delete | `ssh f:<id>@snips.sh -- rm` |
 | Force delete | `ssh f:<id>@snips.sh -- rm -f` |
 | Sign | `ssh f:<id>@snips.sh -- sign -ttl 1h` |
@@ -107,6 +112,32 @@ cat renamed.py | ssh f:abc123:content@snips.sh -ext py
 ```
 
 Only the file owner can update content. Each update creates a revision with a unified diff of the changes (for text files). Old revisions are pruned once the limit (default 64, but configurable) is reached.
+
+## Naming
+
+Files can be given a human-readable name that appears in the web URL:
+
+```bash
+echo "content" | ssh snips.sh -name deploy-notes   # name at upload
+ssh f:abc123@snips.sh -- rename deploy-notes          # name an existing file
+```
+
+Names may contain letters, numbers, hyphens, dots, and underscores (up to 40 characters).
+
+Named files can also be referenced over SSH with the `n:` prefix anywhere `f:<id>` works — downloads, updates, and commands:
+
+```bash
+ssh n:deploy-notes@snips.sh                        # download by name
+echo "new" | ssh n:deploy-notes:content@snips.sh   # update by name
+```
+
+To remove a name:
+
+```bash
+ssh f:abc123@snips.sh rename -rm
+```
+
+You can also rename files from the interactive TUI via the options menu.
 
 ## Deleting
 

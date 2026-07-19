@@ -555,6 +555,80 @@ func (_c *MockDB_FindFile_Call) RunAndReturn(run func(ctx context.Context, id st
 	return _c
 }
 
+// FindFileByName provides a mock function for the type MockDB
+func (_mock *MockDB) FindFileByName(ctx context.Context, userID string, name string) (*snips.File, error) {
+	ret := _mock.Called(ctx, userID, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindFileByName")
+	}
+
+	var r0 *snips.File
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*snips.File, error)); ok {
+		return returnFunc(ctx, userID, name)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *snips.File); ok {
+		r0 = returnFunc(ctx, userID, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*snips.File)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, userID, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDB_FindFileByName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindFileByName'
+type MockDB_FindFileByName_Call struct {
+	*mock.Call
+}
+
+// FindFileByName is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+//   - name string
+func (_e *MockDB_Expecter) FindFileByName(ctx any, userID any, name any) *MockDB_FindFileByName_Call {
+	return &MockDB_FindFileByName_Call{Call: _e.mock.On("FindFileByName", ctx, userID, name)}
+}
+
+func (_c *MockDB_FindFileByName_Call) Run(run func(ctx context.Context, userID string, name string)) *MockDB_FindFileByName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_FindFileByName_Call) Return(file *snips.File, err error) *MockDB_FindFileByName_Call {
+	_c.Call.Return(file, err)
+	return _c
+}
+
+func (_c *MockDB_FindFileByName_Call) RunAndReturn(run func(ctx context.Context, userID string, name string) (*snips.File, error)) *MockDB_FindFileByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindFilesByUser provides a mock function for the type MockDB
 func (_mock *MockDB) FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error) {
 	ret := _mock.Called(ctx, userID)

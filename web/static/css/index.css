@@ -186,6 +186,7 @@ svg.lucide {
   display: flex;
   gap: 1.2rem;
   align-items: center;
+  overflow-x: scroll;
 }
 
 .file-header .file-details .file-detail {

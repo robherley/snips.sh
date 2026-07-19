@@ -121,6 +121,60 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 			},
 		},
 		{
+			name:     "public file via named path",
+			method:   "GET",
+			path:     "/f/eLcyRMrrgP/n/My-Notes",
+			expected: 200,
+			setup: func() {
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = "eLcyRMrrgP"
+				file.Name = "my-notes"
+
+				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.EXPECT().CountRevisionsByFileID(mock.Anything, file.ID).Return(int64(0), nil)
+			},
+		},
+		{
+			name:     "named path with wrong name",
+			method:   "GET",
+			path:     "/f/wrongname1/n/other-name",
+			expected: 404,
+			setup: func() {
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = "wrongname1"
+				file.Name = "my-notes"
+
+				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+			},
+		},
+		{
+			name:     "named path for unnamed file",
+			method:   "GET",
+			path:     "/f/unnamed123/n/my-notes",
+			expected: 404,
+			setup: func() {
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = "unnamed123"
+				file.Name = ""
+
+				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+			},
+		},
+		{
+			name:     "revisions via named path",
+			method:   "GET",
+			path:     "/f/namedrev12/n/my-notes/rev",
+			expected: 200,
+			setup: func() {
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = "namedrev12"
+				file.Name = "my-notes"
+
+				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.EXPECT().FindRevisionsByFileID(mock.Anything, file.ID).Return(nil, nil)
+			},
+		},
+		{
 			name:     "public file",
 			method:   "GET",
 			path:     "/f/eLcyRMrrgP",

@@ -24,6 +24,14 @@ type File struct {
 	Private    bool
 	Type       string
 	UserID     string
+	Name       string
+}
+
+func (f *File) DisplayName() string {
+	if f.Name != "" {
+		return fmt.Sprintf("%s (%s)", f.Name, f.ID)
+	}
+	return f.ID
 }
 
 func (f *File) IsBinary() bool {

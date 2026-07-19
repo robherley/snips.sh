@@ -23,6 +23,10 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	mux.HandleFunc("GET /f/{fileID}/rev", RevisionsHandler(cfg, database, assets))
 	mux.HandleFunc("GET /f/{fileID}/rev/{revisionID}", RevisionDiffHandler(cfg, database, assets))
 	mux.HandleFunc("GET /f/{fileID}/og.png", OGImageHandler(cfg, database, assets))
+	mux.HandleFunc("GET /f/{fileID}/n/{name}", FileHandler(cfg, database, assets))
+	mux.HandleFunc("GET /f/{fileID}/n/{name}/rev", RevisionsHandler(cfg, database, assets))
+	mux.HandleFunc("GET /f/{fileID}/n/{name}/rev/{revisionID}", RevisionDiffHandler(cfg, database, assets))
+	mux.HandleFunc("GET /f/{fileID}/n/{name}/og.png", OGImageHandler(cfg, database, assets))
 	mux.HandleFunc("GET /assets/{asset...}", assets.Serve)
 	mux.HandleFunc("GET /meta.json", MetaHandler(cfg))
 

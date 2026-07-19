@@ -162,6 +162,16 @@
             </div>
         </div>
         <div class="recipe">
+            <p class="muted text-sm">upload (named)</p>
+            <div class="recipe-cmd">
+                <code>echo "content" | {{ .SSHCommand }} -- -name my-notes</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
             <p class="muted text-sm">download</p>
             <div class="recipe-cmd">
                 <code>{{ .SSHCommandForFile }}</code>
@@ -172,9 +182,39 @@
             </div>
         </div>
         <div class="recipe">
+            <p class="muted text-sm">download (by name)</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForNamedFile }}</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
             <p class="muted text-sm">update</p>
             <div class="recipe-cmd">
                 <code>echo "new" | {{ .SSHCommandForFileContent }}</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">rename</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForFile }} -- rename my-notes</code>
+                <button class="recipe-copy" aria-label="copy command">
+                    <i data-lucide="copy"></i>
+                    <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+        <div class="recipe">
+            <p class="muted text-sm">remove name</p>
+            <div class="recipe-cmd">
+                <code>{{ .SSHCommandForFile }} -- rename -rm</code>
                 <button class="recipe-copy" aria-label="copy command">
                     <i data-lucide="copy"></i>
                     <i data-lucide="check"></i>

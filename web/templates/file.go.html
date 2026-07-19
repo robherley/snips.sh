@@ -22,6 +22,12 @@
         <i data-lucide="terminal"></i>
         <a href="">{{ .FileID }}</a>
     </div>
+    {{ if .FileName }}
+    <div class="file-detail">
+        <i data-lucide="tag"></i>
+        <a href="/f/{{ .FileID }}/n/{{ .FileName }}">{{ .FileName }}</a>
+    </div>
+    {{ end }}
     <div class="file-detail">
         <i data-lucide="file-code"></i>
         {{ .FileType }}
@@ -76,7 +82,7 @@
     {{ end }} {{ if .RevisionCount }}
     <a
         class="file-action"
-        href="/f/{{ .FileID }}/rev"
+        href="{{ .FilePath }}/rev"
         aria-label="view revision history"
         data-shortcut="h"
     >

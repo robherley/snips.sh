@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"embed"
 	"errors"
+	"strings"
 	"time"
 
+	"github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/snips"
-
-	_ "github.com/mattn/go-sqlite3" // sqlite driver
 )
 
 //go:embed migrations/*.sql
@@ -50,13 +50,18 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 			content,
 			private,
 			type,
-			user_id
+			user_id,
+			name
 		FROM files
 		WHERE id = ?
 	`
 
+	return scanFile(s.QueryRowContext(ctx, query, id))
+}
+
+func scanFile(row *sql.Row) (*snips.File, error) {
 	file := &snips.File{}
-	row := s.QueryRowContext(ctx, query, id)
+	name := sql.NullString{}
 
 	if err := row.Scan(
 		&file.ID,
@@ -67,6 +72,7 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 		&file.Private,
 		&file.Type,
 		&file.UserID,
+		&name,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -75,7 +81,26 @@ func (s *Sqlite) FindFile(ctx context.Context, id string) (*snips.File, error) {
 		return nil, err
 	}
 
+	file.Name = name.String
 	return file, nil
+}
+
+// nullableName stores unnamed files as NULL rather than empty string.
+func nullableName(name string) sql.NullString {
+	return sql.NullString{String: name, Valid: name != ""}
+}
+
+// nameConstraintErr maps a violation of the per-user unique name index to
+// ErrNameTaken so callers can show a friendly message.
+func nameConstraintErr(err error) error {
+	sqliteErr := sqlite3.Error{}
+	if errors.As(err, &sqliteErr) &&
+		sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique &&
+		strings.Contains(sqliteErr.Error(), "files.name") {
+		return ErrNameTaken
+	}
+
+	return err
 }
 
 func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount uint64) error {
@@ -108,8 +133,9 @@ func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount 
 			content,
 			private,
 			type,
-			user_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+			user_id,
+			name
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	if _, err := s.ExecContext(ctx, insertQuery,
@@ -121,8 +147,9 @@ func (s *Sqlite) CreateFile(ctx context.Context, file *snips.File, maxFileCount 
 		file.Private,
 		file.Type,
 		file.UserID,
+		nullableName(file.Name),
 	); err != nil {
-		return err
+		return nameConstraintErr(err)
 	}
 
 	return nil
@@ -138,7 +165,8 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 			size = ?,
 			content = ?,
 			private = ?,
-			type = ?
+			type = ?,
+			name = ?
 		WHERE id = ?
 	`
 
@@ -148,9 +176,10 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 		file.RawContent,
 		file.Private,
 		file.Type,
+		nullableName(file.Name),
 		file.ID,
 	); err != nil {
-		return err
+		return nameConstraintErr(err)
 	}
 
 	return nil
@@ -166,7 +195,8 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 			size,
 			private,
 			type,
-			user_id
+			user_id,
+			name
 		FROM files
 		WHERE user_id = ?
 		ORDER BY updated_at DESC
@@ -181,6 +211,7 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 	files := []*snips.File{}
 	for rows.Next() {
 		file := &snips.File{}
+		name := sql.NullString{}
 		if err := rows.Scan(
 			&file.ID,
 			&file.CreatedAt,
@@ -189,14 +220,36 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 			&file.Private,
 			&file.Type,
 			&file.UserID,
+			&name,
 		); err != nil {
 			return nil, err
 		}
 
+		file.Name = name.String
 		files = append(files, file)
 	}
 
 	return files, nil
+}
+
+func (s *Sqlite) FindFileByName(ctx context.Context, userID, name string) (*snips.File, error) {
+	// names are unique per user, so at most one row can match
+	const query = `
+		SELECT
+			id,
+			created_at,
+			updated_at,
+			size,
+			content,
+			private,
+			type,
+			user_id,
+			name
+		FROM files
+		WHERE user_id = ? AND name = ? COLLATE NOCASE
+	`
+
+	return scanFile(s.QueryRowContext(ctx, query, userID, name))
 }
 
 func (s *Sqlite) CountFilesByUser(ctx context.Context, userID string) (int64, error) {
