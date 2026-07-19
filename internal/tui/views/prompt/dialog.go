@@ -50,6 +50,8 @@ func newDialog(kind Kind, width int) dialog {
 		return newSignedURLDialog()
 	case DeleteFile:
 		return newDeleteDialog()
+	case Rename:
+		return newRenameDialog()
 	default:
 		return nil
 	}

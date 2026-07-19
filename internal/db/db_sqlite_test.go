@@ -640,3 +640,147 @@ func (s *SqliteSuite) TestFindUser_DoesNotExist() {
 	s.Require().NoError(err)
 	s.Require().Nil(user)
 }
+
+func (s *SqliteSuite) createFile(database *db.Sqlite, name string) *snips.File {
+	file := &snips.File{
+		Size:       11,
+		RawContent: []byte("hello world"),
+		Private:    false,
+		Type:       "plaintext",
+		UserID:     id.New(),
+		Name:       name,
+	}
+
+	err := database.CreateFile(context.Background(), file, 0)
+	s.Require().NoError(err)
+
+	return file
+}
+
+func (s *SqliteSuite) TestCreateFile_WithName() {
+	database := s.getTestDB(true)
+
+	file := s.createFile(database, "deploy-notes")
+
+	found, err := database.FindFile(context.Background(), file.ID)
+	s.Require().NoError(err)
+	s.Require().NotNil(found)
+	s.Require().Equal("deploy-notes", found.Name)
+}
+
+func (s *SqliteSuite) TestUpdateFile_SetAndClearName() {
+	database := s.getTestDB(true)
+
+	file := s.createFile(database, "")
+
+	found, err := database.FindFile(context.Background(), file.ID)
+	s.Require().NoError(err)
+	s.Require().Empty(found.Name)
+
+	file.Name = "deploy-notes"
+	s.Require().NoError(database.UpdateFile(context.Background(), file))
+
+	found, err = database.FindFile(context.Background(), file.ID)
+	s.Require().NoError(err)
+	s.Require().Equal("deploy-notes", found.Name)
+
+	file.Name = ""
+	s.Require().NoError(database.UpdateFile(context.Background(), file))
+
+	found, err = database.FindFile(context.Background(), file.ID)
+	s.Require().NoError(err)
+	s.Require().Empty(found.Name)
+}
+
+func (s *SqliteSuite) TestNames_NotUniqueAcrossUsers() {
+	database := s.getTestDB(true)
+
+	// different users can reuse a name — the file ID is what disambiguates
+	first := s.createFile(database, "deploy-notes")
+	second := s.createFile(database, "deploy-notes")
+
+	s.Require().NotEqual(first.ID, second.ID)
+	s.Require().NotEqual(first.UserID, second.UserID)
+
+	for _, f := range []*snips.File{first, second} {
+		found, err := database.FindFile(context.Background(), f.ID)
+		s.Require().NoError(err)
+		s.Require().Equal("deploy-notes", found.Name)
+	}
+}
+
+func (s *SqliteSuite) TestNames_UniquePerUser() {
+	database := s.getTestDB(true)
+
+	first := s.createFile(database, "deploy-notes")
+
+	duplicate := &snips.File{
+		Size:       11,
+		RawContent: []byte("hello world"),
+		Type:       "plaintext",
+		UserID:     first.UserID,
+		Name:       "Deploy-Notes", // same name, different case
+	}
+	err := database.CreateFile(context.Background(), duplicate, 0)
+	s.Require().ErrorIs(err, db.ErrNameTaken)
+
+	// renaming another file to a taken name fails too
+	other := &snips.File{
+		Size:       11,
+		RawContent: []byte("hello world"),
+		Type:       "plaintext",
+		UserID:     first.UserID,
+	}
+	s.Require().NoError(database.CreateFile(context.Background(), other, 0))
+
+	other.Name = "DEPLOY-NOTES"
+	err = database.UpdateFile(context.Background(), other)
+	s.Require().ErrorIs(err, db.ErrNameTaken)
+
+	// updating a file without changing its own name is fine
+	first.Size = 22
+	s.Require().NoError(database.UpdateFile(context.Background(), first))
+
+	// unnamed files don't participate in the index: many per user are fine
+	for range 2 {
+		unnamed := &snips.File{
+			Size:       11,
+			RawContent: []byte("hello world"),
+			Type:       "plaintext",
+			UserID:     first.UserID,
+		}
+		s.Require().NoError(database.CreateFile(context.Background(), unnamed, 0))
+	}
+}
+
+func (s *SqliteSuite) TestFindFilesByUser_IncludesName() {
+	database := s.getTestDB(true)
+
+	file := s.createFile(database, "deploy-notes")
+
+	files, err := database.FindFilesByUser(context.Background(), file.UserID)
+	s.Require().NoError(err)
+	s.Require().Len(files, 1)
+	s.Require().Equal("deploy-notes", files[0].Name)
+}
+
+func (s *SqliteSuite) TestFindFileByName() {
+	database := s.getTestDB(true)
+
+	first := s.createFile(database, "Deploy-Notes")
+	s.createFile(database, "other")
+
+	// another user's file with the same name is out of scope
+	s.createFile(database, "deploy-notes")
+
+	// case-insensitive, scoped to the user, includes content
+	file, err := database.FindFileByName(context.Background(), first.UserID, "DEPLOY-NOTES")
+	s.Require().NoError(err)
+	s.Require().NotNil(file)
+	s.Require().Equal(first.ID, file.ID)
+	s.Require().Equal(first.RawContent, file.RawContent)
+
+	file, err = database.FindFileByName(context.Background(), first.UserID, "nope")
+	s.Require().NoError(err)
+	s.Require().Nil(file)
+}

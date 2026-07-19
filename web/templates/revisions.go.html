@@ -4,14 +4,14 @@
 <div class="file-details text-sm">
     <div class="file-detail">
         <i data-lucide="terminal"></i>
-        <a href="/f/{{ .FileID }}">{{ .FileID }}</a>
+        <a href="{{ .FilePath }}">{{ .FileID }}</a>
     </div>
 </div>
 </nav>
 {{ end }} {{ define "content" }}
 <div class="file-content">
     <div class="revision-list">
-        <a class="revision-item" href="/f/{{ .FileID }}">
+        <a class="revision-item" href="{{ .FilePath }}">
             <div class="revision-item-details">
                 <span class="revision-item-id">
                     <i data-lucide="file-code"></i>
@@ -25,7 +25,7 @@
             <span class="revision-item-time muted"> {{ .UpdatedAt }} </span>
         </a>
         {{ range .Revisions }}
-        <a class="revision-item" href="/f/{{ $.FileID }}/rev/{{ .Sequence }}">
+        <a class="revision-item" href="{{ $.FilePath }}/rev/{{ .Sequence }}">
             <div class="revision-item-details">
                 <span class="revision-item-id">
                     <i data-lucide="git-commit-horizontal"></i>

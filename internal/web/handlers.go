@@ -98,6 +98,7 @@ func LandingHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 		"HTTPAddr":                 httpAddr,
 		"SSHCommand":               fmt.Sprintf("ssh %s%s", portFlag, sshHost),
 		"SSHCommandForFile":        fmt.Sprintf("ssh %sf:<id>@%s", portFlag, sshHost),
+		"SSHCommandForNamedFile":   fmt.Sprintf("ssh %sn:<name>@%s", portFlag, sshHost),
 		"SSHCommandForFileContent": fmt.Sprintf("ssh %sf:<id>:content@%s", portFlag, sshHost),
 		"CommitSHA":                config.BuildCommit(),
 		"OGImageURL":               httpAddr + "/og.png",
@@ -225,18 +226,47 @@ func DocOGImageHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 	}
 }
 
+// findFile resolves the {fileID} path segment. When the route carries an
+// /n/{name} segment, it must match the file's name (case-insensitively)
+// or the file is treated as not found, so named links can't be spoofed.
+func findFile(r *http.Request, database db.DB) (*snips.File, error) {
+	fileID := r.PathValue("fileID")
+	if fileID == "" {
+		return nil, nil
+	}
+
+	file, err := database.FindFile(r.Context(), fileID)
+	if err != nil || file == nil {
+		return nil, err
+	}
+
+	if name := r.PathValue("name"); name != "" {
+		if file.Name == "" || !strings.EqualFold(name, file.Name) {
+			return nil, nil
+		}
+	}
+
+	return file, nil
+}
+
+// filePath is the base path the file was requested under: the named variant
+// when the request came in via /n/{name}, otherwise the canonical ID path.
+// Links on the page (raw, revisions) are built from it so navigation stays on
+// the path the visitor arrived on.
+func filePath(r *http.Request, file *snips.File) string {
+	if r.PathValue("name") != "" {
+		return fmt.Sprintf("/f/%s/n/%s", file.ID, file.Name)
+	}
+
+	return fmt.Sprintf("/f/%s", file.ID)
+}
+
 func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
 	signer := signer.New(cfg.HMACKey)
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
-		fileID := r.PathValue("fileID")
-		if fileID == "" {
-			http.NotFound(w, r)
-			return
-		}
-
-		file, err := database.FindFile(r.Context(), fileID)
+		file, err := findFile(r, database)
 		if err != nil {
 			log.Error("unable to lookup file", "err", err)
 			http.NotFound(w, r)
@@ -324,11 +354,14 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			log.Warn("unable to count revisions", "err", err)
 		}
 
-		ogImageURL := fmt.Sprintf("%s://%s/f/%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, file.ID)
+		path := filePath(r, file)
+		ogImageURL := fmt.Sprintf("%s://%s%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, path)
 		ogDescription := fmt.Sprintf("%s · %s · %s · %s", file.ID, strings.ToLower(file.Type), humanize.Bytes(file.Size), humanize.Time(file.UpdatedAt))
 
 		vars := map[string]interface{}{
 			"FileID":        file.ID,
+			"FileName":      file.Name,
+			"FilePath":      path,
 			"FileSize":      humanize.Bytes(file.Size),
 			"CreatedAt":     humanize.Time(file.CreatedAt),
 			"UpdatedAt":     humanize.Time(file.UpdatedAt),
@@ -393,13 +426,7 @@ func OGImageHandler(cfg *config.Config, database db.DB, assets Assets) http.Hand
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
-		fileID := r.PathValue("fileID")
-		if fileID == "" {
-			http.NotFound(w, r)
-			return
-		}
-
-		file, err := database.FindFile(r.Context(), fileID)
+		file, err := findFile(r, database)
 		if err != nil {
 			log.Error("unable to lookup file", "err", err)
 			http.NotFound(w, r)
@@ -440,13 +467,7 @@ func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.Ha
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
-		fileID := r.PathValue("fileID")
-		if fileID == "" {
-			http.NotFound(w, r)
-			return
-		}
-
-		file, err := database.FindFile(r.Context(), fileID)
+		file, err := findFile(r, database)
 		if err != nil {
 			log.Error("unable to lookup file", "err", err)
 			http.NotFound(w, r)
@@ -492,6 +513,7 @@ func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.Ha
 
 		vars := map[string]interface{}{
 			"FileID":       file.ID,
+			"FilePath":     filePath(r, file),
 			"FileSize":     humanize.Bytes(file.Size),
 			"FileType":     strings.ToLower(file.Type),
 			"UpdatedAt":    humanize.Time(file.UpdatedAt),
@@ -515,9 +537,8 @@ func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
 
-		fileID := r.PathValue("fileID")
 		seqStr := r.PathValue("revisionID")
-		if fileID == "" || seqStr == "" {
+		if seqStr == "" {
 			http.NotFound(w, r)
 			return
 		}
@@ -528,7 +549,7 @@ func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http
 			return
 		}
 
-		file, err := database.FindFile(r.Context(), fileID)
+		file, err := findFile(r, database)
 		if err != nil {
 			log.Error("unable to lookup file", "err", err)
 			http.NotFound(w, r)
@@ -571,6 +592,7 @@ func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http
 
 		vars := map[string]interface{}{
 			"FileID":           file.ID,
+			"FilePath":         filePath(r, file),
 			"FileSize":         humanize.Bytes(file.Size),
 			"FileType":         strings.ToLower(file.Type),
 			"Private":          file.Private,
@@ -642,6 +664,9 @@ func FileToMarkdown(cfg *config.Config, file *snips.File, content []byte) []byte
 
 	fmt.Fprintf(&buf, "---\n")
 	fmt.Fprintf(&buf, "id: %s\n", file.ID)
+	if file.Name != "" {
+		fmt.Fprintf(&buf, "name: %s\n", file.Name)
+	}
 	fmt.Fprintf(&buf, "size: %s\n", humanize.Bytes(file.Size))
 	fmt.Fprintf(&buf, "type: %s\n", strings.ToLower(file.Type))
 	fmt.Fprintf(&buf, "created: %s\n", file.CreatedAt.UTC().Format(time.RFC3339))

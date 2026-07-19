@@ -15,6 +15,7 @@ import {
   KeyRound,
   Package,
   SquarePen,
+  Tag,
   Terminal,
   Zap,
 } from "lucide";
@@ -157,6 +158,7 @@ const initIcons = () => {
       KeyRound,
       Package,
       SquarePen,
+      Tag,
       Terminal,
       Zap,
     },

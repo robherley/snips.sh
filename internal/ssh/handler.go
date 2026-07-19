@@ -121,27 +121,39 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 
 func (h *SessionHandler) FileRequest(sesh *UserSession) {
 	userID := sesh.UserID()
-	fileID := sesh.RequestedFileID()
 
-	file, err := h.DB.FindFile(sesh.Context(), fileID)
+	var (
+		file       *snips.File
+		err        error
+		identifier string
+	)
+
+	if sesh.IsNamedFileRequest() {
+		identifier = sesh.RequestedFileName()
+		file, err = h.DB.FindFileByName(sesh.Context(), userID, identifier)
+	} else {
+		identifier = sesh.RequestedFileID()
+		file, err = h.DB.FindFile(sesh.Context(), identifier)
+	}
+
 	if err != nil {
-		sesh.Error(err, "Unable to get file", "File not found: %s", fileID)
+		sesh.Error(err, "Unable to get file", "File not found: %s", identifier)
 		return
 	}
 
 	if file == nil {
-		sesh.Error(ErrFileNotFound, "Unable to get file", "File not found: %s", fileID)
+		sesh.Error(ErrFileNotFound, "Unable to get file", "File not found: %s", identifier)
 		return
 	}
 
 	if file.Private && file.UserID != userID {
-		sesh.Error(ErrPrivateFileAccess, "Unable to get file", "File not found: %s", fileID)
+		sesh.Error(ErrPrivateFileAccess, "Unable to get file", "File not found: %s", identifier)
 		return
 	}
 
 	if sesh.IsContentUpdate() {
 		if file.UserID != userID {
-			sesh.Error(ErrFileNotFound, "Unable to get file", "File not found: %s", fileID)
+			sesh.Error(ErrFileNotFound, "Unable to get file", "File not found: %s", identifier)
 			return
 		}
 		h.UpdateFileContent(sesh, file)
@@ -155,7 +167,7 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 	}
 
 	if file.UserID != userID {
-		sesh.Error(ErrFileNotFound, "Unable to get file", "File not found: %s", fileID)
+		sesh.Error(ErrFileNotFound, "Unable to get file", "File not found: %s", identifier)
 		return
 	}
 
@@ -164,9 +176,107 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 		h.DeleteFile(sesh, file)
 	case "sign":
 		h.SignFile(sesh, file)
+	case "rename":
+		h.RenameFile(sesh, file)
 	default:
 		sesh.Error(ErrUnknownCommand, "Unknown command", "Unknown command specified: %q", args[0])
 	}
+}
+
+func (h *SessionHandler) RenameFile(sesh *UserSession, file *snips.File) {
+	log := logger.From(sesh.Context())
+
+	flags := RenameFlags{}
+	args := sesh.Command()[1:]
+	if err := flags.Parse(sesh.Stderr(), args); err != nil {
+		if !errors.Is(err, flag.ErrHelp) {
+			log.Warn("invalid user specified flags", "err", err)
+		}
+		return
+	}
+
+	if flags.Remove {
+		if file.Name == "" {
+			noti := Notification{
+				Title: "File Not Renamed ℹ️",
+				Color: styles.Colors.Yellow,
+				WithStyle: func(s *lipgloss.Style) {
+					s.MarginTop(1)
+				},
+			}
+			noti.Messagef("File %q has no name to remove.", file.ID)
+			noti.Render(sesh)
+			return
+		}
+
+		oldName := file.Name
+		file.Name = ""
+		if err := h.DB.UpdateFile(sesh.Context(), file); err != nil {
+			file.Name = oldName
+			sesh.Error(err, "Unable to rename file", "There was an error renaming file: %q", file.ID)
+			return
+		}
+
+		metrics.IncrCounter([]string{"file", "rename"}, 1)
+		log.Info("file name removed", "file_id", file.ID, "old_name", oldName)
+
+		noti := Notification{
+			Color: styles.Colors.Green,
+			Title: "Name Removed 🏷️",
+			WithStyle: func(s *lipgloss.Style) {
+				s.MarginTop(1)
+			},
+		}
+		noti.Messagef("File %q is no longer named %q.", file.ID, oldName)
+		noti.Render(sesh)
+		return
+	}
+
+	name := flags.Arg(0)
+	if name == "" {
+		sesh.Error(ErrNameRequired, "Unable to rename file", "Provide a name (e.g. %q) or remove the current one with -rm.", "rename my-notes")
+		return
+	}
+
+	// ssh joins command words with spaces, so a quoted "two words" name
+	// arrives as extra args — reject instead of silently using the first word
+	if flags.NArg() > 1 {
+		sesh.Error(snips.ErrInvalidName, "Unable to rename file", "%s", snips.ErrInvalidName.Error())
+		return
+	}
+
+	normalized, err := snips.NormalizeName(name)
+	if err != nil {
+		sesh.Error(err, "Unable to rename file", "%s", err.Error())
+		return
+	}
+
+	previous := file.Name
+	file.Name = normalized
+	if err := h.DB.UpdateFile(sesh.Context(), file); err != nil {
+		file.Name = previous
+		if errors.Is(err, db.ErrNameTaken) {
+			sesh.Error(err, "Unable to rename file", "You already have a file named %q.", normalized)
+			return
+		}
+		sesh.Error(err, "Unable to rename file", "There was an error renaming file: %q", file.ID)
+		return
+	}
+
+	metrics.IncrCounter([]string{"file", "rename"}, 1)
+	log.Info("file renamed", "file_id", file.ID, "name", file.Name)
+
+	noti := Notification{
+		Color: styles.Colors.Green,
+		Title: "File Renamed 🏷️",
+		WithStyle: func(s *lipgloss.Style) {
+			s.MarginTop(1)
+		},
+	}
+	noti.Messagef("File %q is now named %q.", file.ID, file.Name)
+	noti.Render(sesh)
+
+	h.renderFileURL(sesh, file)
 }
 
 func (h *SessionHandler) DeleteFile(sesh *UserSession, file *snips.File) {
@@ -323,6 +433,9 @@ func (h *SessionHandler) renderFileResult(sesh *UserSession, file *snips.File, t
 		"size":       styles.C(styles.Colors.White, humanize.Bytes(file.Size)),
 		"visibility": visibility,
 	}
+	if file.Name != "" {
+		kvp["name"] = styles.C(styles.Colors.White, file.Name)
+	}
 	for k, v := range kvp {
 		key := styles.C(styles.Colors.Muted, k+": ")
 		attrs = append(attrs, key+v)
@@ -350,7 +463,11 @@ func (h *SessionHandler) renderFileResult(sesh *UserSession, file *snips.File, t
 }
 
 func (h *SessionHandler) renderFileURL(sesh *UserSession, file *snips.File) {
+	// prefer the human-readable path when the file is named
 	addr := h.Config.HTTPAddressForFile(file.ID)
+	if file.Name != "" {
+		addr = h.Config.HTTPAddressForNamedFile(file.ID, file.Name)
+	}
 	url := lipgloss.NewStyle().
 		Foreground(styles.Colors.Blue).
 		Underline(true).
@@ -497,12 +614,22 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		return
 	}
 
+	name := ""
+	if flags.Name != "" {
+		name, err = snips.NormalizeName(flags.Name)
+		if err != nil {
+			sesh.Error(err, "Unable to create file", "Invalid name %q: %s", flags.Name, err.Error())
+			return
+		}
+	}
+
 	size := uint64(len(content))
 	file := snips.File{
 		Private: flags.Private,
 		Size:    size,
 		UserID:  sesh.UserID(),
 		Type:    renderer.DetectFileType(content, flags.Extension, h.Config.EnableGuesser),
+		Name:    name,
 	}
 
 	if err := file.SetContent(content, h.Config.FileCompression); err != nil {
@@ -510,6 +637,10 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 	}
 
 	if err := h.DB.CreateFile(sesh.Context(), &file, h.Config.Limits.FilesPerUser); err != nil {
+		if errors.Is(err, db.ErrNameTaken) {
+			sesh.Error(err, "Unable to create file", "You already have a file named %q.", name)
+			return
+		}
 		sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
 		return
 	}

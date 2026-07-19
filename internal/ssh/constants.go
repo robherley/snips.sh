@@ -8,5 +8,6 @@ const (
 	FingerprintContextKey = "fingerprint"
 	UserIDContextKey      = "user_id"
 
-	FileRequestPrefix = "f:"
+	FileRequestPrefix      = "f:"
+	NamedFileRequestPrefix = "n:"
 )

@@ -22,7 +22,7 @@ type fileItem struct {
 }
 
 func (i fileItem) Title() string {
-	return i.file.ID
+	return i.file.DisplayName()
 }
 
 func (i fileItem) Description() string {
@@ -39,7 +39,7 @@ func (i fileItem) Description() string {
 }
 
 func (i fileItem) FilterValue() string {
-	return i.file.ID + " " + strings.ToLower(i.file.Type)
+	return i.file.DisplayName() + " " + strings.ToLower(i.file.Type)
 }
 
 func toItems(files []*snips.File) []list.Item {
@@ -92,11 +92,11 @@ func (d fileDelegate) matchHighlight() lipgloss.Style {
 }
 
 // titleMatchIdx filters fuzzy-match positions to those that fall inside the
-// title (file ID) portion of FilterValue.
-func titleMatchIdx(matched []int, id string) []int {
+// title (display name) portion of FilterValue.
+func titleMatchIdx(matched []int, name string) []int {
 	out := make([]int, 0, len(matched))
 	for _, i := range matched {
-		if i < len(id) {
+		if i < len(name) {
 			out = append(out, i)
 		}
 	}
@@ -105,8 +105,8 @@ func titleMatchIdx(matched []int, id string) []int {
 
 // descTypeMatchIdx returns fuzzy-match positions translated to the type span at
 // the start of the description string.
-func descTypeMatchIdx(matched []int, id, typ string) []int {
-	typeStart := len(id) + 1 // skip the space separator in FilterValue
+func descTypeMatchIdx(matched []int, name, typ string) []int {
+	typeStart := len(name) + 1 // skip the space separator in FilterValue
 	typeLen := len(strings.ToLower(typ))
 	out := make([]int, 0, len(matched))
 	for _, i := range matched {
@@ -136,13 +136,13 @@ func (d fileDelegate) itemHint(file *snips.File) string {
 }
 
 func (d fileDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
-	file, ok := item.(fileItem)
+	fileItem, ok := item.(fileItem)
 	if !ok {
 		return
 	}
 
-	title := file.Title()
-	desc := file.Description()
+	title := fileItem.Title()
+	desc := fileItem.Description()
 
 	width := m.Width()
 	if width <= 0 {
@@ -172,15 +172,15 @@ func (d fileDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 		title = ansi.Truncate(title, contentWidth, ellipsis)
 		if isFiltered {
 			unmatched := d.styles.SelectedTitle.Inline(true)
-			title = lipgloss.StyleRunes(title, titleMatchIdx(matchedRunes, file.file.ID), d.matchHighlight(), unmatched)
+			title = lipgloss.StyleRunes(title, titleMatchIdx(matchedRunes, fileItem.file.DisplayName()), d.matchHighlight(), unmatched)
 		}
-		hint := d.itemHint(file.file)
+		hint := d.itemHint(fileItem.file)
 		gap := contentWidth - lipgloss.Width(title) - lipgloss.Width(hint)
 		if gap >= 1 {
 			title = title + strings.Repeat(" ", gap) + hint
 		}
 		if isFiltered {
-			descIdx := descTypeMatchIdx(matchedRunes, file.file.ID, file.file.Type)
+			descIdx := descTypeMatchIdx(matchedRunes, fileItem.file.DisplayName(), fileItem.file.Type)
 			if len(descIdx) > 0 {
 				unmatched := d.styles.SelectedDesc.Inline(true)
 				desc = lipgloss.StyleRunes(desc, descIdx, d.matchHighlight(), unmatched)
@@ -188,7 +188,7 @@ func (d fileDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 		}
 		// emphasize "private" in red on the highlighted item — safe to embed at
 		// the tail of the description because nothing renders after it
-		if file.file.Private {
+		if fileItem.file.Private {
 			desc = strings.Replace(desc, "private", styles.C(styles.Colors.Red, "private"), 1)
 		}
 		desc = ansi.Truncate(desc, contentWidth, ellipsis)
@@ -199,10 +199,10 @@ func (d fileDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 		title = ansi.Truncate(title, contentWidth, ellipsis)
 		if isFiltered {
 			unmatched := d.styles.NormalTitle.Inline(true)
-			title = lipgloss.StyleRunes(title, titleMatchIdx(matchedRunes, file.file.ID), d.matchHighlight(), unmatched)
+			title = lipgloss.StyleRunes(title, titleMatchIdx(matchedRunes, fileItem.file.DisplayName()), d.matchHighlight(), unmatched)
 		}
 		if isFiltered {
-			descIdx := descTypeMatchIdx(matchedRunes, file.file.ID, file.file.Type)
+			descIdx := descTypeMatchIdx(matchedRunes, fileItem.file.DisplayName(), fileItem.file.Type)
 			if len(descIdx) > 0 {
 				unmatched := d.styles.NormalDesc.Inline(true)
 				desc = lipgloss.StyleRunes(desc, descIdx, d.matchHighlight(), unmatched)

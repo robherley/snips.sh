@@ -95,7 +95,7 @@ func (m Code) titleRow() string {
 		humanize.Time(m.file.UpdatedAt),
 	}, " · ")
 
-	return styles.BC(m.theme, m.file.ID) + styles.C(styles.Colors.Muted, " · "+meta)
+	return styles.BC(m.theme, m.file.DisplayName()) + styles.C(styles.Colors.Muted, " · "+meta)
 }
 
 func (m Code) renderContent(file *snips.File) string {

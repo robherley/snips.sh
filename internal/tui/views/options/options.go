@@ -29,6 +29,10 @@ type option struct {
 
 var options = []option{
 	{
+		name:   "rename file",
+		prompt: prompt.Rename,
+	},
+	{
 		name:   "edit extension",
 		prompt: prompt.ChangeExtension,
 	},
@@ -182,6 +186,9 @@ func (o Options) renderDetails() string {
 	file := o.file
 
 	rawHTTPAddr := o.cfg.HTTPAddressForFile(file.ID)
+	if file.Name != "" {
+		rawHTTPAddr = o.cfg.HTTPAddressForNamedFile(file.ID, file.Name)
+	}
 	httpAddr := lipgloss.NewStyle().Hyperlink(rawHTTPAddr).Render(rawHTTPAddr)
 	visibility := "public"
 	if file.Private {
@@ -189,8 +196,14 @@ func (o Options) renderDetails() string {
 		visibility = styles.C(styles.Colors.Red, "private")
 	}
 
+	name := styles.C(styles.Colors.Muted, "<none>")
+	if file.Name != "" {
+		name = file.Name
+	}
+
 	values := [][2]string{
 		{"id", file.ID},
+		{"name", name},
 		{"size", humanize.Bytes(file.Size)},
 		{"created", fmt.Sprintf("%s (%s)", file.CreatedAt.Format(time.RFC3339), humanize.Time(file.CreatedAt))},
 		{"modified", fmt.Sprintf("%s (%s)", file.UpdatedAt.Format(time.RFC3339), humanize.Time(file.UpdatedAt))},
@@ -201,6 +214,9 @@ func (o Options) renderDetails() string {
 	access := [][2]string{
 		{"url", httpAddr},
 		{"ssh", o.cfg.SSHCommandForFile(file.ID)},
+	}
+	if file.Name != "" {
+		access = append(access, [2]string{"", o.cfg.SSHCommandForNamedFile(file.Name)})
 	}
 
 	return styles.Table(

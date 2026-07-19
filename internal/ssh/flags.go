@@ -22,6 +22,7 @@ type UploadFlags struct {
 	Private   bool
 	Extension string
 	TTL       time.Duration
+	Name      string
 }
 
 func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
@@ -31,6 +32,7 @@ func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
 	uf.BoolVar(&uf.Private, "private", false, "only accessible via creator or signed urls (optional)")
 	uf.StringVar(&uf.Extension, "ext", "", "set the file extension (optional)")
 	addDurationFlag(uf.FlagSet, &uf.TTL, "ttl", 0, "lifetime of the signed url (optional)")
+	uf.StringVar(&uf.Name, "name", "", "human-readable name for the file, must be unique per user (optional)")
 
 	if err := uf.FlagSet.Parse(args); err != nil {
 		return err
@@ -43,6 +45,21 @@ func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
 	uf.Extension = strings.TrimPrefix(strings.ToLower(uf.Extension), ".")
 
 	return nil
+}
+
+type RenameFlags struct {
+	*flag.FlagSet
+
+	Remove bool
+}
+
+func (rf *RenameFlags) Parse(out io.Writer, args []string) error {
+	rf.FlagSet = flag.NewFlagSet("", flag.ContinueOnError)
+	rf.SetOutput(out)
+
+	rf.BoolVar(&rf.Remove, "rm", false, "remove the file's name")
+
+	return rf.FlagSet.Parse(args)
 }
 
 type SignFlags struct {
