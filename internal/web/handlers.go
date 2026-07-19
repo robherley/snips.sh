@@ -354,13 +354,14 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			log.Warn("unable to count revisions", "err", err)
 		}
 
-		ogImageURL := fmt.Sprintf("%s://%s/f/%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, file.ID)
+		path := filePath(r, file)
+		ogImageURL := fmt.Sprintf("%s://%s%s/og.png", cfg.HTTP.External.Scheme, cfg.HTTP.External.Host, path)
 		ogDescription := fmt.Sprintf("%s · %s · %s · %s", file.ID, strings.ToLower(file.Type), humanize.Bytes(file.Size), humanize.Time(file.UpdatedAt))
 
 		vars := map[string]interface{}{
 			"FileID":        file.ID,
 			"FileName":      file.Name,
-			"FilePath":      filePath(r, file),
+			"FilePath":      path,
 			"FileSize":      humanize.Bytes(file.Size),
 			"CreatedAt":     humanize.Time(file.CreatedAt),
 			"UpdatedAt":     humanize.Time(file.UpdatedAt),
