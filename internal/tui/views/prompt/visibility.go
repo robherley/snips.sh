@@ -11,7 +11,7 @@ import (
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
-	"github.com/robherley/snips.sh/internal/tui/styles"
+	"github.com/robherley/snips.sh/internal/tui/feedback"
 )
 
 // visibilityDialog toggles a file between public and private after a y/n
@@ -57,7 +57,7 @@ func (d *visibilityDialog) submit(e env) tea.Cmd {
 	})
 	logger.From(e.ctx).Info("updated file visibility", "file", e.file.ID, "private", e.file.Private)
 
-	msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q is now %s", e.file.ID, e.file.Visibility()))
+	msg := feedback.Success(fmt.Sprintf("file %q is now %s", e.file.ID, e.file.Visibility()))
 	return tea.Batch(cmds.ReloadFiles(e.db, e.file.UserID), SetPromptFeedbackCmd(msg, true))
 }
 

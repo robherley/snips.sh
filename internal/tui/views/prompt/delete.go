@@ -9,7 +9,7 @@ import (
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
-	"github.com/robherley/snips.sh/internal/tui/styles"
+	"github.com/robherley/snips.sh/internal/tui/feedback"
 )
 
 // deleteDialog deletes a file after the user types its ID to confirm.
@@ -41,6 +41,6 @@ func (d *deleteDialog) submit(e env) tea.Cmd {
 	metrics.IncrCounter([]string{"file", "delete"}, 1)
 	logger.From(e.ctx).Info("file deleted", "file_id", e.file.ID)
 
-	msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q deleted", e.file.ID))
+	msg := feedback.Success(fmt.Sprintf("file %q deleted", e.file.ID))
 	return tea.Batch(cmds.ReloadFiles(e.db, e.file.UserID), SetPromptFeedbackCmd(msg, true))
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
+	"github.com/robherley/snips.sh/internal/tui/feedback"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 	"github.com/robherley/snips.sh/internal/tui/views"
@@ -59,8 +60,7 @@ type Settings struct {
 	confirm    textinput.Model // typed confirmation on the delete page
 	fileCount  int64
 
-	feedback   string
-	feedbackOK bool
+	feedback feedback.Feedback
 }
 
 func New(ctx context.Context, width, height int, database db.DB, user *snips.User, fingerprint string) Settings {
@@ -105,7 +105,7 @@ func (s Settings) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// opened fresh: start back at the root with stale feedback cleared
 			s.page = rootPage
 			s.cursor = 0
-			s.feedback = ""
+			s.feedback = feedback.Feedback{}
 		}
 		return s, nil
 	case tea.KeyPressMsg:
@@ -135,7 +135,7 @@ func (s Settings) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // open drills into a deeper page.
 func (s Settings) open(p page) (tea.Model, tea.Cmd) {
 	s.page = p
-	s.feedback = ""
+	s.feedback = feedback.Feedback{}
 	switch p {
 	case themePage:
 		s.themeIndex = themeIndexOf(s.user.ThemeColor)
@@ -143,8 +143,7 @@ func (s Settings) open(p page) (tea.Model, tea.Cmd) {
 		count, err := s.db.CountFilesByUser(s.ctx, s.user.ID)
 		if err != nil {
 			s.page = rootPage
-			s.feedback = "failed to count files: " + err.Error()
-			s.feedbackOK = false
+			s.feedback = feedback.Error("failed to count files: " + err.Error())
 			return s, nil
 		}
 		s.fileCount = count
@@ -159,14 +158,13 @@ func (s Settings) updateDeletePage(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "enter":
 		if s.confirm.Value() != s.user.ID {
-			s.feedback = "please type your user id to confirm"
-			s.feedbackOK = false
+			s.feedback = feedback.Error("please type your user id to confirm")
 			return s, nil
 		}
 		return s.deleteEverything()
 	case "esc":
 		s.page = rootPage
-		s.feedback = ""
+		s.feedback = feedback.Feedback{}
 		return s, nil
 	}
 
@@ -179,8 +177,7 @@ func (s Settings) updateDeletePage(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 func (s Settings) deleteEverything() (tea.Model, tea.Cmd) {
 	count, err := s.db.DeleteFilesByUser(s.ctx, s.user.ID)
 	if err != nil {
-		s.feedback = "failed to delete: " + err.Error()
-		s.feedbackOK = false
+		s.feedback = feedback.Error("failed to delete: " + err.Error())
 		return s, nil
 	}
 
@@ -188,11 +185,11 @@ func (s Settings) deleteEverything() (tea.Model, tea.Cmd) {
 	logger.From(s.ctx).Info("deleted all user files", "user_id", s.user.ID, "count", count)
 
 	s.page = rootPage
-	s.feedback = fmt.Sprintf("deleted %d files", count)
+	deleted := fmt.Sprintf("deleted %d files", count)
 	if count == 1 {
-		s.feedback = "deleted 1 file"
+		deleted = "deleted 1 file"
 	}
-	s.feedbackOK = true
+	s.feedback = feedback.Success(deleted)
 
 	return s, cmds.ReloadFiles(s.db, s.user.ID)
 }
@@ -225,13 +222,11 @@ func (s Settings) saveTheme(index int) (tea.Model, tea.Cmd) {
 	s.user.ThemeColor = name
 	if err := s.db.UpdateUser(s.ctx, s.user); err != nil {
 		s.user.ThemeColor = prev
-		s.feedback = "failed to save: " + err.Error()
-		s.feedbackOK = false
+		s.feedback = feedback.Error("failed to save: " + err.Error())
 		return s, nil
 	}
 
-	s.feedback = "theme set to " + name
-	s.feedbackOK = true
+	s.feedback = feedback.Success("theme set to " + name)
 
 	return s, func() tea.Msg { return msgs.ThemeChanged{Color: styles.ThemeOptions[index].Color} }
 }
@@ -272,12 +267,8 @@ func (s Settings) rootRows() []string {
 		rows = append(rows, s.entryRow(e, i == s.cursor))
 	}
 
-	if s.feedback != "" {
-		c := styles.Colors.Green
-		if !s.feedbackOK {
-			c = styles.Colors.Red
-		}
-		rows = append(rows, "", styles.C(c, s.feedback))
+	if !s.feedback.Empty() {
+		rows = append(rows, "", s.feedback.View())
 	}
 
 	return rows
@@ -340,8 +331,8 @@ func (s Settings) deleteRows() []string {
 		s.confirm.View(),
 	}
 
-	if s.feedback != "" && !s.feedbackOK {
-		rows = append(rows, "", styles.C(styles.Colors.Red, s.feedback))
+	if !s.feedback.Empty() && s.feedback.Err {
+		rows = append(rows, "", s.feedback.View())
 	}
 
 	return rows

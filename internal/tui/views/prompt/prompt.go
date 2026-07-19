@@ -11,6 +11,7 @@ import (
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
+	"github.com/robherley/snips.sh/internal/tui/feedback"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
@@ -28,7 +29,7 @@ type Prompt struct {
 	file       *snips.File
 	dialog     dialog
 	breadcrumb string
-	feedback   string
+	feedback   feedback.Feedback
 	finished   bool
 }
 
@@ -59,8 +60,6 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Code == tea.KeyEnter {
 			return p, p.submit()
 		}
-		// the surrounding TUI leaves keys to us while a dialog is capturing,
-		// so escape has to close the prompt from here
 		if msg.Code == tea.KeyEscape {
 			return p, cmds.PopView()
 		}
@@ -82,7 +81,7 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case msgs.PopView:
 		p.dialog = nil
 		p.breadcrumb = ""
-		p.feedback = ""
+		p.feedback = feedback.Feedback{}
 		p.finished = false
 		return p, nil
 	case tea.WindowSizeMsg:
@@ -160,11 +159,11 @@ func (p Prompt) renderPrompt() string {
 		)
 	}
 
-	if p.feedback != "" {
+	if !p.feedback.Empty() {
 		if !p.finished {
 			pieces = append(pieces, "")
 		}
-		pieces = append(pieces, p.feedback)
+		pieces = append(pieces, p.feedback.View())
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Top, pieces...)

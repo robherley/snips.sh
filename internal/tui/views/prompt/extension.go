@@ -15,6 +15,7 @@ import (
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
+	"github.com/robherley/snips.sh/internal/tui/feedback"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 
@@ -95,7 +96,7 @@ func (d *extensionDialog) submit(e env) tea.Cmd {
 	})
 	logger.From(e.ctx).Info("updated file type", "file", e.file.ID, "old_type", old, "new_type", e.file.Type)
 
-	msg := styles.C(styles.Colors.Green, fmt.Sprintf("file %q extension set to %q", e.file.ID, item.name))
+	msg := feedback.Success(fmt.Sprintf("file %q extension set to %q", e.file.ID, item.name))
 	return tea.Batch(cmds.ReloadFiles(e.db, e.file.UserID), SetPromptFeedbackCmd(msg, true))
 }
 

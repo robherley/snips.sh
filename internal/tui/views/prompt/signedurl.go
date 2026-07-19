@@ -9,6 +9,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/armon/go-metrics"
 	"github.com/robherley/snips.sh/internal/logger"
+	"github.com/robherley/snips.sh/internal/tui/feedback"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
@@ -50,7 +51,7 @@ func (d *signedURLDialog) submit(e env) tea.Cmd {
 	// keep the url on a single unwrapped line and hyperlink it, so it stays
 	// easy to copy (or cmd+click) out of the modal
 	raw := url.String()
-	link := lipgloss.NewStyle().Foreground(styles.Colors.Green).Hyperlink(raw).Render(raw)
-	msg := link + "\n\n" + styles.C(styles.Colors.Green, "expires at: "+expires.Format(time.RFC3339))
+	link := lipgloss.NewStyle().Hyperlink(raw).Render(raw)
+	msg := feedback.Success(link + "\n\n" + "expires at: " + expires.Format(time.RFC3339))
 	return SetPromptFeedbackCmd(msg, true)
 }

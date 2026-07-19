@@ -2,7 +2,7 @@ package prompt
 
 import (
 	tea "charm.land/bubbletea/v2"
-	"github.com/robherley/snips.sh/internal/tui/styles"
+	"github.com/robherley/snips.sh/internal/tui/feedback"
 )
 
 // SetPromptKindCmd opens the dialog for the kind. The breadcrumb is the modal
@@ -16,10 +16,10 @@ func SetPromptKindCmd(pk Kind, breadcrumb string) tea.Cmd {
 	}
 }
 
-func SetPromptFeedbackCmd(feedback string, finished bool) tea.Cmd {
+func SetPromptFeedbackCmd(fb feedback.Feedback, finished bool) tea.Cmd {
 	return func() tea.Msg {
 		return FeedbackMsg{
-			Feedback: feedback,
+			Feedback: fb,
 			Finished: finished,
 		}
 	}
@@ -28,7 +28,7 @@ func SetPromptFeedbackCmd(feedback string, finished bool) tea.Cmd {
 func SetPromptErrorCmd(err error) tea.Cmd {
 	return func() tea.Msg {
 		return FeedbackMsg{
-			Feedback: styles.C(styles.Colors.Red, err.Error()),
+			Feedback: feedback.Error(err.Error()),
 			Finished: false,
 		}
 	}
