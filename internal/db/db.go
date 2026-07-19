@@ -21,6 +21,8 @@ type DB interface {
 	DeleteFilesByUser(ctx context.Context, userID string) (int64, error)
 	// FindFilesByUser returns all files for a user. Does not include file content.
 	FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error)
+	// CountFilesByUser returns the number of files a user has.
+	CountFilesByUser(ctx context.Context, userID string) (int64, error)
 	// FindPublicKeyByFingerprint returns a public key by its fingerprint.
 	FindPublicKeyByFingerprint(ctx context.Context, fingerprint string) (*snips.PublicKey, error)
 	// CreateUserWithPublicKey creates a new user with a public key.

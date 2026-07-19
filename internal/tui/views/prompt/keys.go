@@ -12,26 +12,24 @@ type keyMap struct {
 }
 
 func (km keyMap) ShortHelp() []key.Binding {
-	bindings := []key.Binding{km.Help, km.Escape}
-
-	if !km.submitted {
-		bindings = append(bindings, km.Enter)
+	if km.submitted {
+		return []key.Binding{km.Help, km.Escape}
 	}
 
-	return bindings
+	return []key.Binding{km.Escape, km.Enter}
 }
 
 func (km keyMap) FullHelp() [][]key.Binding {
-	bindings := [][]key.Binding{
-		{km.Escape},
-		{km.Help, km.Quit},
+	if km.submitted {
+		return [][]key.Binding{
+			{km.Escape},
+			{km.Help, km.Quit},
+		}
 	}
 
-	if !km.submitted {
-		bindings[0] = append(bindings[0], km.Enter)
+	return [][]key.Binding{
+		{km.Escape, km.Enter},
 	}
-
-	return bindings
 }
 
 func newKeyMap(submitted bool) keyMap {

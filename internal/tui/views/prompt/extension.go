@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -76,7 +77,11 @@ func (d *extensionDialog) resize(width int) {
 }
 
 func (d *extensionDialog) submit(e env) tea.Cmd {
-	item := d.selector.SelectedItem().(selectorItem)
+	// SelectedItem is nil when the filter matches nothing
+	item, ok := d.selector.SelectedItem().(selectorItem)
+	if !ok {
+		return SetPromptErrorCmd(errors.New("no matching extension selected"))
+	}
 	old := e.file.Type
 	e.file.Type = item.name
 

@@ -1,7 +1,8 @@
 package prompt
 
 type KindSetMsg struct {
-	Kind Kind
+	Kind       Kind
+	Breadcrumb string
 }
 
 type FeedbackMsg struct {

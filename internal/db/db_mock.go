@@ -38,6 +38,72 @@ func (_m *MockDB) EXPECT() *MockDB_Expecter {
 	return &MockDB_Expecter{mock: &_m.Mock}
 }
 
+// CountFilesByUser provides a mock function for the type MockDB
+func (_mock *MockDB) CountFilesByUser(ctx context.Context, userID string) (int64, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountFilesByUser")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (int64, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) int64); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDB_CountFilesByUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountFilesByUser'
+type MockDB_CountFilesByUser_Call struct {
+	*mock.Call
+}
+
+// CountFilesByUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockDB_Expecter) CountFilesByUser(ctx any, userID any) *MockDB_CountFilesByUser_Call {
+	return &MockDB_CountFilesByUser_Call{Call: _e.mock.On("CountFilesByUser", ctx, userID)}
+}
+
+func (_c *MockDB_CountFilesByUser_Call) Run(run func(ctx context.Context, userID string)) *MockDB_CountFilesByUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_CountFilesByUser_Call) Return(n int64, err error) *MockDB_CountFilesByUser_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockDB_CountFilesByUser_Call) RunAndReturn(run func(ctx context.Context, userID string) (int64, error)) *MockDB_CountFilesByUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CountRevisionsByFileID provides a mock function for the type MockDB
 func (_mock *MockDB) CountRevisionsByFileID(ctx context.Context, fileID string) (int64, error) {
 	ret := _mock.Called(ctx, fileID)

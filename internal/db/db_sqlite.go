@@ -199,6 +199,21 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 	return files, nil
 }
 
+func (s *Sqlite) CountFilesByUser(ctx context.Context, userID string) (int64, error) {
+	const query = `
+		SELECT COUNT(*)
+		FROM files
+		WHERE user_id = ?
+	`
+
+	var count int64
+	if err := s.QueryRowContext(ctx, query, userID).Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s *Sqlite) FindPublicKeyByFingerprint(ctx context.Context, fingerprint string) (*snips.PublicKey, error) {
 	const query = `
 		SELECT
@@ -556,8 +571,6 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 }
 
 func (s *Sqlite) UpdateUser(ctx context.Context, user *snips.User) error {
-	user.UpdatedAt = time.Now().UTC()
-
 	const query = `
 		UPDATE users
 		SET
@@ -566,6 +579,11 @@ func (s *Sqlite) UpdateUser(ctx context.Context, user *snips.User) error {
 		WHERE id = ?
 	`
 
-	_, err := s.ExecContext(ctx, query, user.UpdatedAt, user.ThemeColor, user.ID)
-	return err
+	updatedAt := time.Now().UTC()
+	if _, err := s.ExecContext(ctx, query, updatedAt, user.ThemeColor, user.ID); err != nil {
+		return err
+	}
+
+	user.UpdatedAt = updatedAt
+	return nil
 }

@@ -111,18 +111,21 @@ func (o Options) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				o.index--
 			}
 		case "tab":
-			return o, tea.Batch(cmds.PopView(), cmds.DeselectFile())
+			return o, cmds.PopView()
 		case "enter":
 			if len(opts) == 0 {
 				return o, nil
 			}
 			return o, tea.Batch(
-				prompt.SetPromptKindCmd(opts[o.index].prompt),
+				prompt.SetPromptKindCmd(opts[o.index].prompt, "options"),
 				cmds.PushView(views.Prompt),
 			)
 		}
 	case msgs.FileLoaded:
 		o.file = msg.File
+		o.index = 0
+	case msgs.FileDeselected:
+		o.file = nil
 		o.index = 0
 	case tea.WindowSizeMsg:
 		o.width, o.height = msg.Width, msg.Height

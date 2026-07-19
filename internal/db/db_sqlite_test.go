@@ -442,6 +442,52 @@ func (s *SqliteSuite) TestFindFilesByUser() {
 	}
 }
 
+func (s *SqliteSuite) TestCountFilesByUser() {
+	database := s.getTestDB(true)
+
+	userID := id.New()
+
+	count, err := database.CountFilesByUser(context.TODO(), userID)
+	s.Require().NoError(err)
+	s.Require().Equal(int64(0), count)
+
+	numFiles := 3
+	for range numFiles {
+		const query = `
+			INSERT INTO files (
+				id,
+				created_at,
+				updated_at,
+				size,
+				content,
+				private,
+				type,
+				user_id
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+
+		_, err := s.testDB.Exec(
+			query,
+			id.New(),
+			time.Now().UTC(),
+			time.Now().UTC(),
+			11,
+			[]byte("hello world"),
+			false,
+			"plaintext",
+			userID,
+		)
+		s.Require().NoError(err)
+	}
+
+	count, err = database.CountFilesByUser(context.TODO(), userID)
+	s.Require().NoError(err)
+	s.Require().Equal(int64(numFiles), count)
+
+	count, err = database.CountFilesByUser(context.TODO(), id.New())
+	s.Require().NoError(err)
+	s.Require().Equal(int64(0), count)
+}
+
 func (s *SqliteSuite) TestFindFilesByUser_DoesNotExist() {
 	database := s.getTestDB(true)
 

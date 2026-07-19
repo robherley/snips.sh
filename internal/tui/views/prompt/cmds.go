@@ -5,10 +5,13 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 
-func SetPromptKindCmd(pk Kind) tea.Cmd {
+// SetPromptKindCmd opens the dialog for the kind. The breadcrumb is the modal
+// title's prefix, naming where the prompt was opened from ("" for none).
+func SetPromptKindCmd(pk Kind, breadcrumb string) tea.Cmd {
 	return func() tea.Msg {
 		return KindSetMsg{
-			Kind: pk,
+			Kind:       pk,
+			Breadcrumb: breadcrumb,
 		}
 	}
 }

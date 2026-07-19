@@ -10,6 +10,7 @@ import (
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/snips"
+	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
@@ -24,10 +25,11 @@ type Prompt struct {
 	height int
 	theme  color.Color
 
-	file     *snips.File
-	dialog   dialog
-	feedback string
-	finished bool
+	file       *snips.File
+	dialog     dialog
+	breadcrumb string
+	feedback   string
+	finished   bool
 }
 
 // contentWidth caps modal content so long feedback and the extension selector
@@ -57,6 +59,11 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Code == tea.KeyEnter {
 			return p, p.submit()
 		}
+		// the surrounding TUI leaves keys to us while a dialog is capturing,
+		// so escape has to close the prompt from here
+		if msg.Code == tea.KeyEscape {
+			return p, cmds.PopView()
+		}
 	case FeedbackMsg:
 		p.feedback = msg.Feedback
 		p.finished = msg.Finished
@@ -64,6 +71,7 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case KindSetMsg:
 		// each open gets a fresh dialog, so no input state leaks between uses
 		p.dialog = newDialog(msg.Kind, contentWidth(p.width))
+		p.breadcrumb = msg.Breadcrumb
 		if p.dialog != nil {
 			return p, p.dialog.init()
 		}
@@ -73,6 +81,7 @@ func (p Prompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return p, nil
 	case msgs.PopView:
 		p.dialog = nil
+		p.breadcrumb = ""
 		p.feedback = ""
 		p.finished = false
 		return p, nil
@@ -114,7 +123,12 @@ func (p Prompt) View() tea.View {
 		return tea.NewView(lipgloss.Place(p.width, p.height, lipgloss.Left, lipgloss.Top, ""))
 	}
 
-	return tea.NewView(styles.ModalBody(p.theme, "options / "+p.dialog.title(), p.renderPrompt()))
+	title := p.dialog.title()
+	if p.breadcrumb != "" {
+		title = p.breadcrumb + " / " + title
+	}
+
+	return tea.NewView(styles.ModalBody(p.theme, title, p.renderPrompt()))
 }
 
 func (p Prompt) Keys() help.KeyMap {
@@ -122,7 +136,9 @@ func (p Prompt) Keys() help.KeyMap {
 }
 
 func (p Prompt) IsCapturing() bool {
-	return false
+	// an unfinished dialog owns the keyboard (text inputs, filter); once
+	// finished only feedback is shown and TUI-level shortcuts apply again
+	return p.dialog != nil && !p.finished
 }
 
 func (p Prompt) renderPrompt() string {

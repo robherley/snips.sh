@@ -64,7 +64,7 @@ func New(ctx context.Context, cfg *config.Config, width, height int, user *snips
 		views.Code:     code.New(width, t.innerViewHeight(), theme),
 		views.Options:  options.New(cfg, width, t.innerViewHeight(), theme),
 		views.Prompt:   prompt.New(ctx, cfg, database, width, t.innerViewHeight(), theme),
-		views.Settings: settings.New(width, t.innerViewHeight(), database, user, fingerprint),
+		views.Settings: settings.New(ctx, width, t.innerViewHeight(), database, user, fingerprint),
 	}
 
 	t.help.Styles = styles.Help
@@ -93,8 +93,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return t, tea.Quit
 		}
-		// ctrl+p toggles the settings menu from anywhere (it isn't typeable)
-		if msg.String() == "ctrl+p" {
+		if msg.String() == "ctrl+p" && !t.inPrompt() {
 			if t.currentViewKind() == views.Settings {
 				return t, cmds.PopView()
 			}
@@ -118,11 +117,7 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return t, tea.Quit
 			}
 
-			batched := []tea.Cmd{cmds.PopView()}
-			if t.currentViewKind() == views.Options {
-				batched = append(batched, cmds.DeselectFile())
-			}
-			return t, tea.Batch(batched...)
+			return t, cmds.PopView()
 		}
 
 		// otherwise, send key msgs to the current view
@@ -150,8 +145,15 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		t.pushView(msg.View)
 		return t, t.broadcast(msg)
 	case msgs.PopView:
+		popped := t.currentViewKind()
 		t.popView()
-		return t, t.broadcast(msg)
+		batched := []tea.Cmd{t.broadcast(msg)}
+		// leaving the options flow means the selected file is no longer
+		// relevant; popping a prompt back onto options keeps it selected
+		if popped == views.Options || (popped == views.Prompt && t.currentViewKind() == views.Browser) {
+			batched = append(batched, cmds.DeselectFile())
+		}
+		return t, tea.Batch(batched...)
 	case msgs.ThemeChanged:
 		t.theme = msg.Color
 		return t, t.broadcast(msg)

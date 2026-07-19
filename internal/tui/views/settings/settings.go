@@ -9,7 +9,9 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/armon/go-metrics"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/cmds"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
@@ -41,6 +43,7 @@ var entries = []entry{
 }
 
 type Settings struct {
+	ctx         context.Context
 	db          db.DB
 	user        *snips.User
 	fingerprint string
@@ -48,22 +51,26 @@ type Settings struct {
 	width  int
 	height int
 
-	page       page
+	page page
+
+	// TODO(robherley): separate into sub-models for each page when we have more settings
 	cursor     int             // selected entry on the root page
 	themeIndex int             // selection within the theme page
 	confirm    textinput.Model // typed confirmation on the delete page
-	fileCount  int             // user's file count, fetched when the delete page opens
+	fileCount  int64
+
 	feedback   string
 	feedbackOK bool
 }
 
-func New(width, height int, database db.DB, user *snips.User, fingerprint string) Settings {
+func New(ctx context.Context, width, height int, database db.DB, user *snips.User, fingerprint string) Settings {
 	ti := textinput.New()
 	ti.CharLimit = 255
 	ti.SetWidth(30)
 	ti.Prompt = styles.BC(styles.Colors.Red, "> ")
 
 	return Settings{
+		ctx:         ctx,
 		db:          database,
 		user:        user,
 		fingerprint: fingerprint,
@@ -133,14 +140,14 @@ func (s Settings) open(p page) (tea.Model, tea.Cmd) {
 	case themePage:
 		s.themeIndex = themeIndexOf(s.user.ThemeColor)
 	case deletePage:
-		files, err := s.db.FindFilesByUser(context.Background(), s.user.ID)
+		count, err := s.db.CountFilesByUser(s.ctx, s.user.ID)
 		if err != nil {
 			s.page = rootPage
 			s.feedback = "failed to count files: " + err.Error()
 			s.feedbackOK = false
 			return s, nil
 		}
-		s.fileCount = len(files)
+		s.fileCount = count
 		s.confirm.Reset()
 		s.confirm.Focus()
 		return s, textinput.Blink
@@ -170,12 +177,15 @@ func (s Settings) updateDeletePage(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 }
 
 func (s Settings) deleteEverything() (tea.Model, tea.Cmd) {
-	count, err := s.db.DeleteFilesByUser(context.Background(), s.user.ID)
+	count, err := s.db.DeleteFilesByUser(s.ctx, s.user.ID)
 	if err != nil {
 		s.feedback = "failed to delete: " + err.Error()
 		s.feedbackOK = false
 		return s, nil
 	}
+
+	metrics.IncrCounter([]string{"file", "delete", "all"}, 1)
+	logger.From(s.ctx).Info("deleted all user files", "user_id", s.user.ID, "count", count)
 
 	s.page = rootPage
 	s.feedback = fmt.Sprintf("deleted %d files", count)
@@ -211,8 +221,10 @@ func (s Settings) updateThemePage(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 func (s Settings) saveTheme(index int) (tea.Model, tea.Cmd) {
 	name := styles.ThemeOptions[index].Name
+	prev := s.user.ThemeColor
 	s.user.ThemeColor = name
-	if err := s.db.UpdateUser(context.Background(), s.user); err != nil {
+	if err := s.db.UpdateUser(s.ctx, s.user); err != nil {
+		s.user.ThemeColor = prev
 		s.feedback = "failed to save: " + err.Error()
 		s.feedbackOK = false
 		return s, nil

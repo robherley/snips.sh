@@ -84,7 +84,7 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return bwsr, tea.Batch(
 				cmds.SelectFile(file.ID),
-				prompt.SetPromptKindCmd(prompt.DeleteFile),
+				prompt.SetPromptKindCmd(prompt.DeleteFile, ""),
 				cmds.PushView(views.Prompt),
 			)
 		case "s":
@@ -95,7 +95,7 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return bwsr, tea.Batch(
 				cmds.SelectFile(file.ID),
-				prompt.SetPromptKindCmd(prompt.GenerateSignedURL),
+				prompt.SetPromptKindCmd(prompt.GenerateSignedURL, ""),
 				cmds.PushView(views.Prompt),
 			)
 		}
