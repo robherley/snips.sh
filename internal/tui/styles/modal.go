@@ -5,15 +5,16 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 )
 
-// ModalMinWidth keeps modal windows from collapsing around short content.
 const ModalMinWidth = 44
 
-// Modal centers a window over a Backdrop-filled canvas. The window has no
-// border: the body is expected to come from ModalBody, whose header bar marks
-// the top edge, and the window layer blanks the backdrop behind the rest.
-func Modal(width, height int, body string) string {
+func Dim(s string) string {
+	return lipgloss.NewStyle().Foreground(Colors.Dim).Render(ansi.Strip(s))
+}
+
+func Modal(width, height int, under, body string) string {
 	x := max((width-lipgloss.Width(body))/2, 0)
 	y := max((height-lipgloss.Height(body))/2, 0)
 
@@ -21,29 +22,36 @@ func Modal(width, height int, body string) string {
 	// the Canvas ignores its X/Y offset and blanks the cells around it
 	return lipgloss.NewCanvas(width, height).
 		Compose(lipgloss.NewCompositor(
-			lipgloss.NewLayer(Backdrop(width, height)).Z(0),
+			lipgloss.NewLayer(Dim(under)).Z(0),
 			lipgloss.NewLayer(body).X(x).Y(y).Z(1),
 		)).
 		Render()
 }
 
-// ModalBody assembles a modal page: a full-width accent-colored header bar
-// with the title on the left and an esc hint on the right, a blank line, then
-// the rows.
 func ModalBody(accent color.Color, title string, rows ...string) string {
-	width := ModalMinWidth
+	width := max(ModalMinWidth, lipgloss.Width(title))
 	for _, row := range rows {
 		width = max(width, lipgloss.Width(row))
 	}
 
-	onAccent := lipgloss.NewStyle().Foreground(Colors.Black).Background(accent)
-	gap := max(width-lipgloss.Width(title)-len("[esc]"), 1)
-	bar := onAccent.Bold(true).Render("  "+title) +
-		onAccent.Render(strings.Repeat(" ", gap)+"[esc]  ")
-
 	body := lipgloss.NewStyle().
 		Padding(1, 2).
-		Render(lipgloss.JoinVertical(lipgloss.Top, rows...))
+		Render(lipgloss.NewStyle().Width(width).Render(lipgloss.JoinVertical(lipgloss.Top, rows...)))
 
-	return lipgloss.JoinVertical(lipgloss.Top, bar, body)
+	pad := max(lipgloss.Width(body)-lipgloss.Width(title)-2, 0)
+	titleRow := "  " + BC(accent, title) + strings.Repeat(" ", pad)
+	titleBar := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder(), true, true, false, true).
+		BorderForeground(accent).
+		Render(titleRow)
+
+	frame := lipgloss.RoundedBorder()
+	frame.TopLeft, frame.TopRight = "├", "┤"
+
+	window := lipgloss.NewStyle().
+		Border(frame).
+		BorderForeground(accent).
+		Render(body)
+
+	return lipgloss.JoinVertical(lipgloss.Top, titleBar, window)
 }

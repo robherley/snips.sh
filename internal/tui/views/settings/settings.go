@@ -229,18 +229,17 @@ func (s Settings) View() tea.View {
 	var rows []string
 	switch s.page {
 	case themePage:
-		title = "settings > theme color"
+		title = "settings / theme color"
 		rows = s.themeRows()
 	case deletePage:
-		title = "settings > delete all my data"
+		title = "settings / delete all my data"
 		rows = s.deleteRows()
 	default:
 		title = "settings"
 		rows = s.rootRows()
 	}
 
-	body := styles.ModalBody(s.accent(), title, rows...)
-	return tea.NewView(styles.Modal(s.width, s.height, body))
+	return tea.NewView(styles.ModalBody(s.accent(), title, rows...))
 }
 
 // accent is the user's chosen theme color, used to highlight the modal.
@@ -249,12 +248,11 @@ func (s Settings) accent() color.Color {
 }
 
 func (s Settings) rootRows() []string {
-	labelStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted).Bold(true).Width(13)
-	valueStyle := lipgloss.NewStyle().Foreground(styles.Colors.White)
-
 	rows := []string{
-		labelStyle.Render("user id") + valueStyle.Render(s.user.ID),
-		labelStyle.Render("fingerprint") + valueStyle.Render(s.fingerprint),
+		styles.Table(styles.TableSection{Label: styles.Colors.Muted, Rows: [][2]string{
+			{"user id", s.user.ID},
+			{"fingerprint", s.fingerprint},
+		}}),
 		"",
 	}
 

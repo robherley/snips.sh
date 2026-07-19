@@ -6,7 +6,6 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-// Colors mirror the web theme's HSL palette (web/static/css/index.css).
 var (
 	Colors = struct {
 		Primary color.Color
@@ -20,18 +19,20 @@ var (
 		White   color.Color
 		Muted   color.Color
 		Black   color.Color
+		Dim     color.Color
 	}{
-		Primary: lipgloss.Color("#65adff"), // blue
+		Primary: lipgloss.Color("#65adff"),
 		Green:   lipgloss.Color("#6fcc85"),
 		Red:     lipgloss.Color("#ff7079"),
-		Cyan:    lipgloss.Color("#11d4b7"), // teal
-		Yellow:  lipgloss.Color("#f5b41d"), // amber
+		Cyan:    lipgloss.Color("#11d4b7"),
+		Yellow:  lipgloss.Color("#f5b41d"),
 		Blue:    lipgloss.Color("#65adff"),
 		Pink:    lipgloss.Color("#f67396"),
 		Purple:  lipgloss.Color("#ca8aef"),
 		White:   lipgloss.Color("#ffffff"),
-		Muted:   lipgloss.Color("#868a91"), // gray
-		Black:   lipgloss.Color("#111317"), // surface-0
+		Muted:   lipgloss.Color("#868a91"),
+		Black:   lipgloss.Color("#111317"),
+		Dim:     lipgloss.Color("#363a41"),
 	}
 )
 
@@ -55,14 +56,11 @@ func UC(c color.Color, s string) string {
 	return lipgloss.NewStyle().Foreground(c).Underline(true).Render(s)
 }
 
-// ThemeOption is a named selectable accent color. The set mirrors the web
-// theme palette in web/static/css/index.css.
 type ThemeOption struct {
 	Name  string
 	Color color.Color
 }
 
-// ThemeOptions is the ordered list of named accent colors users can choose from.
 var ThemeOptions = []ThemeOption{
 	{"blue", Colors.Blue},
 	{"red", Colors.Red},
@@ -73,8 +71,6 @@ var ThemeOptions = []ThemeOption{
 	{"pink", Colors.Pink},
 }
 
-// Theme resolves a stored theme name to its color.Color. Unknown / empty names
-// fall back to the default Primary color.
 func Theme(name string) color.Color {
 	for _, opt := range ThemeOptions {
 		if opt.Name == name {
@@ -84,8 +80,6 @@ func Theme(name string) color.Color {
 	return Colors.Primary
 }
 
-// IsValidTheme reports whether s is empty (use default) or one of the named
-// ThemeOptions.
 func IsValidTheme(s string) bool {
 	if s == "" {
 		return true

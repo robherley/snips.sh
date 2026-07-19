@@ -2,17 +2,6 @@ package browser
 
 import "charm.land/bubbles/v2/key"
 
-func getKeyMap(isOptsFocused bool) keyMap {
-	km := keys
-
-	if isOptsFocused {
-		km.Enter.SetHelp("↵", "select")
-		km.Tab.SetHelp("tab", "files")
-	}
-
-	return km
-}
-
 type keyMap struct {
 	Up       key.Binding
 	Down     key.Binding

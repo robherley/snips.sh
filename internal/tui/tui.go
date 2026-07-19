@@ -19,6 +19,7 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/views"
 	"github.com/robherley/snips.sh/internal/tui/views/browser"
 	"github.com/robherley/snips.sh/internal/tui/views/code"
+	"github.com/robherley/snips.sh/internal/tui/views/options"
 	"github.com/robherley/snips.sh/internal/tui/views/prompt"
 	"github.com/robherley/snips.sh/internal/tui/views/settings"
 )
@@ -61,6 +62,7 @@ func New(ctx context.Context, cfg *config.Config, width, height int, user *snips
 	t.models = []views.Model{
 		views.Browser:  browser.New(cfg, width, t.innerViewHeight(), files, theme),
 		views.Code:     code.New(width, t.innerViewHeight()),
+		views.Options:  options.New(cfg, width, t.innerViewHeight(), theme),
 		views.Prompt:   prompt.New(ctx, cfg, database, width, t.innerViewHeight(), theme),
 		views.Settings: settings.New(width, t.innerViewHeight(), database, user, fingerprint),
 	}
@@ -112,18 +114,12 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return t, tea.Quit
 			}
 		case "esc":
-			if t.currentViewKind() == views.Browser && t.models[views.Browser].(browser.Browser).IsOptionsFocused() {
-				// special case where options focused, also allow escape to unfocus too
-				// allows browser to capture the escape key
-				break
-			}
-
 			if len(t.views) == 1 {
 				return t, tea.Quit
 			}
 
 			batched := []tea.Cmd{cmds.PopView()}
-			if t.currentViewKind() == views.Browser {
+			if t.currentViewKind() == views.Options {
 				batched = append(batched, cmds.DeselectFile())
 			}
 			return t, tea.Batch(batched...)
@@ -141,8 +137,14 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case msgs.FileLoaded:
 		t.file = msg.File
 		return t, t.broadcast(msg)
-	case msgs.FileDeselected, msgs.ReloadFiles:
+	case msgs.FileDeselected:
 		t.file = nil
+		return t, t.broadcast(msg)
+	case msgs.ReloadFiles:
+		t.file = nil
+		// the options window's file just went stale; drop it from the stack so
+		// popping the prompt lands back on the browser
+		t.dropView(views.Options)
 		return t, t.broadcast(msg)
 	case msgs.PushView:
 		t.pushView(msg.View)
@@ -161,9 +163,44 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (t TUI) View() tea.View {
 	v := t.currentViewModel().View()
-	v.Content = lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), v.Content, t.helpBar())
+	content := v.Content
+	if t.modalActive() {
+		// modal views render bare windows; float them over the view below
+		content = styles.Modal(t.width, t.innerViewHeight(), t.underlay(), content)
+	}
+
+	title := t.titleBar()
+	if t.modalActive() {
+		// recede along with the underlay so only the window stays bright
+		title = styles.Dim(title)
+	}
+
+	v.Content = lipgloss.JoinVertical(lipgloss.Top, title, content, t.helpBar())
 	v.AltScreen = true
 	return v
+}
+
+// modalActive reports whether the current view is a modal window floating
+// above the rest of the TUI.
+func (t TUI) modalActive() bool {
+	switch t.currentViewKind() {
+	case views.Options, views.Prompt, views.Settings:
+		return true
+	}
+	return false
+}
+
+// underlay is the rendered content of the topmost non-floating view in the
+// stack, which Modal dims to sit beneath modal windows.
+func (t TUI) underlay() string {
+	for i := len(t.views) - 1; i >= 0; i-- {
+		switch t.views[i] {
+		case views.Options, views.Prompt, views.Settings:
+			continue
+		}
+		return t.models[t.views[i]].View().Content
+	}
+	return ""
 }
 
 func (t TUI) titleBar() string {
@@ -212,6 +249,16 @@ func (t *TUI) pushView(view views.Kind) {
 
 func (t *TUI) popView() {
 	t.views = t.views[:len(t.views)-1]
+}
+
+func (t *TUI) dropView(kind views.Kind) {
+	kept := t.views[:0]
+	for _, v := range t.views {
+		if v != kind {
+			kept = append(kept, v)
+		}
+	}
+	t.views = kept
 }
 
 func (t TUI) inPrompt() bool {

@@ -114,8 +114,7 @@ func (p Prompt) View() tea.View {
 		return tea.NewView(lipgloss.Place(p.width, p.height, lipgloss.Left, lipgloss.Top, ""))
 	}
 
-	body := styles.ModalBody(p.theme, "options > "+p.dialog.title(), p.renderPrompt())
-	return tea.NewView(styles.Modal(p.width, p.height, body))
+	return tea.NewView(styles.ModalBody(p.theme, "options / "+p.dialog.title(), p.renderPrompt()))
 }
 
 func (p Prompt) Keys() help.KeyMap {
@@ -123,8 +122,6 @@ func (p Prompt) Keys() help.KeyMap {
 }
 
 func (p Prompt) IsCapturing() bool {
-	// existing TUI shortcut handling already routes correctly while a prompt is
-	// active (q falls through to the textinput, esc pops the view, etc.)
 	return false
 }
 

@@ -10,6 +10,7 @@ type Kind int
 const (
 	Browser Kind = iota
 	Code
+	Options
 	Prompt
 	Settings
 )
@@ -17,8 +18,5 @@ const (
 type Model interface {
 	tea.Model
 	Keys() help.KeyMap
-	// IsCapturing reports whether the view is currently consuming raw keystrokes
-	// (e.g. typing into a filter or text input) and therefore the TUI shouldn't
-	// intercept its own shortcuts.
 	IsCapturing() bool
 }

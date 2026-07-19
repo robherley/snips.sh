@@ -23,25 +23,17 @@ type Browser struct {
 	height int
 	width  int
 	theme  color.Color
-
-	options struct {
-		focused bool
-		index   int
-	}
 }
 
 func New(cfg *config.Config, width, height int, files []*snips.File, theme color.Color) Browser {
 	l := list.New(toItems(files), newItemDelegate(theme), width, height)
-	l.SetShowTitle(false)      // the F1 tab in the title bar already labels this view
-	l.SetShowHelp(false)       // help is rendered at the TUI level
-	l.SetShowStatusBar(false)  // we render our own combined status + pagination row
-	l.SetShowPagination(false) // ditto
+	l.SetShowTitle(false)
+	l.SetShowHelp(false)
+	l.SetShowStatusBar(false)
+	l.SetShowPagination(false)
 	l.SetStatusBarItemName("file", "files")
 
-	// breathing room above the filter input
 	l.Styles.TitleBar = l.Styles.TitleBar.PaddingTop(1)
-
-	// bigger pagination glyphs (• → ● / ○)
 	l.Paginator.ActiveDot = lipgloss.NewStyle().Foreground(theme).Render("■")
 	l.Paginator.InactiveDot = lipgloss.NewStyle().Foreground(styles.Colors.Muted).Render("▪")
 
@@ -60,8 +52,6 @@ func (bwsr Browser) Init() tea.Cmd {
 
 func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case msgs.PushView, msgs.PopView:
-		bwsr.options.index = 0
 	case tea.KeyPressMsg:
 		// don't intercept anything while the user is typing in the filter
 		if bwsr.list.FilterState() == list.Filtering {
@@ -70,20 +60,15 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch msg.String() {
 		case "tab":
-			if bwsr.options.focused {
-				bwsr.options.index = 0
-			}
-			bwsr.options.focused = !bwsr.options.focused
-			return bwsr, nil
-		case "esc":
-			if bwsr.options.focused {
-				bwsr.options.focused = false
+			file := bwsr.selectedFile()
+			if file == nil {
 				return bwsr, nil
 			}
+			return bwsr, tea.Batch(
+				cmds.SelectFile(file.ID),
+				cmds.PushView(views.Options),
+			)
 		case "enter":
-			if bwsr.options.focused {
-				return bwsr.handleOptionsEnter()
-			}
 			file := bwsr.selectedFile()
 			if file == nil {
 				return bwsr, nil
@@ -114,10 +99,6 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds.PushView(views.Prompt),
 			)
 		}
-
-		if bwsr.options.focused {
-			return bwsr.handleOptionsNavigation(msg)
-		}
 	case tea.WindowSizeMsg:
 		bwsr.width, bwsr.height = msg.Width, msg.Height
 		// reserve 2 rows at the bottom: our combined status + pagination,
@@ -125,8 +106,6 @@ func (bwsr Browser) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		bwsr.list.SetSize(msg.Width, max(msg.Height-2, 0))
 	case msgs.ReloadFiles:
 		bwsr.list.SetItems(toItems(msg.Files))
-		bwsr.options.focused = false
-		bwsr.options.index = 0
 	case msgs.ThemeChanged:
 		bwsr.theme = msg.Color
 		bwsr.list.SetDelegate(newItemDelegate(msg.Color))
@@ -152,9 +131,6 @@ func (bwsr Browser) viewContent() string {
 			Render(styles.C(bwsr.theme, "No files found!\nLearn how to get started at: ") + link)
 	}
 
-	if bwsr.options.focused {
-		return bwsr.renderModal()
-	}
 	return lipgloss.JoinVertical(lipgloss.Top, bwsr.list.View(), bwsr.statusBar(), "")
 }
 
@@ -204,11 +180,7 @@ func (bwsr Browser) statusBar() string {
 }
 
 func (bwsr Browser) Keys() help.KeyMap {
-	return getKeyMap(bwsr.IsOptionsFocused())
-}
-
-func (bwsr Browser) IsOptionsFocused() bool {
-	return bwsr.options.focused
+	return keys
 }
 
 func (bwsr Browser) IsCapturing() bool {
