@@ -216,7 +216,7 @@ func (o Options) renderDetails() string {
 		{"ssh", o.cfg.SSHCommandForFile(file.ID)},
 	}
 	if file.Name != "" {
-		access = append(access, [2]string{"ssh (name)", o.cfg.SSHCommandForNamedFile(file.Name)})
+		access = append(access, [2]string{"", o.cfg.SSHCommandForNamedFile(file.Name)})
 	}
 
 	return styles.Table(
