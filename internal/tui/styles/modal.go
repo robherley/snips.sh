@@ -38,8 +38,12 @@ func ModalBody(accent color.Color, title string, rows ...string) string {
 		Padding(1, 2).
 		Render(lipgloss.NewStyle().Width(width).Render(lipgloss.JoinVertical(lipgloss.Top, rows...)))
 
+	return Frame(accent, BC(accent, title), body)
+}
+
+func Frame(accent color.Color, title, body string) string {
 	pad := max(lipgloss.Width(body)-lipgloss.Width(title)-2, 0)
-	titleRow := "  " + BC(accent, title) + strings.Repeat(" ", pad)
+	titleRow := "  " + title + strings.Repeat(" ", pad)
 	titleBar := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder(), true, true, false, true).
 		BorderForeground(accent).

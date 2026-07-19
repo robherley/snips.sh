@@ -2,6 +2,7 @@ package code
 
 import (
 	"fmt"
+	"image/color"
 	"log/slog"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/tui/msgs"
@@ -20,12 +22,19 @@ type Code struct {
 	viewport viewport.Model
 	file     *snips.File
 	content  string
+	theme    color.Color
 }
 
-func New(width, height int) Code {
+func New(width, height int, theme color.Color) Code {
+	w, h := frameFit(width, height)
 	return Code{
-		viewport: viewport.New(viewport.WithWidth(width), viewport.WithHeight(height)),
+		viewport: viewport.New(viewport.WithWidth(w), viewport.WithHeight(h)),
+		theme:    theme,
 	}
+}
+
+func frameFit(width, height int) (int, int) {
+	return max(width-2, 0), max(height-4, 0)
 }
 
 func (m Code) Init() tea.Cmd {
@@ -44,8 +53,9 @@ func (m Code) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	case tea.WindowSizeMsg:
-		m.viewport.SetWidth(msg.Width)
-		m.viewport.SetHeight(msg.Height)
+		w, h := frameFit(msg.Width, msg.Height)
+		m.viewport.SetWidth(w)
+		m.viewport.SetHeight(h)
 	case msgs.FileLoaded:
 		m.file = msg.File
 		m.content = m.renderContent(msg.File)
@@ -53,6 +63,8 @@ func (m Code) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(m.content)
 	case msgs.FileDeselected:
 		m.file = nil
+	case msgs.ThemeChanged:
+		m.theme = msg.Color
 	}
 
 	var cmd tea.Cmd
@@ -61,7 +73,7 @@ func (m Code) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Code) View() tea.View {
-	return tea.NewView(m.viewport.View())
+	return tea.NewView(styles.Frame(m.theme, m.titleRow(), m.viewport.View()))
 }
 
 func (m Code) Keys() help.KeyMap {
@@ -70,6 +82,20 @@ func (m Code) Keys() help.KeyMap {
 
 func (m Code) IsCapturing() bool {
 	return false
+}
+
+func (m Code) titleRow() string {
+	if m.file == nil {
+		return ""
+	}
+
+	meta := strings.Join([]string{
+		strings.ToLower(m.file.Type),
+		humanize.Bytes(m.file.Size),
+		humanize.Time(m.file.UpdatedAt),
+	}, " · ")
+
+	return styles.BC(m.theme, m.file.ID) + styles.C(styles.Colors.Muted, " · "+meta)
 }
 
 func (m Code) renderContent(file *snips.File) string {

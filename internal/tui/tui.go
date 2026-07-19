@@ -61,7 +61,7 @@ func New(ctx context.Context, cfg *config.Config, width, height int, user *snips
 
 	t.models = []views.Model{
 		views.Browser:  browser.New(cfg, width, t.innerViewHeight(), files, theme),
-		views.Code:     code.New(width, t.innerViewHeight()),
+		views.Code:     code.New(width, t.innerViewHeight(), theme),
 		views.Options:  options.New(cfg, width, t.innerViewHeight(), theme),
 		views.Prompt:   prompt.New(ctx, cfg, database, width, t.innerViewHeight(), theme),
 		views.Settings: settings.New(width, t.innerViewHeight(), database, user, fingerprint),
@@ -177,6 +177,9 @@ func (t TUI) View() tea.View {
 
 	v.Content = lipgloss.JoinVertical(lipgloss.Top, title, content, t.helpBar())
 	v.AltScreen = true
+	// force the web theme's surface color (via OSC 11) so the palette renders
+	// consistently regardless of the user's terminal background
+	v.BackgroundColor = styles.Colors.Black
 	return v
 }
 
