@@ -9,8 +9,8 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/armon/go-metrics"
 	"github.com/robherley/snips.sh/internal/logger"
-	"github.com/robherley/snips.sh/internal/tui/feedback"
 	"github.com/robherley/snips.sh/internal/snips"
+	"github.com/robherley/snips.sh/internal/tui/feedback"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 
