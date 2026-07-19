@@ -10,6 +10,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.27.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/charmbracelet/ssh v0.0.0-20250826160808-ebfa259c7309
+	github.com/charmbracelet/x/ansi v0.11.7
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fogleman/gg v1.3.0
 	github.com/jaevor/go-nanoid v1.4.0
@@ -41,7 +42,6 @@ require (
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/keygen v0.5.4 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20260703014108-f5a850f9c2b7 // indirect
-	github.com/charmbracelet/x/ansi v0.11.7 // indirect
 	github.com/charmbracelet/x/conpty v0.1.1 // indirect
 	github.com/charmbracelet/x/errors v0.0.0-20251110184232-6ab307057ac7 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect

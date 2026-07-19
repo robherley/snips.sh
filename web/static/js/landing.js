@@ -72,15 +72,22 @@ const initLanding = () => {
     {
       label: "tui",
       cmd: sshTo(host),
+      noPrompt: true,
       output: [
+        `<span class="t-badge"> snips.sh </span> <span class="t-primary-b">${"╱".repeat(51)}</span>`,
         "",
-        `<span class="t-white">snips.sh</span> <span class="t-muted">· 3 snips</span>`,
+        '<span class="t-url">┃</span> <span class="t-primary-b">y3ex1nbcje</span>',
+        '<span class="t-url">┃</span> <span class="t-white">json · 24 B · just now · public</span>',
         "",
-        '<span class="t-url">❯ y3ex1nbcje</span>   <span class="t-white">json</span>    <span class="t-muted">24 B   just now</span>',
-        '  <span class="t-white">mkw2n8fhx0</span>   <span class="t-white">md</span>     <span class="t-muted">118 B   1 minute ago</span>',
-        '  <span class="t-white">qp0d81xk2v</span>   <span class="t-white">go</span>    <span class="t-muted">1.9 kB   3 days ago</span>',
+        '  <span class="t-muted">mkw2n8fhx0</span>',
+        '  <span class="t-muted">markdown · 118 B · 1 minute ago · private</span>',
         "",
-        '<span class="t-muted">↑/↓ navigate · enter view · q quit</span>',
+        '  <span class="t-muted">qp0d81xk2v</span>',
+        '  <span class="t-muted">go · 1.9 kB · 3 days ago · public</span>',
+        "",
+        '  <span class="t-muted">3 files</span>',
+        "",
+        '<span class="t-muted">↵ view • tab options • / filter • ? help • q quit u:xk29dmv0q1</span>',
       ],
     },
   ];
@@ -128,7 +135,8 @@ const initLanding = () => {
       shown++;
       const lines = scene.output.slice(0, shown).join("\n");
       const done = shown >= scene.output.length;
-      screen.innerHTML = `${prompt}${typed}\n${lines}${done ? `\n${prompt}${cursor}` : ""}`;
+      const tail = done && !scene.noPrompt ? `\n${prompt}${cursor}` : "";
+      screen.innerHTML = `${prompt}${typed}\n${lines}${tail}`;
       if (done) {
         scheduleNext();
       } else {
@@ -149,7 +157,8 @@ const initLanding = () => {
     const full = esc(scene.cmd);
 
     if (!animate || reducedMotion) {
-      screen.innerHTML = `${prompt}${full}\n${scene.output.join("\n")}\n${prompt}${cursor}`;
+      const tail = scene.noPrompt ? "" : `\n${prompt}${cursor}`;
+      screen.innerHTML = `${prompt}${full}\n${scene.output.join("\n")}${tail}`;
       scheduleNext();
       return;
     }

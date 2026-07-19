@@ -65,13 +65,19 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 		return
 	}
 
+	user, err := h.DB.FindUser(sesh.Context(), sesh.UserID())
+	if err != nil || user == nil {
+		sesh.Error(err, "Failed to load user", "There was an error loading your user. Please try again.")
+		return
+	}
+
 	program := tea.NewProgram(
 		tui.New(
 			sesh.Context(),
 			h.Config,
 			pty.Window.Width,
 			pty.Window.Height,
-			sesh.UserID(),
+			user,
 			sesh.PublicKeyFingerprint(),
 			h.DB,
 			files,
@@ -256,6 +262,7 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 	url := lipgloss.NewStyle().
 		Foreground(styles.Colors.Blue).
 		Underline(true).
+		Hyperlink(signedFileURL.String()).
 		Render(signedFileURL.String())
 
 	noti = Notification{
@@ -343,10 +350,12 @@ func (h *SessionHandler) renderFileResult(sesh *UserSession, file *snips.File, t
 }
 
 func (h *SessionHandler) renderFileURL(sesh *UserSession, file *snips.File) {
+	addr := h.Config.HTTPAddressForFile(file.ID)
 	url := lipgloss.NewStyle().
 		Foreground(styles.Colors.Blue).
 		Underline(true).
-		Render(h.Config.HTTPAddressForFile(file.ID))
+		Hyperlink(addr).
+		Render(addr)
 
 	noti := Notification{
 		Title:   "URL 🔗",
@@ -527,6 +536,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		url := lipgloss.NewStyle().
 			Foreground(styles.Colors.Blue).
 			Underline(true).
+			Hyperlink(signedURL.String()).
 			Render(signedURL.String())
 
 		noti := Notification{

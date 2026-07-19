@@ -199,6 +199,21 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 	return files, nil
 }
 
+func (s *Sqlite) CountFilesByUser(ctx context.Context, userID string) (int64, error) {
+	const query = `
+		SELECT COUNT(*)
+		FROM files
+		WHERE user_id = ?
+	`
+
+	var count int64
+	if err := s.QueryRowContext(ctx, query, userID).Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s *Sqlite) FindPublicKeyByFingerprint(ctx context.Context, fingerprint string) (*snips.PublicKey, error) {
 	const query = `
 		SELECT
@@ -326,6 +341,42 @@ func (s *Sqlite) DeleteFile(ctx context.Context, id string) error {
 	}
 
 	return tx.Commit()
+}
+
+func (s *Sqlite) DeleteFilesByUser(ctx context.Context, userID string) (int64, error) {
+	tx, err := s.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	const deleteRevisionsQuery = `
+		DELETE FROM revisions
+		WHERE file_id IN (SELECT id FROM files WHERE user_id = ?)
+	`
+
+	if _, err := tx.ExecContext(ctx, deleteRevisionsQuery, userID); err != nil {
+		return 0, err
+	}
+
+	const deleteFilesQuery = `
+		DELETE FROM files
+		WHERE user_id = ?
+	`
+
+	result, err := tx.ExecContext(ctx, deleteFilesQuery, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return count, tx.Commit()
 }
 
 func (s *Sqlite) CreateRevision(ctx context.Context, revision *snips.Revision, maxRevisions uint64) error {
@@ -494,7 +545,8 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 		SELECT
 			id,
 			created_at,
-			updated_at
+			updated_at,
+			theme_color
 		FROM users
 		WHERE id = ?
 	`
@@ -506,6 +558,7 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 		&user.ID,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.ThemeColor,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -515,4 +568,22 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *Sqlite) UpdateUser(ctx context.Context, user *snips.User) error {
+	const query = `
+		UPDATE users
+		SET
+			updated_at = ?,
+			theme_color = ?
+		WHERE id = ?
+	`
+
+	updatedAt := time.Now().UTC()
+	if _, err := s.ExecContext(ctx, query, updatedAt, user.ThemeColor, user.ID); err != nil {
+		return err
+	}
+
+	user.UpdatedAt = updatedAt
+	return nil
 }

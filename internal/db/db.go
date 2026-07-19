@@ -17,14 +17,20 @@ type DB interface {
 	UpdateFile(ctx context.Context, file *snips.File) error
 	// DeleteFile deletes a file by its ID.
 	DeleteFile(ctx context.Context, id string) error
+	// DeleteFilesByUser deletes all of a user's files and their revisions, returning the number of files deleted.
+	DeleteFilesByUser(ctx context.Context, userID string) (int64, error)
 	// FindFilesByUser returns all files for a user. Does not include file content.
 	FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error)
+	// CountFilesByUser returns the number of files a user has.
+	CountFilesByUser(ctx context.Context, userID string) (int64, error)
 	// FindPublicKeyByFingerprint returns a public key by its fingerprint.
 	FindPublicKeyByFingerprint(ctx context.Context, fingerprint string) (*snips.PublicKey, error)
 	// CreateUserWithPublicKey creates a new user with a public key.
 	CreateUserWithPublicKey(ctx context.Context, publickey *snips.PublicKey) (*snips.User, error)
 	// FindUser returns a user by its ID.
 	FindUser(ctx context.Context, id string) (*snips.User, error)
+	// UpdateUser updates a user's mutable fields (currently theme color and updated_at).
+	UpdateUser(ctx context.Context, user *snips.User) error
 	// CreateRevision creates a new file revision. If maxRevisions > 0, prunes oldest revisions exceeding the limit.
 	CreateRevision(ctx context.Context, revision *snips.Revision, maxRevisions uint64) error
 	// FindRevisionsByFileID returns all revisions for a file, ordered by sequence DESC. Does not include diff content.

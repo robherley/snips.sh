@@ -30,6 +30,10 @@ build *args: _check-onnx
     mkdir -p "$(dirname "{{ output }}")"
     go build -ldflags '-extldflags "{{ extldflags }}"' -o "{{ output }}" . "$@"
 
+# Run the application in development mode (with live reload)
+dev: _check-onnx
+    air
+
 # Run all tests
 test: _check-onnx
     gotestsum --raw-command -- go test -json -ldflags '-extldflags "{{ extldflags }}"' ./...
@@ -61,7 +65,7 @@ record-tape tape *tapes:
     done
 
 # Connect with a fresh temporary SSH key
-ssh-tmp destination *args:
+ssh-tmp *args:
     #!/usr/bin/env bash
     tmpdir="$(mktemp -d)"; trap 'rm -rf "$tmpdir"' EXIT
     ssh-keygen -t ecdsa -f "$tmpdir/id_ecdsa" -q -N ""

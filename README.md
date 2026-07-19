@@ -12,7 +12,7 @@
   <a href="#credits">Credits</a>
 </p>
 
-<img alt="tui" width="85%" src="https://vhs.charm.sh/vhs-1MRS4DCN6XUpxzM2PrqCfL.gif" />
+<img alt="tui" width="85%" src="https://vhs.charm.sh/vhs-7iN60xsb5T1VIGaWNM0DxW.gif" />
 
 </div>
 

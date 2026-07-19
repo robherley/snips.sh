@@ -19,17 +19,20 @@ var (
 		White   color.Color
 		Muted   color.Color
 		Black   color.Color
+		Dim     color.Color
 	}{
-		Primary: lipgloss.Color("#0ac5b2"),
-		Green:   lipgloss.Color("#63c174"),
-		Red:     lipgloss.Color("#ff6368"),
-		Yellow:  lipgloss.Color("#f1a10d"),
-		Blue:    lipgloss.Color("#52a9ff"),
-		Pink:    lipgloss.Color("#f76191"),
-		Purple:  lipgloss.Color("#bf7af0"),
-		White:   lipgloss.Color("7"),
-		Muted:   lipgloss.Color("8"),
-		Black:   lipgloss.Color("16"),
+		Primary: lipgloss.Color("#65adff"),
+		Green:   lipgloss.Color("#6fcc85"),
+		Red:     lipgloss.Color("#ff7079"),
+		Cyan:    lipgloss.Color("#11d4b7"),
+		Yellow:  lipgloss.Color("#f5b41d"),
+		Blue:    lipgloss.Color("#65adff"),
+		Pink:    lipgloss.Color("#f67396"),
+		Purple:  lipgloss.Color("#ca8aef"),
+		White:   lipgloss.Color("#ffffff"),
+		Muted:   lipgloss.Color("#868a91"),
+		Black:   lipgloss.Color("#111317"),
+		Dim:     lipgloss.Color("#363a41"),
 	}
 )
 
@@ -51,4 +54,40 @@ func U(s string) string {
 
 func UC(c color.Color, s string) string {
 	return lipgloss.NewStyle().Foreground(c).Underline(true).Render(s)
+}
+
+type ThemeOption struct {
+	Name  string
+	Color color.Color
+}
+
+var ThemeOptions = []ThemeOption{
+	{"blue", Colors.Blue},
+	{"red", Colors.Red},
+	{"amber", Colors.Yellow},
+	{"green", Colors.Green},
+	{"teal", Colors.Cyan},
+	{"purple", Colors.Purple},
+	{"pink", Colors.Pink},
+}
+
+func Theme(name string) color.Color {
+	for _, opt := range ThemeOptions {
+		if opt.Name == name {
+			return opt.Color
+		}
+	}
+	return Colors.Primary
+}
+
+func IsValidTheme(s string) bool {
+	if s == "" {
+		return true
+	}
+	for _, opt := range ThemeOptions {
+		if opt.Name == s {
+			return true
+		}
+	}
+	return false
 }

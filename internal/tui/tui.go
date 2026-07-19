@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"image/color"
 	"log/slog"
 	"strings"
 
@@ -18,7 +19,9 @@ import (
 	"github.com/robherley/snips.sh/internal/tui/views"
 	"github.com/robherley/snips.sh/internal/tui/views/browser"
 	"github.com/robherley/snips.sh/internal/tui/views/code"
+	"github.com/robherley/snips.sh/internal/tui/views/options"
 	"github.com/robherley/snips.sh/internal/tui/views/prompt"
+	"github.com/robherley/snips.sh/internal/tui/views/settings"
 )
 
 type TUI struct {
@@ -35,11 +38,12 @@ type TUI struct {
 	views  []views.Kind  // navigation stack
 	models []views.Model // indexed by views.Kind; deterministic iteration order
 	help   help.Model
+	theme  color.Color
 }
 
-func New(ctx context.Context, cfg *config.Config, width, height int, userID string, fingerprint string, database db.DB, files []*snips.File) TUI {
+func New(ctx context.Context, cfg *config.Config, width, height int, user *snips.User, fingerprint string, database db.DB, files []*snips.File) TUI {
 	t := TUI{
-		UserID:      userID,
+		UserID:      user.ID,
 		Fingerprint: fingerprint,
 		DB:          database,
 
@@ -52,10 +56,15 @@ func New(ctx context.Context, cfg *config.Config, width, height int, userID stri
 		help:   help.New(),
 	}
 
+	theme := styles.Theme(user.ThemeColor)
+	t.theme = theme
+
 	t.models = []views.Model{
-		views.Browser: browser.New(cfg, width, t.innerViewHeight(), files),
-		views.Code:    code.New(width, t.innerViewHeight()),
-		views.Prompt:  prompt.New(ctx, cfg, database, width),
+		views.Browser:  browser.New(cfg, width, t.innerViewHeight(), files, theme),
+		views.Code:     code.New(width, t.innerViewHeight(), theme),
+		views.Options:  options.New(cfg, width, t.innerViewHeight(), theme),
+		views.Prompt:   prompt.New(ctx, cfg, database, width, t.innerViewHeight(), theme),
+		views.Settings: settings.New(ctx, width, t.innerViewHeight(), database, user, fingerprint),
 	}
 
 	t.help.Styles = styles.Help
@@ -80,6 +89,21 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		slog.Error("encountered error", "err", msg)
 		return t, tea.Quit
 	case tea.KeyPressMsg:
+		// ctrl+c always quits, even when a view is capturing input
+		if msg.String() == "ctrl+c" {
+			return t, tea.Quit
+		}
+		if msg.String() == "ctrl+p" && !t.inPrompt() {
+			if t.currentViewKind() == views.Settings {
+				return t, cmds.PopView()
+			}
+			return t, cmds.PushView(views.Settings)
+		}
+		// when a view is consuming raw input (filter, text field), skip our shortcuts
+		if t.currentViewModel().IsCapturing() {
+			return t, t.updateCurrent(msg)
+		}
+
 		switch msg.String() {
 		case "?":
 			t.help.ShowAll = !t.help.ShowAll
@@ -88,24 +112,12 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if !t.inPrompt() {
 				return t, tea.Quit
 			}
-		case "ctrl+c":
-			return t, tea.Quit
 		case "esc":
-			if t.currentViewKind() == views.Browser && t.models[views.Browser].(browser.Browser).IsOptionsFocused() {
-				// special case where options focused, also allow escape to unfocus too
-				// allows browser to capture the escape key
-				break
-			}
-
 			if len(t.views) == 1 {
 				return t, tea.Quit
 			}
 
-			batched := []tea.Cmd{cmds.PopView()}
-			if t.currentViewKind() == views.Browser {
-				batched = append(batched, cmds.DeselectFile())
-			}
-			return t, tea.Batch(batched...)
+			return t, cmds.PopView()
 		}
 
 		// otherwise, send key msgs to the current view
@@ -120,14 +132,30 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case msgs.FileLoaded:
 		t.file = msg.File
 		return t, t.broadcast(msg)
-	case msgs.FileDeselected, msgs.ReloadFiles:
+	case msgs.FileDeselected:
 		t.file = nil
+		return t, t.broadcast(msg)
+	case msgs.ReloadFiles:
+		t.file = nil
+		// the options window's file just went stale; drop it from the stack so
+		// popping the prompt lands back on the browser
+		t.dropView(views.Options)
 		return t, t.broadcast(msg)
 	case msgs.PushView:
 		t.pushView(msg.View)
 		return t, t.broadcast(msg)
 	case msgs.PopView:
+		popped := t.currentViewKind()
 		t.popView()
+		batched := []tea.Cmd{t.broadcast(msg)}
+		// leaving the options flow means the selected file is no longer
+		// relevant; popping a prompt back onto options keeps it selected
+		if popped == views.Options || (popped == views.Prompt && t.currentViewKind() == views.Browser) {
+			batched = append(batched, cmds.DeselectFile())
+		}
+		return t, tea.Batch(batched...)
+	case msgs.ThemeChanged:
+		t.theme = msg.Color
 		return t, t.broadcast(msg)
 	}
 
@@ -137,22 +165,63 @@ func (t TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (t TUI) View() tea.View {
 	v := t.currentViewModel().View()
-	v.Content = lipgloss.JoinVertical(lipgloss.Top, t.titleBar(), v.Content, t.helpBar())
+	content := v.Content
+	if t.modalActive() {
+		// modal views render bare windows; float them over the view below
+		content = styles.Modal(t.width, t.innerViewHeight(), t.underlay(), content)
+	}
+
+	title := t.titleBar()
+	if t.modalActive() {
+		// recede along with the underlay so only the window stays bright
+		title = styles.Dim(title)
+	}
+
+	v.Content = lipgloss.JoinVertical(lipgloss.Top, title, content, t.helpBar())
 	v.AltScreen = true
+	// force the web theme's surface color (via OSC 11) so the palette renders
+	// consistently regardless of the user's terminal background
+	v.BackgroundColor = styles.Colors.Black
 	return v
 }
 
-func (t TUI) titleBar() string {
-	textStyle := lipgloss.NewStyle().Foreground(styles.Colors.Black).Background(styles.Colors.Primary).Padding(0, 1).Bold(true)
-	title := textStyle.Render("snips.sh")
-	user := textStyle.Render(fmt.Sprintf("u:%s", t.UserID))
+// modalActive reports whether the current view is a modal window floating
+// above the rest of the TUI.
+func (t TUI) modalActive() bool {
+	switch t.currentViewKind() {
+	case views.Options, views.Prompt, views.Settings:
+		return true
+	}
+	return false
+}
 
-	count := t.width - lipgloss.Width(title) - lipgloss.Width(user)
+// underlay is the rendered content of the topmost non-floating view in the
+// stack, which Modal dims to sit beneath modal windows.
+func (t TUI) underlay() string {
+	for i := len(t.views) - 1; i >= 0; i-- {
+		switch t.views[i] {
+		case views.Options, views.Prompt, views.Settings:
+			continue
+		}
+		return t.models[t.views[i]].View().Content
+	}
+	return ""
+}
+
+func (t TUI) titleBar() string {
+	brand := lipgloss.NewStyle().
+		Foreground(styles.Colors.Black).
+		Background(t.theme).
+		Padding(0, 1).
+		Bold(true).
+		Render("snips.sh")
+
+	count := t.width - lipgloss.Width(brand) - 1
 	if count < 0 {
 		count = 0
 	}
 
-	return title + strings.Repeat(styles.BC(styles.Colors.Primary, "╱"), count) + user
+	return brand + " " + strings.Repeat(styles.BC(t.theme, "╱"), count)
 }
 
 func (t TUI) helpBar() string {
@@ -160,7 +229,15 @@ func (t TUI) helpBar() string {
 		return ""
 	}
 
-	return t.help.View(t.currentViewModel().Keys())
+	help := t.help.View(t.currentViewModel().Keys())
+	user := styles.C(styles.Colors.Muted, fmt.Sprintf("u:%s", t.UserID))
+
+	count := t.width - lipgloss.Width(help) - lipgloss.Width(user) - 2 // gap on each side of the slashes
+	if count < 0 {
+		return help + " " + user
+	}
+
+	return help + " " + strings.Repeat(styles.C(styles.Colors.Muted, "╱"), count) + " " + user
 }
 
 func (t TUI) currentViewKind() views.Kind {
@@ -177,6 +254,16 @@ func (t *TUI) pushView(view views.Kind) {
 
 func (t *TUI) popView() {
 	t.views = t.views[:len(t.views)-1]
+}
+
+func (t *TUI) dropView(kind views.Kind) {
+	kept := t.views[:0]
+	for _, v := range t.views {
+		if v != kind {
+			kept = append(kept, v)
+		}
+	}
+	t.views = kept
 }
 
 func (t TUI) inPrompt() bool {
