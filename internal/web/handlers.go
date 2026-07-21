@@ -2,7 +2,6 @@ package web
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"image/png"
@@ -43,41 +42,6 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		// Available profiles can be found in [runtime/pprof.Profile].
 		// https://pkg.go.dev/runtime/pprof#Profile
 		pprof.Handler(profiler).ServeHTTP(w, r)
-	}
-}
-
-func MetaHandler(cfg *config.Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		metadata := map[string]interface{}{
-			"limits": map[string]interface{}{
-				"file_size": map[string]interface{}{
-					"bytes": cfg.Limits.FileSize,
-					"human": humanize.Bytes(cfg.Limits.FileSize),
-				},
-				"files_per_user":     cfg.Limits.FilesPerUser,
-				"revisions_per_file": cfg.Limits.RevisionsPerFile,
-				"session_duration": map[string]interface{}{
-					"seconds": cfg.Limits.SessionDuration.Seconds(),
-					"human":   cfg.Limits.SessionDuration.String(),
-				},
-			},
-			"endpoints": map[string]interface{}{
-				"http": cfg.HTTP.External.String(),
-				"ssh":  cfg.SSH.External.String(),
-			},
-			"commit_sha":      config.BuildCommit(),
-			"guesser_enabled": cfg.EnableGuesser,
-		}
-
-		metabites, err := json.MarshalIndent(metadata, "", "  ")
-		if err != nil {
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-
-		_, _ = w.Write(metabites)
 	}
 }
 

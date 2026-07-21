@@ -16,15 +16,15 @@ const (
 )
 
 type File struct {
-	ID         string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Size       uint64
-	RawContent []byte
-	Private    bool
-	Type       string
-	UserID     string
-	Name       string
+	ID         string    `json:"id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	Size       uint64    `json:"size"`
+	RawContent []byte    `json:"-"`
+	Private    bool      `json:"private"`
+	Type       string    `json:"type"`
+	UserID     string    `json:"-"`
+	Name       string    `json:"name,omitempty"`
 }
 
 func (f *File) DisplayName() string {

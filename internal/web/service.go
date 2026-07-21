@@ -28,7 +28,8 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	mux.HandleFunc("GET /f/{fileID}/n/{name}/rev/{revisionID}", RevisionDiffHandler(cfg, database, assets))
 	mux.HandleFunc("GET /f/{fileID}/n/{name}/og.png", OGImageHandler(cfg, database, assets))
 	mux.HandleFunc("GET /assets/{asset...}", assets.Serve)
-	mux.HandleFunc("GET /meta.json", MetaHandler(cfg))
+
+	NewAPI(cfg, database).Register(mux)
 
 	if cfg.Debug {
 		mux.HandleFunc("/_debug/pprof/{profile}", ProfileHandler)

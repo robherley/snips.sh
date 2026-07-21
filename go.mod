@@ -20,7 +20,6 @@ require (
 	github.com/mattn/go-isatty v0.0.22
 	github.com/mattn/go-sqlite3 v1.14.47
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/muesli/reflow v0.3.0
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/pressly/goose/v3 v3.27.2
 	github.com/robherley/magika-go v0.1.0
@@ -31,6 +30,7 @@ require (
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20220924101305-151362477c87
 	golang.org/x/crypto v0.54.0
 	golang.org/x/image v0.44.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -76,5 +76,4 @@ require (
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

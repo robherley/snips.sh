@@ -7,13 +7,13 @@ import (
 )
 
 type Revision struct {
-	ID        string
-	Sequence  int64
-	FileID    string
-	CreatedAt time.Time
-	RawDiff   []byte // may be zstd-compressed
-	Size      uint64 // file size after this revision
-	Type      string // file type after this revision
+	ID        string    `json:"id"`
+	Sequence  int64     `json:"sequence"`
+	FileID    string    `json:"-"`
+	CreatedAt time.Time `json:"created_at"`
+	RawDiff   []byte    `json:"-"`    // may be zstd-compressed
+	Size      uint64    `json:"size"` // file size after this revision
+	Type      string    `json:"type"` // file type after this revision
 }
 
 func (r *Revision) GetDiff() ([]byte, error) {
