@@ -3,6 +3,7 @@ package db_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -783,4 +784,124 @@ func (s *SqliteSuite) TestFindFileByName() {
 	file, err = database.FindFileByName(context.Background(), first.UserID, "nope")
 	s.Require().NoError(err)
 	s.Require().Nil(file)
+}
+
+func (s *SqliteSuite) insertFileForPaging(database *db.Sqlite, userID string, updatedAt time.Time, fileID string) *snips.File {
+	file := &snips.File{
+		ID:        fileID,
+		CreatedAt: updatedAt,
+		UpdatedAt: updatedAt,
+		Size:      1,
+		Private:   false,
+		Type:      "plaintext",
+		UserID:    userID,
+	}
+
+	const query = `
+		INSERT INTO files (
+			id,
+			created_at,
+			updated_at,
+			size,
+			content,
+			private,
+			type,
+			user_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+
+	_, err := s.testDB.Exec(query, file.ID, file.CreatedAt, file.UpdatedAt, file.Size, []byte("x"), file.Private, file.Type, file.UserID)
+	s.Require().NoError(err)
+
+	return file
+}
+
+func (s *SqliteSuite) TestFindFilesByUser_Pagination() {
+	database := s.getTestDB(true)
+	userID := id.New()
+
+	base := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	for i := 0; i < 5; i++ {
+		s.insertFileForPaging(database, userID, base.Add(time.Duration(i)*time.Minute), fmt.Sprintf("file-%d", i))
+	}
+	// another user's files must never appear
+	s.insertFileForPaging(database, id.New(), base.Add(time.Hour), "other-user-file")
+
+	// first page: newest first
+	page, err := database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2))
+	s.Require().NoError(err)
+	s.Require().Len(page, 2)
+	s.Require().Equal("file-4", page[0].ID)
+	s.Require().Equal("file-3", page[1].ID)
+
+	// second page continues at the offset
+	page, err = database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(2))
+	s.Require().NoError(err)
+	s.Require().Len(page, 2)
+	s.Require().Equal("file-2", page[0].ID)
+	s.Require().Equal("file-1", page[1].ID)
+
+	// final partial page
+	page, err = database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(4))
+	s.Require().NoError(err)
+	s.Require().Len(page, 1)
+	s.Require().Equal("file-0", page[0].ID)
+
+	// past the end
+	page, err = database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(5))
+	s.Require().NoError(err)
+	s.Require().Empty(page)
+}
+
+func (s *SqliteSuite) TestFindFilesByUser_PaginationTieBreaksOnID() {
+	database := s.getTestDB(true)
+	userID := id.New()
+
+	// same updated_at for every file: ordering falls back to id DESC
+	ts := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	for _, fileID := range []string{"aaa", "bbb", "ccc"} {
+		s.insertFileForPaging(database, userID, ts, fileID)
+	}
+
+	page, err := database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2))
+	s.Require().NoError(err)
+	s.Require().Len(page, 2)
+	s.Require().Equal("ccc", page[0].ID)
+	s.Require().Equal("bbb", page[1].ID)
+
+	page, err = database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(2))
+	s.Require().NoError(err)
+	s.Require().Len(page, 1)
+	s.Require().Equal("aaa", page[0].ID)
+}
+
+func (s *SqliteSuite) TestFindRevisionsByFileID_Pagination() {
+	database := s.getTestDB(true)
+	fileID := id.New()
+
+	for i := 0; i < 5; i++ {
+		rev := &snips.Revision{
+			FileID:  fileID,
+			RawDiff: []byte("diff"),
+			Size:    4,
+			Type:    "plaintext",
+		}
+		s.Require().NoError(database.CreateRevision(context.TODO(), rev, 0))
+	}
+
+	page, err := database.FindRevisionsByFileID(context.TODO(), fileID, db.WithLimit(2))
+	s.Require().NoError(err)
+	s.Require().Len(page, 2)
+	s.Require().Equal(int64(5), page[0].Sequence)
+	s.Require().Equal(int64(4), page[1].Sequence)
+
+	page, err = database.FindRevisionsByFileID(context.TODO(), fileID, db.WithLimit(2), db.WithOffset(2))
+	s.Require().NoError(err)
+	s.Require().Len(page, 2)
+	s.Require().Equal(int64(3), page[0].Sequence)
+	s.Require().Equal(int64(2), page[1].Sequence)
+
+	page, err = database.FindRevisionsByFileID(context.TODO(), fileID, db.WithLimit(2), db.WithOffset(4))
+	s.Require().NoError(err)
+	s.Require().Len(page, 1)
+	s.Require().Equal(int64(1), page[0].Sequence)
 }

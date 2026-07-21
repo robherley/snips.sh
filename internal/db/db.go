@@ -19,8 +19,9 @@ type DB interface {
 	DeleteFile(ctx context.Context, id string) error
 	// DeleteFilesByUser deletes all of a user's files and their revisions, returning the number of files deleted.
 	DeleteFilesByUser(ctx context.Context, userID string) (int64, error)
-	// FindFilesByUser returns all files for a user. Does not include file content.
-	FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error)
+	// FindFilesByUser returns a user's files, newest first.
+	// Does not include file content.
+	FindFilesByUser(ctx context.Context, userID string, opts ...PageOption) ([]*snips.File, error)
 	// FindFileByName returns a user's file with the given name (case-insensitive). Includes file content.
 	FindFileByName(ctx context.Context, userID, name string) (*snips.File, error)
 	// CountFilesByUser returns the number of files a user has.
@@ -35,8 +36,9 @@ type DB interface {
 	UpdateUser(ctx context.Context, user *snips.User) error
 	// CreateRevision creates a new file revision. If maxRevisions > 0, prunes oldest revisions exceeding the limit.
 	CreateRevision(ctx context.Context, revision *snips.Revision, maxRevisions uint64) error
-	// FindRevisionsByFileID returns all revisions for a file, ordered by sequence DESC. Does not include diff content.
-	FindRevisionsByFileID(ctx context.Context, fileID string) ([]*snips.Revision, error)
+	// FindRevisionsByFileID returns a file's revisions, newest first.
+	// Does not include diff content.
+	FindRevisionsByFileID(ctx context.Context, fileID string, opts ...PageOption) ([]*snips.Revision, error)
 	// FindRevisionByFileIDAndSequence returns a revision by file ID and sequence number, including diff content.
 	FindRevisionByFileIDAndSequence(ctx context.Context, fileID string, sequence int64) (*snips.Revision, error)
 	// CountRevisionsByFileID returns the number of revisions for a file.

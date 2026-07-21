@@ -3,7 +3,6 @@ package ssh
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"io"
 	"sort"
 	"strconv"
@@ -17,9 +16,9 @@ import (
 	"github.com/armon/go-metrics"
 	"github.com/charmbracelet/ssh"
 	"github.com/dustin/go-humanize"
-	"github.com/pmezard/go-difflib/difflib"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/files"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/renderer"
 	"github.com/robherley/snips.sh/internal/snips"
@@ -511,57 +510,7 @@ func (h *SessionHandler) UpdateFileContent(sesh *UserSession, file *snips.File) 
 		return
 	}
 
-	size := uint64(len(content))
-	file.Size = size
-
-	if flags.Extension != "" {
-		file.Type = renderer.DetectFileType(content, flags.Extension, h.Config.EnableGuesser)
-	} else {
-		file.Type = renderer.DetectFileType(content, "", h.Config.EnableGuesser)
-	}
-
-	// Compute diff for revision history (skip binary files)
-	if !file.IsBinary() {
-		oldContent, err := file.GetContent()
-		if err != nil {
-			log.Warn("unable to get old content for diff", "err", err)
-		} else {
-			revCount, err := h.DB.CountRevisionsByFileID(sesh.Context(), file.ID)
-			if err != nil {
-				log.Warn("unable to count revisions", "err", err)
-			}
-			fromLabel := fmt.Sprintf("%s (v%d)", file.ID, revCount)
-			toLabel := fmt.Sprintf("%s (v%d)", file.ID, revCount+1)
-			diff, err := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-				A:        difflib.SplitLines(string(oldContent)),
-				B:        difflib.SplitLines(string(content)),
-				FromFile: fromLabel,
-				ToFile:   toLabel,
-				Context:  3,
-			})
-			if err != nil {
-				log.Warn("unable to compute diff", "err", err)
-			} else if diff != "" {
-				revision := &snips.Revision{
-					FileID: file.ID,
-					Size:   size,
-					Type:   file.Type,
-				}
-				if err := revision.SetDiff([]byte(diff), h.Config.FileCompression); err != nil {
-					log.Warn("unable to compress diff", "err", err)
-				} else if err := h.DB.CreateRevision(sesh.Context(), revision, h.Config.Limits.RevisionsPerFile); err != nil {
-					log.Warn("unable to create revision", "err", err)
-				}
-			}
-		}
-	}
-
-	if err := file.SetContent(content, h.Config.FileCompression); err != nil {
-		sesh.Error(err, "Unable to update file", "There was an error updating the file: %s", err.Error())
-		return
-	}
-
-	if err := h.DB.UpdateFile(sesh.Context(), file); err != nil {
+	if err := files.UpdateContent(sesh.Context(), h.DB, h.Config, file, content, flags.Extension); err != nil {
 		sesh.Error(err, "Unable to update file", "There was an error updating the file: %s", err.Error())
 		return
 	}

@@ -85,6 +85,30 @@ func scanFile(row *sql.Row) (*snips.File, error) {
 	return file, nil
 }
 
+// applyPage appends the limit/offset pagination to a listing query; sqlite
+// requires a LIMIT clause (-1 = unbounded) to use OFFSET.
+func applyPage(query *string, args []any, opts []PageOption) []any {
+	p := buildPage(opts)
+	if p.limit == 0 && p.offset == 0 {
+		return args
+	}
+
+	limit := int64(-1)
+	if p.limit > 0 {
+		limit = int64(p.limit)
+	}
+
+	*query += ` LIMIT ?`
+	args = append(args, limit)
+
+	if p.offset > 0 {
+		*query += ` OFFSET ?`
+		args = append(args, p.offset)
+	}
+
+	return args
+}
+
 // nullableName stores unnamed files as NULL rather than empty string.
 func nullableName(name string) sql.NullString {
 	return sql.NullString{String: name, Valid: name != ""}
@@ -185,9 +209,9 @@ func (s *Sqlite) UpdateFile(ctx context.Context, file *snips.File) error {
 	return nil
 }
 
-func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error) {
+func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string, opts ...PageOption) ([]*snips.File, error) {
 	// note that content is _not_ included
-	const query = `
+	query := `
 		SELECT
 			id,
 			created_at,
@@ -199,10 +223,14 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 			name
 		FROM files
 		WHERE user_id = ?
-		ORDER BY updated_at DESC
-	`
+		ORDER BY created_at DESC, id DESC`
+	args := applyPage(&query, []any{userID}, opts)
 
-	rows, err := s.QueryContext(ctx, query, userID)
+	return s.queryFilesWithoutContent(ctx, query, args...)
+}
+
+func (s *Sqlite) queryFilesWithoutContent(ctx context.Context, query string, args ...any) ([]*snips.File, error) {
+	rows, err := s.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +257,7 @@ func (s *Sqlite) FindFilesByUser(ctx context.Context, userID string) ([]*snips.F
 		files = append(files, file)
 	}
 
-	return files, nil
+	return files, rows.Err()
 }
 
 func (s *Sqlite) FindFileByName(ctx context.Context, userID, name string) (*snips.File, error) {
@@ -501,8 +529,8 @@ func (s *Sqlite) CreateRevision(ctx context.Context, revision *snips.Revision, m
 	return tx.Commit()
 }
 
-func (s *Sqlite) FindRevisionsByFileID(ctx context.Context, fileID string) ([]*snips.Revision, error) {
-	const query = `
+func (s *Sqlite) FindRevisionsByFileID(ctx context.Context, fileID string, opts ...PageOption) ([]*snips.Revision, error) {
+	query := `
 		SELECT
 			id,
 			sequence,
@@ -512,10 +540,14 @@ func (s *Sqlite) FindRevisionsByFileID(ctx context.Context, fileID string) ([]*s
 			type
 		FROM revisions
 		WHERE file_id = ?
-		ORDER BY sequence DESC
-	`
+		ORDER BY sequence DESC`
+	args := applyPage(&query, []any{fileID}, opts)
 
-	rows, err := s.QueryContext(ctx, query, fileID)
+	return s.queryRevisionsWithoutDiff(ctx, query, args...)
+}
+
+func (s *Sqlite) queryRevisionsWithoutDiff(ctx context.Context, query string, args ...any) ([]*snips.Revision, error) {
+	rows, err := s.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -538,7 +570,7 @@ func (s *Sqlite) FindRevisionsByFileID(ctx context.Context, fileID string) ([]*s
 		revisions = append(revisions, rev)
 	}
 
-	return revisions, nil
+	return revisions, rows.Err()
 }
 
 func (s *Sqlite) FindRevisionByFileIDAndSequence(ctx context.Context, fileID string, sequence int64) (*snips.Revision, error) {

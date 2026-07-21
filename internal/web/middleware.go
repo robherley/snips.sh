@@ -31,11 +31,13 @@ func WithMiddleware(handler http.Handler, middlewares ...Middleware) http.Handle
 	return withMiddleware
 }
 
-// WithRequestID adds a unique request ID to the request context.
+// WithRequestID adds a unique request ID to the request context, and echoes
+// it as a response header so clients can reference it when reporting issues.
 func WithRequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestID := id.New()
 		r.Header.Set(RequestIDHeader, requestID)
+		w.Header().Set(RequestIDHeader, requestID)
 
 		ctx := context.WithValue(r.Context(), RequestIDContextKey, requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))

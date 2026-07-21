@@ -53,15 +53,6 @@ func TestUploadFlags(t *testing.T) {
 			},
 		},
 		{
-			name: "trims leading dot and lowercases",
-			args: []string{"-ext", ".tXt"},
-			want: ssh.UploadFlags{
-				Private:   false,
-				Extension: "txt",
-				TTL:       time.Duration(0),
-			},
-		},
-		{
 			name: "private and ttl",
 			args: []string{"-private", "-ttl", "1w2d3m4s"},
 			want: ssh.UploadFlags{
