@@ -96,6 +96,13 @@ func TestUploadFlags(t *testing.T) {
 	}
 }
 
+func TestAPIKeyCreateFlagsRejectsNegativeTTL(t *testing.T) {
+	var got ssh.APIKeyCreateFlags
+	err := got.Parse(io.Discard, []string{"-name", "ci", "-ttl", "-1h"})
+
+	assert.ErrorIs(t, err, ssh.ErrFlagParse)
+}
+
 func TestRenameFlags(t *testing.T) {
 	testcases := []struct {
 		name string

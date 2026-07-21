@@ -656,27 +656,11 @@ func (s *Sqlite) FindUser(ctx context.Context, id string) (*snips.User, error) {
 }
 
 func (s *Sqlite) CreateAPIKey(ctx context.Context, key *snips.APIKey, maxKeys uint64) error {
-	const countQuery = `
-		SELECT COUNT(*)
-		FROM api_keys
-		WHERE user_id = ?
-	`
+	keyID := id.New()
+	createdAt := time.Now().UTC()
+	updatedAt := time.Now().UTC()
 
-	var count uint64
-	row := s.QueryRowContext(ctx, countQuery, key.UserID)
-	if err := row.Scan(&count); err != nil {
-		return err
-	}
-
-	if maxKeys > 0 && count >= maxKeys {
-		return ErrAPIKeyLimit
-	}
-
-	key.ID = id.New()
-	key.CreatedAt = time.Now().UTC()
-	key.UpdatedAt = time.Now().UTC()
-
-	const insertQuery = `
+	insertQuery := `
 		INSERT INTO api_keys (
 			id,
 			created_at,
@@ -686,20 +670,42 @@ func (s *Sqlite) CreateAPIKey(ctx context.Context, key *snips.APIKey, maxKeys ui
 			user_id,
 			last_used_at,
 			expires_at
-		) VALUES (?, ?, ?, ?, ?, ?, NULL, ?)
+		) SELECT ?, ?, ?, ?, ?, ?, NULL, ?
 	`
 
-	_, err := s.ExecContext(ctx, insertQuery,
-		key.ID,
-		key.CreatedAt,
-		key.UpdatedAt,
+	args := []any{
+		keyID,
+		createdAt,
+		updatedAt,
 		nullableName(key.Name),
 		key.TokenHash,
 		key.UserID,
 		key.ExpiresAt,
-	)
+	}
+	if maxKeys > 0 {
+		insertQuery += `
+			WHERE (SELECT COUNT(*) FROM api_keys WHERE user_id = ?) < ?
+		`
+		args = append(args, key.UserID, maxKeys)
+	}
 
-	return err
+	result, err := s.ExecContext(ctx, insertQuery, args...)
+	if err != nil {
+		return err
+	}
+
+	created, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if created == 0 {
+		return ErrAPIKeyLimit
+	}
+
+	key.ID = keyID
+	key.CreatedAt = createdAt
+	key.UpdatedAt = updatedAt
+	return nil
 }
 
 func (s *Sqlite) FindAPIKeyByTokenHash(ctx context.Context, tokenHash string) (*snips.APIKey, error) {

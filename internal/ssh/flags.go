@@ -65,6 +65,9 @@ func (af *APIKeyCreateFlags) Parse(out io.Writer, args []string) error {
 	if af.Name == "" {
 		return fmt.Errorf("%w: -name", ErrFlagRequired)
 	}
+	if af.TTL < 0 {
+		return fmt.Errorf("%w: -ttl", ErrFlagParse)
+	}
 
 	return nil
 }
