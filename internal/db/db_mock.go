@@ -170,6 +170,69 @@ func (_c *MockDB_CountRevisionsByFileID_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// CreateAPIKey provides a mock function for the type MockDB
+func (_mock *MockDB) CreateAPIKey(ctx context.Context, key *snips.APIKey, maxKeys uint64) error {
+	ret := _mock.Called(ctx, key, maxKeys)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateAPIKey")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *snips.APIKey, uint64) error); ok {
+		r0 = returnFunc(ctx, key, maxKeys)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockDB_CreateAPIKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateAPIKey'
+type MockDB_CreateAPIKey_Call struct {
+	*mock.Call
+}
+
+// CreateAPIKey is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key *snips.APIKey
+//   - maxKeys uint64
+func (_e *MockDB_Expecter) CreateAPIKey(ctx any, key any, maxKeys any) *MockDB_CreateAPIKey_Call {
+	return &MockDB_CreateAPIKey_Call{Call: _e.mock.On("CreateAPIKey", ctx, key, maxKeys)}
+}
+
+func (_c *MockDB_CreateAPIKey_Call) Run(run func(ctx context.Context, key *snips.APIKey, maxKeys uint64)) *MockDB_CreateAPIKey_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *snips.APIKey
+		if args[1] != nil {
+			arg1 = args[1].(*snips.APIKey)
+		}
+		var arg2 uint64
+		if args[2] != nil {
+			arg2 = args[2].(uint64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_CreateAPIKey_Call) Return(err error) *MockDB_CreateAPIKey_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockDB_CreateAPIKey_Call) RunAndReturn(run func(ctx context.Context, key *snips.APIKey, maxKeys uint64) error) *MockDB_CreateAPIKey_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateFile provides a mock function for the type MockDB
 func (_mock *MockDB) CreateFile(ctx context.Context, file *snips.File, maxFiles uint64) error {
 	ret := _mock.Called(ctx, file, maxFiles)
@@ -364,6 +427,78 @@ func (_c *MockDB_CreateUserWithPublicKey_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// DeleteAPIKey provides a mock function for the type MockDB
+func (_mock *MockDB) DeleteAPIKey(ctx context.Context, id string, userID string) (bool, error) {
+	ret := _mock.Called(ctx, id, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAPIKey")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+		return returnFunc(ctx, id, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = returnFunc(ctx, id, userID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, id, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDB_DeleteAPIKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAPIKey'
+type MockDB_DeleteAPIKey_Call struct {
+	*mock.Call
+}
+
+// DeleteAPIKey is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - userID string
+func (_e *MockDB_Expecter) DeleteAPIKey(ctx any, id any, userID any) *MockDB_DeleteAPIKey_Call {
+	return &MockDB_DeleteAPIKey_Call{Call: _e.mock.On("DeleteAPIKey", ctx, id, userID)}
+}
+
+func (_c *MockDB_DeleteAPIKey_Call) Run(run func(ctx context.Context, id string, userID string)) *MockDB_DeleteAPIKey_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_DeleteAPIKey_Call) Return(b bool, err error) *MockDB_DeleteAPIKey_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockDB_DeleteAPIKey_Call) RunAndReturn(run func(ctx context.Context, id string, userID string) (bool, error)) *MockDB_DeleteAPIKey_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteFile provides a mock function for the type MockDB
 func (_mock *MockDB) DeleteFile(ctx context.Context, id string) error {
 	ret := _mock.Called(ctx, id)
@@ -483,6 +618,142 @@ func (_c *MockDB_DeleteFilesByUser_Call) Return(n int64, err error) *MockDB_Dele
 }
 
 func (_c *MockDB_DeleteFilesByUser_Call) RunAndReturn(run func(ctx context.Context, userID string) (int64, error)) *MockDB_DeleteFilesByUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindAPIKeyByTokenHash provides a mock function for the type MockDB
+func (_mock *MockDB) FindAPIKeyByTokenHash(ctx context.Context, tokenHash string) (*snips.APIKey, error) {
+	ret := _mock.Called(ctx, tokenHash)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAPIKeyByTokenHash")
+	}
+
+	var r0 *snips.APIKey
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*snips.APIKey, error)); ok {
+		return returnFunc(ctx, tokenHash)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *snips.APIKey); ok {
+		r0 = returnFunc(ctx, tokenHash)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*snips.APIKey)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, tokenHash)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDB_FindAPIKeyByTokenHash_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAPIKeyByTokenHash'
+type MockDB_FindAPIKeyByTokenHash_Call struct {
+	*mock.Call
+}
+
+// FindAPIKeyByTokenHash is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tokenHash string
+func (_e *MockDB_Expecter) FindAPIKeyByTokenHash(ctx any, tokenHash any) *MockDB_FindAPIKeyByTokenHash_Call {
+	return &MockDB_FindAPIKeyByTokenHash_Call{Call: _e.mock.On("FindAPIKeyByTokenHash", ctx, tokenHash)}
+}
+
+func (_c *MockDB_FindAPIKeyByTokenHash_Call) Run(run func(ctx context.Context, tokenHash string)) *MockDB_FindAPIKeyByTokenHash_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_FindAPIKeyByTokenHash_Call) Return(aPIKey *snips.APIKey, err error) *MockDB_FindAPIKeyByTokenHash_Call {
+	_c.Call.Return(aPIKey, err)
+	return _c
+}
+
+func (_c *MockDB_FindAPIKeyByTokenHash_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) (*snips.APIKey, error)) *MockDB_FindAPIKeyByTokenHash_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindAPIKeysByUser provides a mock function for the type MockDB
+func (_mock *MockDB) FindAPIKeysByUser(ctx context.Context, userID string) ([]*snips.APIKey, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAPIKeysByUser")
+	}
+
+	var r0 []*snips.APIKey
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]*snips.APIKey, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []*snips.APIKey); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*snips.APIKey)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDB_FindAPIKeysByUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAPIKeysByUser'
+type MockDB_FindAPIKeysByUser_Call struct {
+	*mock.Call
+}
+
+// FindAPIKeysByUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockDB_Expecter) FindAPIKeysByUser(ctx any, userID any) *MockDB_FindAPIKeysByUser_Call {
+	return &MockDB_FindAPIKeysByUser_Call{Call: _e.mock.On("FindAPIKeysByUser", ctx, userID)}
+}
+
+func (_c *MockDB_FindAPIKeysByUser_Call) Run(run func(ctx context.Context, userID string)) *MockDB_FindAPIKeysByUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_FindAPIKeysByUser_Call) Return(aPIKeys []*snips.APIKey, err error) *MockDB_FindAPIKeysByUser_Call {
+	_c.Call.Return(aPIKeys, err)
+	return _c
+}
+
+func (_c *MockDB_FindAPIKeysByUser_Call) RunAndReturn(run func(ctx context.Context, userID string) ([]*snips.APIKey, error)) *MockDB_FindAPIKeysByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1052,6 +1323,63 @@ func (_c *MockDB_Migrate_Call) Return(err error) *MockDB_Migrate_Call {
 }
 
 func (_c *MockDB_Migrate_Call) RunAndReturn(run func(ctx context.Context) error) *MockDB_Migrate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TouchAPIKey provides a mock function for the type MockDB
+func (_mock *MockDB) TouchAPIKey(ctx context.Context, id string) error {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TouchAPIKey")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockDB_TouchAPIKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TouchAPIKey'
+type MockDB_TouchAPIKey_Call struct {
+	*mock.Call
+}
+
+// TouchAPIKey is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *MockDB_Expecter) TouchAPIKey(ctx any, id any) *MockDB_TouchAPIKey_Call {
+	return &MockDB_TouchAPIKey_Call{Call: _e.mock.On("TouchAPIKey", ctx, id)}
+}
+
+func (_c *MockDB_TouchAPIKey_Call) Run(run func(ctx context.Context, id string)) *MockDB_TouchAPIKey_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDB_TouchAPIKey_Call) Return(err error) *MockDB_TouchAPIKey_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockDB_TouchAPIKey_Call) RunAndReturn(run func(ctx context.Context, id string) error) *MockDB_TouchAPIKey_Call {
 	_c.Call.Return(run)
 	return _c
 }

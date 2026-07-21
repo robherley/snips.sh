@@ -47,6 +47,12 @@ func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
 			return
 		}
 
+		// user managing api keys
+		if args := userSesh.Command(); len(args) > 0 && args[0] == APIKeyCommand {
+			h.APIKey(userSesh)
+			return
+		}
+
 		// otherwise, it's a file upload
 		h.Upload(userSesh)
 	}

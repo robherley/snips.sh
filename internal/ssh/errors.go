@@ -11,4 +11,6 @@ var (
 	ErrSignPublicFile    = errors.New("unable to sign public file")
 	ErrEmptyContent      = errors.New("empty content")
 	ErrNameRequired      = errors.New("name required")
+	ErrAPIKeyNotFound    = errors.New("api key not found")
+	ErrAPIKeyIDRequired  = errors.New("api key id required")
 )

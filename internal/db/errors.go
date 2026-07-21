@@ -3,6 +3,7 @@ package db
 import "errors"
 
 var (
-	ErrFileLimit = errors.New("file limit reached")
-	ErrNameTaken = errors.New("file already exists with that name")
+	ErrFileLimit   = errors.New("file limit reached")
+	ErrNameTaken   = errors.New("file already exists with that name")
+	ErrAPIKeyLimit = errors.New("api key limit reached")
 )

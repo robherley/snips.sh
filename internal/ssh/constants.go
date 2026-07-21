@@ -10,4 +10,6 @@ const (
 
 	FileRequestPrefix      = "f:"
 	NamedFileRequestPrefix = "n:"
+
+	APIKeyCommand = "api-key"
 )

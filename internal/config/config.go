@@ -41,6 +41,7 @@ type Config struct {
 		FilesPerUser     uint64        `default:"100" desc:"maximum number of files per user"`
 		SessionDuration  time.Duration `default:"15m" desc:"maximum ssh session duration"`
 		RevisionsPerFile uint64        `default:"64" desc:"maximum number of revisions per file"`
+		APIKeysPerUser   uint64        `default:"16" desc:"maximum number of api keys per user"`
 	}
 
 	DB struct {

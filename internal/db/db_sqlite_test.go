@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -904,4 +905,152 @@ func (s *SqliteSuite) TestFindRevisionsByFileID_Pagination() {
 	s.Require().NoError(err)
 	s.Require().Len(page, 1)
 	s.Require().Equal(int64(1), page[0].Sequence)
+}
+
+func (s *SqliteSuite) TestCreateAPIKey() {
+	database := s.getTestDB(true)
+
+	token, hash, err := snips.NewAPIKeyToken()
+	s.Require().NoError(err)
+	s.Require().True(strings.HasPrefix(token, snips.APIKeyTokenPrefix))
+	s.Require().Equal(snips.HashAPIKeyToken(token), hash)
+
+	key := &snips.APIKey{
+		Name:      "ci",
+		TokenHash: hash,
+		UserID:    id.New(),
+	}
+
+	s.Require().NoError(database.CreateAPIKey(context.TODO(), key, 16))
+	s.Require().NotEmpty(key.ID)
+	s.Require().NotEmpty(key.CreatedAt)
+
+	found, err := database.FindAPIKeyByTokenHash(context.TODO(), hash)
+	s.Require().NoError(err)
+	s.Require().NotNil(found)
+	s.Require().Equal(key.ID, found.ID)
+	s.Require().Equal("ci", found.Name)
+	s.Require().Equal(key.UserID, found.UserID)
+	s.Require().Nil(found.LastUsedAt)
+}
+
+func (s *SqliteSuite) TestCreateAPIKey_Limit() {
+	database := s.getTestDB(true)
+	userID := id.New()
+
+	for i := 0; i < 2; i++ {
+		_, hash, err := snips.NewAPIKeyToken()
+		s.Require().NoError(err)
+		s.Require().NoError(database.CreateAPIKey(context.TODO(), &snips.APIKey{TokenHash: hash, UserID: userID}, 2))
+	}
+
+	_, hash, err := snips.NewAPIKeyToken()
+	s.Require().NoError(err)
+	err = database.CreateAPIKey(context.TODO(), &snips.APIKey{TokenHash: hash, UserID: userID}, 2)
+	s.Require().ErrorIs(err, db.ErrAPIKeyLimit)
+}
+
+func (s *SqliteSuite) TestFindAPIKeyByTokenHash_DoesNotExist() {
+	database := s.getTestDB(true)
+
+	key, err := database.FindAPIKeyByTokenHash(context.TODO(), snips.HashAPIKeyToken("nope"))
+	s.Require().NoError(err)
+	s.Require().Nil(key)
+}
+
+func (s *SqliteSuite) TestFindAPIKeysByUser() {
+	database := s.getTestDB(true)
+	userID := id.New()
+
+	ids := make([]string, 0, 3)
+	for i := 0; i < 3; i++ {
+		_, hash, err := snips.NewAPIKeyToken()
+		s.Require().NoError(err)
+		key := &snips.APIKey{TokenHash: hash, UserID: userID}
+		s.Require().NoError(database.CreateAPIKey(context.TODO(), key, 16))
+		ids = append(ids, key.ID)
+	}
+
+	// another user's key must never appear
+	_, hash, err := snips.NewAPIKeyToken()
+	s.Require().NoError(err)
+	s.Require().NoError(database.CreateAPIKey(context.TODO(), &snips.APIKey{TokenHash: hash, UserID: id.New()}, 16))
+
+	keys, err := database.FindAPIKeysByUser(context.TODO(), userID)
+	s.Require().NoError(err)
+	s.Require().Len(keys, 3)
+	for _, key := range keys {
+		s.Require().Contains(ids, key.ID)
+		s.Require().Equal(userID, key.UserID)
+	}
+}
+
+func (s *SqliteSuite) TestDeleteAPIKey() {
+	database := s.getTestDB(true)
+	userID := id.New()
+
+	_, hash, err := snips.NewAPIKeyToken()
+	s.Require().NoError(err)
+	key := &snips.APIKey{TokenHash: hash, UserID: userID}
+	s.Require().NoError(database.CreateAPIKey(context.TODO(), key, 16))
+
+	// another user cannot delete it
+	deleted, err := database.DeleteAPIKey(context.TODO(), key.ID, id.New())
+	s.Require().NoError(err)
+	s.Require().False(deleted)
+
+	deleted, err = database.DeleteAPIKey(context.TODO(), key.ID, userID)
+	s.Require().NoError(err)
+	s.Require().True(deleted)
+
+	found, err := database.FindAPIKeyByTokenHash(context.TODO(), hash)
+	s.Require().NoError(err)
+	s.Require().Nil(found)
+}
+
+func (s *SqliteSuite) TestTouchAPIKey() {
+	database := s.getTestDB(true)
+
+	_, hash, err := snips.NewAPIKeyToken()
+	s.Require().NoError(err)
+	key := &snips.APIKey{TokenHash: hash, UserID: id.New()}
+	s.Require().NoError(database.CreateAPIKey(context.TODO(), key, 16))
+
+	s.Require().NoError(database.TouchAPIKey(context.TODO(), key.ID))
+
+	found, err := database.FindAPIKeyByTokenHash(context.TODO(), hash)
+	s.Require().NoError(err)
+	s.Require().NotNil(found.LastUsedAt)
+}
+
+func (s *SqliteSuite) TestCreateAPIKey_WithExpiry() {
+	database := s.getTestDB(true)
+
+	_, hash, err := snips.NewAPIKeyToken()
+	s.Require().NoError(err)
+
+	expires := time.Now().UTC().Add(time.Hour).Truncate(time.Second)
+	key := &snips.APIKey{
+		Name:      "expiring",
+		TokenHash: hash,
+		UserID:    id.New(),
+		ExpiresAt: &expires,
+	}
+	s.Require().NoError(database.CreateAPIKey(context.TODO(), key, 16))
+
+	found, err := database.FindAPIKeyByTokenHash(context.TODO(), hash)
+	s.Require().NoError(err)
+	s.Require().NotNil(found.ExpiresAt)
+	s.Require().Equal(expires, found.ExpiresAt.UTC())
+	s.Require().False(found.IsExpired())
+
+	past := time.Now().UTC().Add(-time.Hour)
+	_, hash, err = snips.NewAPIKeyToken()
+	s.Require().NoError(err)
+	expired := &snips.APIKey{Name: "stale", TokenHash: hash, UserID: id.New(), ExpiresAt: &past}
+	s.Require().NoError(database.CreateAPIKey(context.TODO(), expired, 16))
+
+	found, err = database.FindAPIKeyByTokenHash(context.TODO(), hash)
+	s.Require().NoError(err)
+	s.Require().True(found.IsExpired())
 }
