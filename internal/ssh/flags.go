@@ -44,6 +44,31 @@ func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
 	return nil
 }
 
+type APIKeyCreateFlags struct {
+	*flag.FlagSet
+
+	Name string
+	TTL  time.Duration
+}
+
+func (af *APIKeyCreateFlags) Parse(out io.Writer, args []string) error {
+	af.FlagSet = flag.NewFlagSet("", flag.ContinueOnError)
+	af.SetOutput(out)
+
+	af.StringVar(&af.Name, "name", "", "human-readable name for the api key")
+	addDurationFlag(af.FlagSet, &af.TTL, "ttl", 0, "lifetime of the api key (optional, never expires when omitted)")
+
+	if err := af.FlagSet.Parse(args); err != nil {
+		return err
+	}
+
+	if af.Name == "" {
+		return fmt.Errorf("%w: -name", ErrFlagRequired)
+	}
+
+	return nil
+}
+
 type RenameFlags struct {
 	*flag.FlagSet
 

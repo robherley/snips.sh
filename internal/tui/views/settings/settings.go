@@ -23,6 +23,7 @@ type page int
 const (
 	rootPage page = iota
 	themePage
+	apiKeysPage
 	deletePage
 )
 
@@ -36,6 +37,7 @@ type entry struct {
 // entries lists the root menu; add new settings pages here.
 var entries = []entry{
 	{label: "theme color", page: themePage},
+	{label: "api keys", page: apiKeysPage},
 	{label: "delete all my data", page: deletePage, danger: true},
 }
 
@@ -72,8 +74,9 @@ type Settings struct {
 	cursor   int // selected entry on the root page
 	feedback feedback.Feedback
 
-	theme  themeView
-	delete deleteView
+	theme   themeView
+	apiKeys apiKeysView
+	delete  deleteView
 }
 
 func New(ctx context.Context, cfg *config.Config, width, height int, database db.DB, user *snips.User, fingerprint string) Settings {
@@ -90,6 +93,7 @@ func New(ctx context.Context, cfg *config.Config, width, height int, database db
 		width:       width,
 		height:      height,
 		theme:       newThemeView(d),
+		apiKeys:     newAPIKeysView(d),
 		delete:      newDeleteView(d),
 	}
 }
@@ -116,6 +120,8 @@ func (s Settings) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch s.page {
 		case themePage:
 			s.theme, res = s.theme.update(msg)
+		case apiKeysPage:
+			s.apiKeys, res = s.apiKeys.update(msg)
 		case deletePage:
 			s.delete, res = s.delete.update(msg)
 		default:
@@ -169,6 +175,8 @@ func (s Settings) open(p page) (tea.Model, tea.Cmd) {
 	switch p {
 	case themePage:
 		s.theme = s.theme.enter()
+	case apiKeysPage:
+		s.apiKeys, err = s.apiKeys.enter()
 	case deletePage:
 		s.delete, cmd, err = s.delete.enter()
 	}
@@ -189,6 +197,9 @@ func (s Settings) View() tea.View {
 	case themePage:
 		title = "settings / theme color"
 		rows = s.theme.rows()
+	case apiKeysPage:
+		title = "settings / api keys"
+		rows = s.apiKeys.rows()
 	case deletePage:
 		title = "settings / delete all my data"
 		rows = s.delete.rows()
@@ -246,6 +257,8 @@ func (s Settings) Keys() help.KeyMap {
 	switch s.page {
 	case themePage:
 		return themeKeys
+	case apiKeysPage:
+		return s.apiKeys.keys()
 	case deletePage:
 		return deleteKeys
 	default:

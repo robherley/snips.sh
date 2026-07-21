@@ -43,4 +43,14 @@ type DB interface {
 	FindRevisionByFileIDAndSequence(ctx context.Context, fileID string, sequence int64) (*snips.Revision, error)
 	// CountRevisionsByFileID returns the number of revisions for a file.
 	CountRevisionsByFileID(ctx context.Context, fileID string) (int64, error)
+	// CreateAPIKey creates a new API key. If a user has maxKeys or more keys, ErrAPIKeyLimit is returned.
+	CreateAPIKey(ctx context.Context, key *snips.APIKey, maxKeys uint64) error
+	// FindAPIKeyByTokenHash returns an API key by its token hash.
+	FindAPIKeyByTokenHash(ctx context.Context, tokenHash string) (*snips.APIKey, error)
+	// FindAPIKeysByUser returns all API keys for a user, newest first.
+	FindAPIKeysByUser(ctx context.Context, userID string) ([]*snips.APIKey, error)
+	// DeleteAPIKey deletes a user's API key by ID, reporting whether a key was deleted.
+	DeleteAPIKey(ctx context.Context, id, userID string) (bool, error)
+	// TouchAPIKey updates an API key's last_used_at timestamp.
+	TouchAPIKey(ctx context.Context, id string) error
 }
