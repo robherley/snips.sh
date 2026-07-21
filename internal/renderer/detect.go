@@ -17,6 +17,9 @@ const (
 // If useGuesser is true, it will try to guess the type of the file using AI guessing.
 // If the content's mimetype is not detected as text/plain, it returns "binary"
 func DetectFileType(content []byte, hint string, useGuesser bool) string {
+	// hints arrive as user input; accept e.g. ".Go" or "md "
+	hint = strings.TrimPrefix(strings.ToLower(strings.TrimSpace(hint)), ".")
+
 	detectedContentType := http.DetectContentType(content)
 
 	if !strings.Contains(detectedContentType, "text/") {

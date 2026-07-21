@@ -630,8 +630,14 @@ func (_c *MockDB_FindFileByName_Call) RunAndReturn(run func(ctx context.Context,
 }
 
 // FindFilesByUser provides a mock function for the type MockDB
-func (_mock *MockDB) FindFilesByUser(ctx context.Context, userID string) ([]*snips.File, error) {
-	ret := _mock.Called(ctx, userID)
+func (_mock *MockDB) FindFilesByUser(ctx context.Context, userID string, opts ...PageOption) ([]*snips.File, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, userID, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, userID)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindFilesByUser")
@@ -639,18 +645,18 @@ func (_mock *MockDB) FindFilesByUser(ctx context.Context, userID string) ([]*sni
 
 	var r0 []*snips.File
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]*snips.File, error)); ok {
-		return returnFunc(ctx, userID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...PageOption) ([]*snips.File, error)); ok {
+		return returnFunc(ctx, userID, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []*snips.File); ok {
-		r0 = returnFunc(ctx, userID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...PageOption) []*snips.File); ok {
+		r0 = returnFunc(ctx, userID, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*snips.File)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, userID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, ...PageOption) error); ok {
+		r1 = returnFunc(ctx, userID, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -665,11 +671,13 @@ type MockDB_FindFilesByUser_Call struct {
 // FindFilesByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockDB_Expecter) FindFilesByUser(ctx any, userID any) *MockDB_FindFilesByUser_Call {
-	return &MockDB_FindFilesByUser_Call{Call: _e.mock.On("FindFilesByUser", ctx, userID)}
+//   - opts ...PageOption
+func (_e *MockDB_Expecter) FindFilesByUser(ctx any, userID any, opts ...any) *MockDB_FindFilesByUser_Call {
+	return &MockDB_FindFilesByUser_Call{Call: _e.mock.On("FindFilesByUser",
+		append([]any{ctx, userID}, opts...)...)}
 }
 
-func (_c *MockDB_FindFilesByUser_Call) Run(run func(ctx context.Context, userID string)) *MockDB_FindFilesByUser_Call {
+func (_c *MockDB_FindFilesByUser_Call) Run(run func(ctx context.Context, userID string, opts ...PageOption)) *MockDB_FindFilesByUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -679,9 +687,16 @@ func (_c *MockDB_FindFilesByUser_Call) Run(run func(ctx context.Context, userID 
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 []PageOption
+		var variadicArgs []PageOption
+		if len(args) > 2 {
+			variadicArgs = args[2].([]PageOption)
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -692,7 +707,7 @@ func (_c *MockDB_FindFilesByUser_Call) Return(files []*snips.File, err error) *M
 	return _c
 }
 
-func (_c *MockDB_FindFilesByUser_Call) RunAndReturn(run func(ctx context.Context, userID string) ([]*snips.File, error)) *MockDB_FindFilesByUser_Call {
+func (_c *MockDB_FindFilesByUser_Call) RunAndReturn(run func(ctx context.Context, userID string, opts ...PageOption) ([]*snips.File, error)) *MockDB_FindFilesByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -840,8 +855,14 @@ func (_c *MockDB_FindRevisionByFileIDAndSequence_Call) RunAndReturn(run func(ctx
 }
 
 // FindRevisionsByFileID provides a mock function for the type MockDB
-func (_mock *MockDB) FindRevisionsByFileID(ctx context.Context, fileID string) ([]*snips.Revision, error) {
-	ret := _mock.Called(ctx, fileID)
+func (_mock *MockDB) FindRevisionsByFileID(ctx context.Context, fileID string, opts ...PageOption) ([]*snips.Revision, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, fileID, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, fileID)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindRevisionsByFileID")
@@ -849,18 +870,18 @@ func (_mock *MockDB) FindRevisionsByFileID(ctx context.Context, fileID string) (
 
 	var r0 []*snips.Revision
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]*snips.Revision, error)); ok {
-		return returnFunc(ctx, fileID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...PageOption) ([]*snips.Revision, error)); ok {
+		return returnFunc(ctx, fileID, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []*snips.Revision); ok {
-		r0 = returnFunc(ctx, fileID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...PageOption) []*snips.Revision); ok {
+		r0 = returnFunc(ctx, fileID, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*snips.Revision)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, fileID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, ...PageOption) error); ok {
+		r1 = returnFunc(ctx, fileID, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -875,11 +896,13 @@ type MockDB_FindRevisionsByFileID_Call struct {
 // FindRevisionsByFileID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - fileID string
-func (_e *MockDB_Expecter) FindRevisionsByFileID(ctx any, fileID any) *MockDB_FindRevisionsByFileID_Call {
-	return &MockDB_FindRevisionsByFileID_Call{Call: _e.mock.On("FindRevisionsByFileID", ctx, fileID)}
+//   - opts ...PageOption
+func (_e *MockDB_Expecter) FindRevisionsByFileID(ctx any, fileID any, opts ...any) *MockDB_FindRevisionsByFileID_Call {
+	return &MockDB_FindRevisionsByFileID_Call{Call: _e.mock.On("FindRevisionsByFileID",
+		append([]any{ctx, fileID}, opts...)...)}
 }
 
-func (_c *MockDB_FindRevisionsByFileID_Call) Run(run func(ctx context.Context, fileID string)) *MockDB_FindRevisionsByFileID_Call {
+func (_c *MockDB_FindRevisionsByFileID_Call) Run(run func(ctx context.Context, fileID string, opts ...PageOption)) *MockDB_FindRevisionsByFileID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -889,9 +912,16 @@ func (_c *MockDB_FindRevisionsByFileID_Call) Run(run func(ctx context.Context, f
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 []PageOption
+		var variadicArgs []PageOption
+		if len(args) > 2 {
+			variadicArgs = args[2].([]PageOption)
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -902,7 +932,7 @@ func (_c *MockDB_FindRevisionsByFileID_Call) Return(revisions []*snips.Revision,
 	return _c
 }
 
-func (_c *MockDB_FindRevisionsByFileID_Call) RunAndReturn(run func(ctx context.Context, fileID string) ([]*snips.Revision, error)) *MockDB_FindRevisionsByFileID_Call {
+func (_c *MockDB_FindRevisionsByFileID_Call) RunAndReturn(run func(ctx context.Context, fileID string, opts ...PageOption) ([]*snips.Revision, error)) *MockDB_FindRevisionsByFileID_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -64,7 +64,7 @@ func New(ctx context.Context, cfg *config.Config, width, height int, user *snips
 		views.Code:     code.New(width, t.innerViewHeight(), theme),
 		views.Options:  options.New(cfg, width, t.innerViewHeight(), theme),
 		views.Prompt:   prompt.New(ctx, cfg, database, width, t.innerViewHeight(), theme),
-		views.Settings: settings.New(ctx, width, t.innerViewHeight(), database, user, fingerprint),
+		views.Settings: settings.New(ctx, cfg, width, t.innerViewHeight(), database, user, fingerprint),
 	}
 
 	t.help.Styles = styles.Help

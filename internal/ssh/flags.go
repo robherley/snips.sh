@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/robherley/snips.sh/internal/timeutil"
@@ -41,8 +40,6 @@ func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
 	if uf.TTL.Seconds() > 0 && !uf.Private {
 		return fmt.Errorf("%w: -private", ErrFlagRequired)
 	}
-
-	uf.Extension = strings.TrimPrefix(strings.ToLower(uf.Extension), ".")
 
 	return nil
 }
@@ -112,13 +109,7 @@ func (uf *UpdateFileContentFlags) Parse(out io.Writer, args []string) error {
 
 	uf.StringVar(&uf.Extension, "ext", "", "hint the file extension (optional)")
 
-	if err := uf.FlagSet.Parse(args); err != nil {
-		return err
-	}
-
-	uf.Extension = strings.TrimPrefix(strings.ToLower(uf.Extension), ".")
-
-	return nil
+	return uf.FlagSet.Parse(args)
 }
 
 // durationFlagValue is a wrapper around time.Duration that implements the flag.Value interface using a custom parser.
