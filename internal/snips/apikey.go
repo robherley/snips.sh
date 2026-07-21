@@ -3,7 +3,7 @@ package snips
 import (
 	"crypto/rand"
 	"crypto/sha512"
-	"encoding/base64"
+	"encoding/base32"
 	"encoding/hex"
 	"time"
 )
@@ -51,7 +51,7 @@ func NewAPIKeyToken() (token string, hash string, err error) {
 		return "", "", err
 	}
 
-	token = APIKeyTokenPrefix + base64.RawURLEncoding.EncodeToString(raw)
+	token = APIKeyTokenPrefix + base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(raw)
 	return token, HashAPIKeyToken(token), nil
 }
 

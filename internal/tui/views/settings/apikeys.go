@@ -221,7 +221,7 @@ func (m apiKeysView) create() (apiKeysView, result) {
 
 	m.expiring = false
 	m.newToken = token
-	m.feedback = feedback.Success("created api key " + key.DisplayName())
+	m.feedback = feedback.Success(fmt.Sprintf("created api key %q", key.DisplayName()))
 
 	if err := m.reload(&m); err != nil {
 		m.feedback = feedback.Error(err.Error())
@@ -257,7 +257,7 @@ func (m apiKeysView) deleteKey() (apiKeysView, result) {
 
 	m.armedDeleteID = ""
 	m.newToken = ""
-	m.feedback = feedback.Success("deleted api key " + selected.DisplayName())
+	m.feedback = feedback.Success(fmt.Sprintf("deleted api key %q", selected.DisplayName()))
 
 	if err := m.reload(&m); err != nil {
 		m.feedback = feedback.Error(err.Error())
@@ -270,10 +270,7 @@ func (m apiKeysView) deleteKey() (apiKeysView, result) {
 func (m apiKeysView) rows() []string {
 	mutedStyle := lipgloss.NewStyle().Foreground(styles.Colors.Muted)
 
-	rows := []string{
-		mutedStyle.Render(fmt.Sprintf("keys for the rest api (%d/%d)", len(m.list), m.cfg.Limits.APIKeysPerUser)),
-		"",
-	}
+	rows := []string{}
 
 	if len(m.list) == 0 {
 		rows = append(rows, mutedStyle.Render("no api keys yet — press n to create one"))
