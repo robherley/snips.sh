@@ -465,6 +465,17 @@ func (suite *APISuite) TestSignFile_PublicRejected() {
 	suite.Equal(http.StatusBadRequest, res.StatusCode)
 }
 
+func (suite *APISuite) TestSignFile_TTLOverflowRejected() {
+	private := suite.file("file1", true)
+
+	suite.expectAuth()
+	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(private, nil).Once()
+
+	res := suite.request("POST", "/api/v1/files/file1/sign", strings.NewReader(`{"ttl_seconds":9223372037}`), true)
+	defer res.Body.Close()
+	suite.Equal(http.StatusBadRequest, res.StatusCode)
+}
+
 func (suite *APISuite) TestOpenAPISpec() {
 	for path, contentType := range map[string]string{
 		"/openapi.yaml": "text/plain; charset=utf-8",

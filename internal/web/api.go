@@ -24,8 +24,9 @@ import (
 )
 
 const (
-	APIDefaultPageSize = 50
-	APIMaxPageSize     = 100
+	APIDefaultPageSize         = 50
+	APIMaxPageSize             = 100
+	APIMaxSignTTLSeconds int64 = (1<<63 - 1) / int64(time.Second)
 )
 
 var (
@@ -594,8 +595,8 @@ func (a *API) SignFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.TTLSeconds < 1 {
-		http.Error(w, "ttl_seconds must be a positive integer", http.StatusBadRequest)
+	if body.TTLSeconds < 1 || body.TTLSeconds > APIMaxSignTTLSeconds {
+		http.Error(w, fmt.Sprintf("ttl_seconds must be between 1 and %d", APIMaxSignTTLSeconds), http.StatusBadRequest)
 		return
 	}
 

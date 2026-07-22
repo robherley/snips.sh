@@ -384,6 +384,7 @@ paths:
                   type: integer
                   format: int64
                   minimum: 1
+                  maximum: 9223372036
                   description: Lifetime of the signed URL in seconds.
       responses:
         "201":
@@ -536,7 +537,7 @@ components:
         size:
           type: integer
           format: int64
-          description: Size of the diff in bytes.
+          description: Content size after this revision, in bytes.
         type:
           type: string
         created_at:
