@@ -157,6 +157,37 @@ func TestWithAuthentication(t *testing.T) {
 	})
 }
 
+func TestWithLocalhostOnly(t *testing.T) {
+	next := func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}
+	handler := web.WithLocalhostOnly(next)
+
+	cases := []struct {
+		name       string
+		remoteAddr string
+		expected   int
+	}{
+		{name: "IPv4 loopback allowed", remoteAddr: "127.0.0.1:12345", expected: http.StatusOK},
+		{name: "IPv6 loopback allowed", remoteAddr: "[::1]:12345", expected: http.StatusOK},
+		{name: "public IPv4 forbidden", remoteAddr: "203.0.113.1:12345", expected: http.StatusForbidden},
+		{name: "private IPv4 forbidden", remoteAddr: "10.0.0.1:12345", expected: http.StatusForbidden},
+		{name: "malformed remote addr forbidden", remoteAddr: "not-an-addr", expected: http.StatusForbidden},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/", nil)
+			req.RemoteAddr = tc.remoteAddr
+
+			rec := httptest.NewRecorder()
+			handler(rec, req)
+
+			assert.Equal(t, tc.expected, rec.Code)
+		})
+	}
+}
+
 func TestUserID(t *testing.T) {
 	// unauthenticated contexts report !ok rather than panicking
 	req := httptest.NewRequest("GET", "/", nil)
