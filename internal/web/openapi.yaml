@@ -1,0 +1,589 @@
+openapi: 3.1.0
+info:
+  title: snips.sh API
+  description: |
+    REST API for snips.sh file operations.
+
+    Authentication uses API keys, presented as a bearer token:
+    `Authorization: Bearer snips_<token>`.
+
+    API keys are minted with your SSH key, never via this API:
+      - SSH: `ssh snips.sh api-key create -name my-key` (also `api-key ls`, `api-key rm <name>`)
+      - TUI: `ssh snips.sh` → `ctrl+p` → "api keys"
+
+    Each user may hold at most 16 active API keys. Tokens are shown once at
+    creation and stored server-side only as a SHA-256 hash.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+
+security:
+  - apiKey: []
+
+paths:
+  /meta:
+    get:
+      operationId: getMeta
+      summary: Instance metadata
+      description: |
+        Public instance metadata (limits, endpoints, build info).
+        The legacy `/meta.json` endpoint now responds with a 301 redirect here.
+      security: []
+      responses:
+        "200":
+          description: Instance metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meta"
+
+  /user:
+    get:
+      operationId: getUser
+      summary: Current user
+      description: Returns the user that owns the presented API key.
+      responses:
+        "200":
+          description: The authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /files:
+    get:
+      operationId: listFiles
+      summary: List files
+      description: |
+        Lists files owned by the authenticated user (metadata only, no
+        content), newest first. Paginated by opaque cursor:
+        when more files exist, the response carries `next_cursor` — pass it
+        back via `cursor` to fetch the next page.
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/cursor"
+        - name: name
+          in: query
+          description: |
+            Filter to the single file with this name (names are unique per
+            user, case-insensitive). Pagination parameters are ignored.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: One page of the user's files
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [files]
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/File"
+                  next_cursor:
+                    $ref: "#/components/schemas/NextCursor"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createFile
+      summary: Create a file
+      description: Uploads the raw request body as a new file.
+      parameters:
+        - name: name
+          in: query
+          description: Human-readable name, unique per user.
+          schema:
+            type: string
+        - name: private
+          in: query
+          description: Only accessible by the owner or via signed URLs.
+          schema:
+            type: boolean
+            default: false
+        - name: ext
+          in: query
+          description: File extension hint (e.g. `go`, `md`). Detected automatically when omitted.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          "*/*":
+            schema:
+              type: string
+              format: binary
+      responses:
+        "201":
+          description: File created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: A file with this name already exists.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            text/plain:
+              schema:
+                type: string
+        "413":
+          description: Content exceeds the per-file size limit.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            text/plain:
+              schema:
+                type: string
+        "422":
+          description: The per-user file count limit has been reached.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /files/{id}:
+    parameters:
+      - $ref: "#/components/parameters/fileID"
+    get:
+      operationId: getFile
+      summary: Get file metadata
+      description: |
+        Returns file metadata. Files owned by other users are visible only if
+        public; otherwise 404.
+      responses:
+        "200":
+          description: File metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateFile
+      summary: Update file metadata
+      description: |
+        Updates name, visibility, and/or type. Owner only.
+        Set `"name": ""` to remove a name.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                name:
+                  type: string
+                  description: New name (unique per user); empty string removes the name.
+                private:
+                  type: boolean
+                type:
+                  type: string
+                  description: File extension / language (e.g. `go`, `md`).
+      responses:
+        "200":
+          description: Updated file metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: A file with this name already exists.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            text/plain:
+              schema:
+                type: string
+    delete:
+      operationId: deleteFile
+      summary: Delete a file
+      description: Permanently deletes a file and its revisions. Owner only.
+      responses:
+        "204":
+          description: File deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /files/{id}/content:
+    parameters:
+      - $ref: "#/components/parameters/fileID"
+    get:
+      operationId: getFileContent
+      summary: Download file content
+      description: |
+        Returns the raw, decompressed file content. Files owned by other users
+        are downloadable only if public.
+      responses:
+        "200":
+          description: Raw file content
+          content:
+            text/plain:
+              schema:
+                type: string
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateFileContent
+      summary: Replace file content
+      description: |
+        Replaces the file's content with the raw request body and records a
+        revision diff. Owner only.
+      parameters:
+        - name: ext
+          in: query
+          description: File extension hint; re-detected when omitted.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          "*/*":
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: Updated file metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          description: Content exceeds the per-file size limit.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /files/{id}/revisions:
+    parameters:
+      - $ref: "#/components/parameters/fileID"
+    get:
+      operationId: listRevisions
+      summary: List file revisions
+      description: |
+        Lists revision metadata (no diffs), newest first. Same visibility
+        rules as the file. Paginated by opaque cursor, like `listFiles`.
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/cursor"
+      responses:
+        "200":
+          description: One page of the file's revisions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [revisions]
+                properties:
+                  revisions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Revision"
+                  next_cursor:
+                    $ref: "#/components/schemas/NextCursor"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /files/{id}/revisions/{sequence}:
+    parameters:
+      - $ref: "#/components/parameters/fileID"
+      - name: sequence
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      operationId: getRevision
+      summary: Get a revision
+      description: Returns revision metadata including its unified diff.
+      responses:
+        "200":
+          description: The revision
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Revision"
+                  - type: object
+                    required: [diff]
+                    properties:
+                      diff:
+                        type: string
+                        description: Unified diff against the previous revision.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /files/{id}/sign:
+    parameters:
+      - $ref: "#/components/parameters/fileID"
+    post:
+      operationId: signFile
+      summary: Create a signed URL
+      description: Creates a time-limited signed URL for a **private** file. Owner only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ttl_seconds]
+              properties:
+                ttl_seconds:
+                  type: integer
+                  format: int64
+                  minimum: 1
+                  maximum: 9223372036
+                  description: Lifetime of the signed URL in seconds.
+      responses:
+        "201":
+          description: Signed URL created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, expires_at]
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                  expires_at:
+                    type: string
+                    format: date-time
+        "400":
+          description: Invalid TTL, or the file is not private.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    apiKey:
+      type: http
+      scheme: bearer
+      bearerFormat: snips_<token>
+      description: "API key minted via SSH or the TUI, e.g. `Authorization: Bearer snips_abc123...`"
+
+  parameters:
+    limit:
+      name: limit
+      in: query
+      description: Maximum items per page.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    cursor:
+      name: cursor
+      in: query
+      description: Opaque pagination cursor from a previous response's `next_cursor`.
+      schema:
+        type: string
+    fileID:
+      name: id
+      in: path
+      required: true
+      description: File ID (e.g. from `listFiles` or the file's URL).
+      schema:
+        type: string
+
+  responses:
+    Unauthorized:
+      description: Missing, malformed, or unknown API key.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        text/plain:
+          schema:
+            type: string
+    NotFound:
+      description: File does not exist or is not accessible.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        text/plain:
+          schema:
+            type: string
+    BadRequest:
+      description: Invalid request parameters or body.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        text/plain:
+          schema:
+            type: string
+
+  headers:
+    XRequestID:
+      description: Unique ID of the request; reference it when reporting issues.
+      schema:
+        type: string
+
+  schemas:
+    NextCursor:
+      type: string
+      description: Opaque cursor for the next page; absent on the last page.
+
+    User:
+      type: object
+      required: [id, created_at, updated_at]
+      properties:
+        id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    File:
+      type: object
+      required: [id, size, private, type, created_at, updated_at]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          description: Optional per-user unique name; omitted when unnamed.
+        size:
+          type: integer
+          format: int64
+          description: Content size in bytes.
+        private:
+          type: boolean
+        type:
+          type: string
+          description: Detected type (`binary`, `markdown`, or a language/extension).
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Revision:
+      type: object
+      required: [id, sequence, size, type, created_at]
+      properties:
+        id:
+          type: string
+        sequence:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+          description: Content size after this revision, in bytes.
+        type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Meta:
+      type: object
+      required: [limits, endpoints, commit_sha, guesser_enabled]
+      properties:
+        limits:
+          type: object
+          properties:
+            file_size:
+              type: object
+              properties:
+                bytes:
+                  type: integer
+                  format: int64
+                human:
+                  type: string
+            files_per_user:
+              type: integer
+              format: int64
+            revisions_per_file:
+              type: integer
+              format: int64
+            api_keys_per_user:
+              type: integer
+              format: int64
+            session_duration:
+              type: object
+              properties:
+                seconds:
+                  type: number
+                human:
+                  type: string
+        endpoints:
+          type: object
+          properties:
+            http:
+              type: string
+              format: uri
+            ssh:
+              type: string
+        commit_sha:
+          type: string
+        guesser_enabled:
+          type: boolean
