@@ -20,8 +20,9 @@ var (
 )
 
 const (
-	ApplicationName = "snips"
-	UsageFormat     = `
+	ApplicationName    = "snips"
+	defaultHMACKey     = "hmac-and-cheese"
+	UsageFormat        = `
 KEY	TYPE	DEFAULT	DESCRIPTION
 {{range .}}{{usage_key .}}	{{usage_type .}}	{{usage_default .}}	{{usage_description .}}
 {{end}}`
@@ -147,6 +148,10 @@ func Load() (*Config, error) {
 	}
 
 	cfg.EnableGuesser = cfg.EnableGuesser && GuessingSupported
+
+	if cfg.HMACKey == defaultHMACKey {
+		slog.Warn("SNIPS_HMACKEY is set to the default value — private file URLs can be forged; set a strong secret before exposing this instance publicly")
+	}
 
 	return cfg, nil
 }
