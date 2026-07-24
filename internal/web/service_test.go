@@ -429,7 +429,7 @@ func (suite *HTTPServiceSuite) TestPprofEndpoints() {
 		debugCfg := *suite.config
 		debugCfg.Debug = true
 
-		svc, err := web.New(&debugCfg, suite.mockDB, suite.assets)
+		svc, err := web.New(&debugCfg, suite.mockDB.DB, suite.assets)
 		suite.Require().NoError(err)
 
 		ts := httptest.NewServer(svc.Handler)
