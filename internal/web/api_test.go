@@ -385,7 +385,7 @@ func (suite *APISuite) TestUpdateFileContent() {
 
 	suite.expectAuth()
 	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
-	suite.mockDB.Files.EXPECT().GetContent(mock.Anything, "file1").Return([]byte("hello world"), nil).Once()
+	suite.mockDB.Files.EXPECT().FindContent(mock.Anything, "file1").Return([]byte("hello world"), nil).Once()
 	suite.mockDB.Revisions.EXPECT().CountByFileID(mock.Anything, "file1").Return(0, nil).Once()
 	suite.mockDB.Revisions.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything, suite.config.Limits.RevisionsPerFile).Return(nil).Once()
 	suite.mockDB.Files.EXPECT().UpdateContent(mock.Anything, mock.Anything, []byte("hello new world")).Return(nil).Once()
@@ -429,7 +429,7 @@ func (suite *APISuite) TestGetRevision() {
 	suite.expectAuth()
 	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
 	suite.mockDB.Revisions.EXPECT().FindByFileIDAndSequence(mock.Anything, "file1", int64(1)).Return(rev, nil).Once()
-	suite.mockDB.Revisions.EXPECT().GetDiff(mock.Anything, "rev1").Return([]byte("+hello"), nil).Once()
+	suite.mockDB.Revisions.EXPECT().FindDiff(mock.Anything, "rev1").Return([]byte("+hello"), nil).Once()
 
 	res := suite.request("GET", "/api/v1/files/file1/revisions/1", nil, true)
 	suite.Equal(http.StatusOK, res.StatusCode)

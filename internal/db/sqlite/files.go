@@ -168,7 +168,7 @@ func (s *files) Update(ctx context.Context, file *snips.File) error {
 	return nil
 }
 
-func (s *files) GetContent(ctx context.Context, id string) ([]byte, error) {
+func (s *files) FindContent(ctx context.Context, id string) ([]byte, error) {
 	const query = `SELECT content FROM files WHERE id = ?`
 
 	var content []byte

@@ -331,12 +331,12 @@ func (_c *MockRevisions_FindByFileIDAndSequence_Call) RunAndReturn(run func(ctx 
 	return _c
 }
 
-// GetDiff provides a mock function for the type MockRevisions
-func (_mock *MockRevisions) GetDiff(ctx context.Context, id string) ([]byte, error) {
+// FindDiff provides a mock function for the type MockRevisions
+func (_mock *MockRevisions) FindDiff(ctx context.Context, id string) ([]byte, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetDiff")
+		panic("no return value specified for FindDiff")
 	}
 
 	var r0 []byte
@@ -359,19 +359,19 @@ func (_mock *MockRevisions) GetDiff(ctx context.Context, id string) ([]byte, err
 	return r0, r1
 }
 
-// MockRevisions_GetDiff_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDiff'
-type MockRevisions_GetDiff_Call struct {
+// MockRevisions_FindDiff_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindDiff'
+type MockRevisions_FindDiff_Call struct {
 	*mock.Call
 }
 
-// GetDiff is a helper method to define mock.On call
+// FindDiff is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockRevisions_Expecter) GetDiff(ctx any, id any) *MockRevisions_GetDiff_Call {
-	return &MockRevisions_GetDiff_Call{Call: _e.mock.On("GetDiff", ctx, id)}
+func (_e *MockRevisions_Expecter) FindDiff(ctx any, id any) *MockRevisions_FindDiff_Call {
+	return &MockRevisions_FindDiff_Call{Call: _e.mock.On("FindDiff", ctx, id)}
 }
 
-func (_c *MockRevisions_GetDiff_Call) Run(run func(ctx context.Context, id string)) *MockRevisions_GetDiff_Call {
+func (_c *MockRevisions_FindDiff_Call) Run(run func(ctx context.Context, id string)) *MockRevisions_FindDiff_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -389,12 +389,12 @@ func (_c *MockRevisions_GetDiff_Call) Run(run func(ctx context.Context, id strin
 	return _c
 }
 
-func (_c *MockRevisions_GetDiff_Call) Return(bytes []byte, err error) *MockRevisions_GetDiff_Call {
+func (_c *MockRevisions_FindDiff_Call) Return(bytes []byte, err error) *MockRevisions_FindDiff_Call {
 	_c.Call.Return(bytes, err)
 	return _c
 }
 
-func (_c *MockRevisions_GetDiff_Call) RunAndReturn(run func(ctx context.Context, id string) ([]byte, error)) *MockRevisions_GetDiff_Call {
+func (_c *MockRevisions_FindDiff_Call) RunAndReturn(run func(ctx context.Context, id string) ([]byte, error)) *MockRevisions_FindDiff_Call {
 	_c.Call.Return(run)
 	return _c
 }

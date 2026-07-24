@@ -250,7 +250,7 @@ func FileHandler(cfg *config.Config, database *db.DB, assets Assets) http.Handle
 			return
 		}
 
-		content, err := database.Files.GetContent(r.Context(), file.ID)
+		content, err := database.Files.FindContent(r.Context(), file.ID)
 		if err != nil {
 			log.Error("unable to get file content", "err", err)
 			http.Error(w, "unable to get file content", http.StatusInternalServerError)
@@ -545,7 +545,7 @@ func RevisionDiffHandler(cfg *config.Config, database *db.DB, assets Assets) htt
 			return
 		}
 
-		diffContent, err := database.Revisions.GetDiff(r.Context(), revision.ID)
+		diffContent, err := database.Revisions.FindDiff(r.Context(), revision.ID)
 		if err != nil {
 			log.Error("unable to decompress diff", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)

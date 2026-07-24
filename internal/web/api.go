@@ -403,7 +403,7 @@ func (a *API) UpdateFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		content, err := a.db.Files.GetContent(r.Context(), file.ID)
+		content, err := a.db.Files.FindContent(r.Context(), file.ID)
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
@@ -557,7 +557,7 @@ func (a *API) GetRevision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	diff, err := a.db.Revisions.GetDiff(r.Context(), rev.ID)
+	diff, err := a.db.Revisions.FindDiff(r.Context(), rev.ID)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return

@@ -129,7 +129,7 @@ func (s *SqliteSuite) TestGetFileContent() {
 	err := database.Files.Create(context.TODO(), file, []byte("hello world"), 0)
 	s.Require().NoError(err)
 
-	content, err := database.Files.GetContent(context.TODO(), file.ID)
+	content, err := database.Files.FindContent(context.TODO(), file.ID)
 	s.Require().NoError(err)
 	s.Require().Equal([]byte("hello world"), content)
 }
@@ -137,7 +137,7 @@ func (s *SqliteSuite) TestGetFileContent() {
 func (s *SqliteSuite) TestGetFileContent_DoesNotExist() {
 	database := s.getTestDB(true)
 
-	content, err := database.Files.GetContent(context.TODO(), id.New())
+	content, err := database.Files.FindContent(context.TODO(), id.New())
 	s.Require().NoError(err)
 	s.Require().Nil(content)
 }
@@ -313,7 +313,7 @@ func (s *SqliteSuite) TestUpdateFile_PreservesContent() {
 	file.Type = "markdown"
 	s.Require().NoError(database.Files.Update(context.Background(), file))
 
-	content, err := database.Files.GetContent(context.Background(), file.ID)
+	content, err := database.Files.FindContent(context.Background(), file.ID)
 	s.Require().NoError(err)
 	s.Require().Equal([]byte("hello world"), content)
 }
@@ -830,7 +830,7 @@ func (s *SqliteSuite) TestFindFileByName() {
 	s.Require().NoError(err)
 	s.Require().NotNil(file)
 	s.Require().Equal(first.ID, file.ID)
-	content, err := database.Files.GetContent(context.Background(), file.ID)
+	content, err := database.Files.FindContent(context.Background(), file.ID)
 	s.Require().NoError(err)
 	s.Require().Equal([]byte("hello world"), content)
 
@@ -968,7 +968,7 @@ func (s *SqliteSuite) TestGetRevisionDiff() {
 
 	s.Require().NoError(database.Revisions.Create(context.TODO(), revision, []byte("+hello world"), 0))
 
-	diff, err := database.Revisions.GetDiff(context.TODO(), revision.ID)
+	diff, err := database.Revisions.FindDiff(context.TODO(), revision.ID)
 	s.Require().NoError(err)
 	s.Require().Equal([]byte("+hello world"), diff)
 }
@@ -976,7 +976,7 @@ func (s *SqliteSuite) TestGetRevisionDiff() {
 func (s *SqliteSuite) TestGetRevisionDiff_DoesNotExist() {
 	database := s.getTestDB(true)
 
-	diff, err := database.Revisions.GetDiff(context.TODO(), "missing")
+	diff, err := database.Revisions.FindDiff(context.TODO(), "missing")
 	s.Require().NoError(err)
 	s.Require().Nil(diff)
 }

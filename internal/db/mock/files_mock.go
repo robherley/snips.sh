@@ -522,6 +522,74 @@ func (_c *MockFiles_FindByUser_Call) RunAndReturn(run func(ctx context.Context, 
 	return _c
 }
 
+// FindContent provides a mock function for the type MockFiles
+func (_mock *MockFiles) FindContent(ctx context.Context, id string) ([]byte, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindContent")
+	}
+
+	var r0 []byte
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]byte, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []byte); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFiles_FindContent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindContent'
+type MockFiles_FindContent_Call struct {
+	*mock.Call
+}
+
+// FindContent is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *MockFiles_Expecter) FindContent(ctx any, id any) *MockFiles_FindContent_Call {
+	return &MockFiles_FindContent_Call{Call: _e.mock.On("FindContent", ctx, id)}
+}
+
+func (_c *MockFiles_FindContent_Call) Run(run func(ctx context.Context, id string)) *MockFiles_FindContent_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFiles_FindContent_Call) Return(bytes []byte, err error) *MockFiles_FindContent_Call {
+	_c.Call.Return(bytes, err)
+	return _c
+}
+
+func (_c *MockFiles_FindContent_Call) RunAndReturn(run func(ctx context.Context, id string) ([]byte, error)) *MockFiles_FindContent_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindWithContent provides a mock function for the type MockFiles
 func (_mock *MockFiles) FindWithContent(ctx context.Context, id string) (*snips.File, []byte, error) {
 	ret := _mock.Called(ctx, id)
@@ -594,74 +662,6 @@ func (_c *MockFiles_FindWithContent_Call) Return(file *snips.File, bytes []byte,
 }
 
 func (_c *MockFiles_FindWithContent_Call) RunAndReturn(run func(ctx context.Context, id string) (*snips.File, []byte, error)) *MockFiles_FindWithContent_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetContent provides a mock function for the type MockFiles
-func (_mock *MockFiles) GetContent(ctx context.Context, id string) ([]byte, error) {
-	ret := _mock.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetContent")
-	}
-
-	var r0 []byte
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]byte, error)); ok {
-		return returnFunc(ctx, id)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []byte); ok {
-		r0 = returnFunc(ctx, id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockFiles_GetContent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetContent'
-type MockFiles_GetContent_Call struct {
-	*mock.Call
-}
-
-// GetContent is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-func (_e *MockFiles_Expecter) GetContent(ctx any, id any) *MockFiles_GetContent_Call {
-	return &MockFiles_GetContent_Call{Call: _e.mock.On("GetContent", ctx, id)}
-}
-
-func (_c *MockFiles_GetContent_Call) Run(run func(ctx context.Context, id string)) *MockFiles_GetContent_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockFiles_GetContent_Call) Return(bytes []byte, err error) *MockFiles_GetContent_Call {
-	_c.Call.Return(bytes, err)
-	return _c
-}
-
-func (_c *MockFiles_GetContent_Call) RunAndReturn(run func(ctx context.Context, id string) ([]byte, error)) *MockFiles_GetContent_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -24,7 +24,7 @@ func UpdateContent(ctx context.Context, database *db.DB, cfg *config.Config, fil
 
 	// Compute diff for revision history (skip binary files)
 	if !file.IsBinary() {
-		oldContent, err := database.Files.GetContent(ctx, file.ID)
+		oldContent, err := database.Files.FindContent(ctx, file.ID)
 		if err != nil {
 			log.Warn("unable to get old content for diff", "err", err)
 		} else {

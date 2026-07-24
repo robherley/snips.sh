@@ -137,7 +137,7 @@ func (s *revisions) FindByFileIDAndSequence(ctx context.Context, fileID string, 
 	return revision, nil
 }
 
-func (s *revisions) GetDiff(ctx context.Context, id string) ([]byte, error) {
+func (s *revisions) FindDiff(ctx context.Context, id string) ([]byte, error) {
 	const query = `SELECT diff FROM revisions WHERE id = ?`
 
 	var diff []byte

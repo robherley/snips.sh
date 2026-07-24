@@ -391,7 +391,7 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 }
 
 func (h *SessionHandler) DownloadFile(sesh *UserSession, file *snips.File) {
-	content, err := h.DB.Files.GetContent(sesh.Context(), file.ID)
+	content, err := h.DB.Files.FindContent(sesh.Context(), file.ID)
 	if err != nil {
 		sesh.Error(err, "Unable to download file", "There was an error downloading the file: %q", file.ID)
 	} else {
