@@ -63,7 +63,7 @@ func (m themeView) save() result {
 
 	prev := m.user.ThemeColor
 	m.user.ThemeColor = opt.Name
-	if err := m.db.UpdateUser(m.ctx, m.user); err != nil {
+	if err := m.db.Users.Update(m.ctx, m.user); err != nil {
 		m.user.ThemeColor = prev
 		return result{back: true, fb: feedback.Error("failed to save: " + err.Error())}
 	}

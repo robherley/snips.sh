@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/robherley/snips.sh/internal/config"
-	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/sqlite"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/web"
 	"github.com/stretchr/testify/suite"
@@ -248,16 +248,14 @@ func newAPIClient(s *APIIntegrationSuite) *apiClient {
 	s.Require().NoError(err)
 	cfg.EnableGuesser = false
 
-	database, err := db.NewSqlite(s.T().TempDir() + "/snips.db")
+	database, err := sqlite.New(s.T().TempDir() + "/snips.db")
 	s.Require().NoError(err)
 	s.T().Cleanup(func() {
-		if closer, ok := database.(interface{ Close() error }); ok {
-			s.Assert().NoError(closer.Close())
-		}
+		s.Assert().NoError(database.Close())
 	})
 
 	s.Require().NoError(database.Migrate(s.T().Context()))
-	user, err := database.CreateUserWithPublicKey(s.T().Context(), &snips.PublicKey{
+	user, err := database.Users.CreateWithPublicKey(s.T().Context(), &snips.PublicKey{
 		Fingerprint: "SHA256:snips-api-integration-test",
 		Type:        "ssh-ed25519",
 	})
@@ -265,7 +263,7 @@ func newAPIClient(s *APIIntegrationSuite) *apiClient {
 
 	token, tokenHash, err := snips.NewAPIKeyToken()
 	s.Require().NoError(err)
-	s.Require().NoError(database.CreateAPIKey(s.T().Context(), &snips.APIKey{
+	s.Require().NoError(database.APIKeys.Create(s.T().Context(), &snips.APIKey{
 		Name:      "integration-test",
 		TokenHash: tokenHash,
 		UserID:    user.ID,

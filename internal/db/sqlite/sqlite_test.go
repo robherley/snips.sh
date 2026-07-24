@@ -1,4 +1,4 @@
-package db_test
+package sqlite_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/sqlite"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/stretchr/testify/suite"
@@ -25,8 +26,8 @@ func TestSqliteSuite(t *testing.T) {
 	suite.Run(t, new(SqliteSuite))
 }
 
-func (s *SqliteSuite) getTestDB(migrate bool) *db.Sqlite {
-	database := &db.Sqlite{DB: s.testDB}
+func (s *SqliteSuite) getTestDB(migrate bool) *db.DB {
+	database := sqlite.NewWithDB(s.testDB)
 
 	if migrate {
 		err := database.Migrate(context.TODO())
@@ -67,14 +68,13 @@ func (s *SqliteSuite) TestFindFile() {
 	database := s.getTestDB(true)
 
 	existingFile := &snips.File{
-		ID:         id.New(),
-		CreatedAt:  time.Now().UTC(),
-		UpdatedAt:  time.Now().UTC(),
-		Size:       11,
-		RawContent: []byte("hello world"),
-		Private:    false,
-		Type:       "plaintext",
-		UserID:     id.New(),
+		ID:        id.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		Size:      11,
+		Private:   false,
+		Type:      "plaintext",
+		UserID:    id.New(),
 	}
 
 	const query = `
@@ -95,14 +95,14 @@ func (s *SqliteSuite) TestFindFile() {
 		existingFile.CreatedAt,
 		existingFile.UpdatedAt,
 		existingFile.Size,
-		existingFile.RawContent,
+		[]byte("hello world"),
 		existingFile.Private,
 		existingFile.Type,
 		existingFile.UserID,
 	)
 	s.Require().NoError(err)
 
-	file, err := database.FindFile(context.TODO(), existingFile.ID)
+	file, err := database.Files.Find(context.TODO(), existingFile.ID)
 	s.Require().NoError(err)
 	s.Require().Equal(existingFile, file)
 }
@@ -110,23 +110,46 @@ func (s *SqliteSuite) TestFindFile() {
 func (s *SqliteSuite) TestFindFile_DoesNotExist() {
 	database := s.getTestDB(true)
 
-	file, err := database.FindFile(context.TODO(), id.New())
+	file, err := database.Files.Find(context.TODO(), id.New())
 	s.Require().NoError(err)
 	s.Require().Nil(file)
+}
+
+func (s *SqliteSuite) TestGetFileContent() {
+	database := s.getTestDB(true)
+	file := &snips.File{
+		Size:   11,
+		Type:   "plaintext",
+		UserID: id.New(),
+	}
+
+	err := database.Files.Create(context.TODO(), file, []byte("hello world"), true, 0)
+	s.Require().NoError(err)
+
+	content, err := database.Files.GetContent(context.TODO(), file.ID)
+	s.Require().NoError(err)
+	s.Require().Equal([]byte("hello world"), content)
+}
+
+func (s *SqliteSuite) TestGetFileContent_DoesNotExist() {
+	database := s.getTestDB(true)
+
+	content, err := database.Files.GetContent(context.TODO(), id.New())
+	s.Require().NoError(err)
+	s.Require().Nil(content)
 }
 
 func (s *SqliteSuite) TestCreateFile() {
 	database := s.getTestDB(true)
 
 	file := &snips.File{
-		Size:       11,
-		RawContent: []byte("hello world"),
-		Private:    false,
-		Type:       "plaintext",
-		UserID:     id.New(),
+		Size:    11,
+		Private: false,
+		Type:    "plaintext",
+		UserID:  id.New(),
 	}
 
-	err := database.CreateFile(context.TODO(), file, 1337)
+	err := database.Files.Create(context.TODO(), file, []byte("hello world"), false, 1337)
 	s.Require().NoError(err)
 
 	s.Require().NotEmpty(file.ID)
@@ -152,7 +175,7 @@ func (s *SqliteSuite) TestCreateFile() {
 	s.Require().Equal(file.CreatedAt, createdAt)
 	s.Require().Equal(file.UpdatedAt, updatedAt)
 	s.Require().Equal(file.Size, size)
-	s.Require().Equal(file.RawContent, content)
+	s.Require().Equal([]byte("hello world"), content)
 	s.Require().Equal(file.Private, private)
 	s.Require().Equal(file.Type, fileType)
 	s.Require().Equal(file.UserID, userID)
@@ -166,23 +189,26 @@ func (s *SqliteSuite) TestCreateFile_FileLimit() {
 	maxFiles := uint64(5)
 
 	for i := uint64(0); i < maxFiles; i++ {
-		err := database.CreateFile(context.TODO(), &snips.File{
-			Size:       11,
-			RawContent: []byte("hello world"),
-			Private:    false,
-			Type:       "plaintext",
-			UserID:     userID,
-		}, maxFiles)
+		err := database.Files.Create(context.TODO(), &snips.File{
+			Size:    11,
+			Private: false,
+			Type:    "plaintext",
+			UserID:  userID,
+		}, []byte("hello world"), false,
+
+			maxFiles)
+
 		s.Require().NoError(err)
 	}
 
-	err := database.CreateFile(context.TODO(), &snips.File{
-		Size:       11,
-		RawContent: []byte("should fail"),
-		Private:    false,
-		Type:       "plaintext",
-		UserID:     userID,
-	}, maxFiles)
+	err := database.Files.Create(context.TODO(), &snips.File{
+		Size:    11,
+		Private: false,
+		Type:    "plaintext",
+		UserID:  userID,
+	}, []byte("hello world"), false,
+
+		maxFiles)
 
 	s.Require().ErrorIs(err, db.ErrFileLimit)
 }
@@ -193,14 +219,13 @@ func (s *SqliteSuite) TestUpdateFile() {
 	originalUpdatedAt := time.Now().UTC()
 
 	existingFile := &snips.File{
-		ID:         id.New(),
-		CreatedAt:  time.Now().UTC(),
-		UpdatedAt:  originalUpdatedAt,
-		Size:       11,
-		RawContent: []byte("hello world"),
-		Private:    false,
-		Type:       "plaintext",
-		UserID:     id.New(),
+		ID:        id.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: originalUpdatedAt,
+		Size:      11,
+		Private:   false,
+		Type:      "plaintext",
+		UserID:    id.New(),
 	}
 
 	const query = `
@@ -221,7 +246,7 @@ func (s *SqliteSuite) TestUpdateFile() {
 		existingFile.CreatedAt,
 		existingFile.UpdatedAt,
 		existingFile.Size,
-		existingFile.RawContent,
+		[]byte("hello world"),
 		existingFile.Private,
 		existingFile.Type,
 		existingFile.UserID,
@@ -229,11 +254,10 @@ func (s *SqliteSuite) TestUpdateFile() {
 	s.Require().NoError(err)
 
 	existingFile.Size = 22
-	existingFile.RawContent = []byte("hello world hello world")
 	existingFile.Private = true
 	existingFile.Type = "markdown"
 
-	err = database.UpdateFile(context.TODO(), existingFile)
+	err = database.Files.UpdateContent(context.TODO(), existingFile, []byte("hello world hello world"), false)
 	s.Require().NoError(err)
 
 	var (
@@ -255,7 +279,7 @@ func (s *SqliteSuite) TestUpdateFile() {
 	s.Require().Equal(existingFile.CreatedAt, createdAt)
 	s.Require().NotEqual(originalUpdatedAt, updatedAt)
 	s.Require().Equal(existingFile.Size, size)
-	s.Require().Equal(existingFile.RawContent, content)
+	s.Require().Equal([]byte("hello world hello world"), content)
 	s.Require().Equal(existingFile.Private, private)
 	s.Require().Equal(existingFile.Type, fileType)
 	s.Require().Equal(existingFile.UserID, userID)
@@ -265,14 +289,13 @@ func (s *SqliteSuite) TestDeleteFile() {
 	database := s.getTestDB(true)
 
 	existingFile := &snips.File{
-		ID:         id.New(),
-		CreatedAt:  time.Now().UTC(),
-		UpdatedAt:  time.Now().UTC(),
-		Size:       11,
-		RawContent: []byte("hello world"),
-		Private:    false,
-		Type:       "plaintext",
-		UserID:     id.New(),
+		ID:        id.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		Size:      11,
+		Private:   false,
+		Type:      "plaintext",
+		UserID:    id.New(),
 	}
 
 	const query = `
@@ -293,14 +316,14 @@ func (s *SqliteSuite) TestDeleteFile() {
 		existingFile.CreatedAt,
 		existingFile.UpdatedAt,
 		existingFile.Size,
-		existingFile.RawContent,
+		[]byte("hello world"),
 		existingFile.Private,
 		existingFile.Type,
 		existingFile.UserID,
 	)
 	s.Require().NoError(err)
 
-	err = database.DeleteFile(context.TODO(), existingFile.ID)
+	err = database.Files.Delete(context.TODO(), existingFile.ID)
 	s.Require().NoError(err)
 
 	row := s.testDB.QueryRow("SELECT id FROM files")
@@ -373,7 +396,7 @@ func (s *SqliteSuite) TestDeleteFilesByUser() {
 	}
 	otherFileID := insertFile(otherUserID)
 
-	count, err := database.DeleteFilesByUser(context.TODO(), userID)
+	count, err := database.Files.DeleteByUser(context.TODO(), userID)
 	s.Require().NoError(err)
 	s.Require().Equal(int64(numFiles), count)
 
@@ -397,14 +420,13 @@ func (s *SqliteSuite) TestFindFilesByUser() {
 
 	for i := 0; i < numFiles; i++ {
 		existingFile := &snips.File{
-			ID:         id.New(),
-			CreatedAt:  time.Now().UTC(),
-			UpdatedAt:  time.Now().UTC(),
-			Size:       11,
-			RawContent: []byte("hello world"),
-			Private:    false,
-			Type:       "plaintext",
-			UserID:     userID,
+			ID:        id.New(),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+			Size:      11,
+			Private:   false,
+			Type:      "plaintext",
+			UserID:    userID,
 		}
 
 		const query = `
@@ -425,7 +447,7 @@ func (s *SqliteSuite) TestFindFilesByUser() {
 			existingFile.CreatedAt,
 			existingFile.UpdatedAt,
 			existingFile.Size,
-			existingFile.RawContent,
+			[]byte("hello world"),
 			existingFile.Private,
 			existingFile.Type,
 			existingFile.UserID,
@@ -433,14 +455,13 @@ func (s *SqliteSuite) TestFindFilesByUser() {
 		s.Require().NoError(err)
 	}
 
-	files, err := database.FindFilesByUser(context.TODO(), userID)
+	files, err := database.Files.FindByUser(context.TODO(), userID)
 	s.Require().NoError(err)
 
 	s.Require().Equal(numFiles, len(files))
 
 	for _, file := range files {
 		s.Require().Equal(userID, file.UserID)
-		s.Require().Empty(file.RawContent)
 	}
 }
 
@@ -449,7 +470,7 @@ func (s *SqliteSuite) TestCountFilesByUser() {
 
 	userID := id.New()
 
-	count, err := database.CountFilesByUser(context.TODO(), userID)
+	count, err := database.Files.CountByUser(context.TODO(), userID)
 	s.Require().NoError(err)
 	s.Require().Equal(int64(0), count)
 
@@ -481,11 +502,11 @@ func (s *SqliteSuite) TestCountFilesByUser() {
 		s.Require().NoError(err)
 	}
 
-	count, err = database.CountFilesByUser(context.TODO(), userID)
+	count, err = database.Files.CountByUser(context.TODO(), userID)
 	s.Require().NoError(err)
 	s.Require().Equal(int64(numFiles), count)
 
-	count, err = database.CountFilesByUser(context.TODO(), id.New())
+	count, err = database.Files.CountByUser(context.TODO(), id.New())
 	s.Require().NoError(err)
 	s.Require().Equal(int64(0), count)
 }
@@ -493,7 +514,7 @@ func (s *SqliteSuite) TestCountFilesByUser() {
 func (s *SqliteSuite) TestFindFilesByUser_DoesNotExist() {
 	database := s.getTestDB(true)
 
-	files, err := database.FindFilesByUser(context.TODO(), id.New())
+	files, err := database.Files.FindByUser(context.TODO(), id.New())
 	s.Require().NoError(err)
 	s.Require().NotNil(files)
 	s.Require().Empty(files)
@@ -524,7 +545,7 @@ func (s *SqliteSuite) TestFindPublicKeyByFingerprint() {
 			user_id
 		) VALUES (?, ?, ?, ?, ?, ?)`
 
-	_, err := database.Exec(
+	_, err := s.testDB.Exec(
 		query,
 		existingPublicKey.ID,
 		existingPublicKey.CreatedAt,
@@ -535,7 +556,7 @@ func (s *SqliteSuite) TestFindPublicKeyByFingerprint() {
 	)
 	s.Require().NoError(err)
 
-	publicKey, err := database.FindPublicKeyByFingerprint(context.Background(), fingerprint)
+	publicKey, err := database.PublicKeys.FindByFingerprint(context.Background(), fingerprint)
 	s.Require().NoError(err)
 
 	s.Require().Equal(existingPublicKey, publicKey)
@@ -544,7 +565,7 @@ func (s *SqliteSuite) TestFindPublicKeyByFingerprint() {
 func (s *SqliteSuite) TestFindPublicKeyByFingerprint_DoesNotExist() {
 	database := s.getTestDB(true)
 
-	pk, err := database.FindPublicKeyByFingerprint(context.TODO(), id.New())
+	pk, err := database.PublicKeys.FindByFingerprint(context.TODO(), id.New())
 	s.Require().NoError(err)
 	s.Require().Nil(pk)
 }
@@ -557,7 +578,7 @@ func (s *SqliteSuite) TestCreateUserWithPublicKey() {
 		Type:        "ssh-ed25519",
 	}
 
-	user, err := database.CreateUserWithPublicKey(context.Background(), newPublicKey)
+	user, err := database.Users.CreateWithPublicKey(context.Background(), newPublicKey)
 	s.Require().NoError(err)
 
 	{
@@ -621,7 +642,7 @@ func (s *SqliteSuite) TestFindUser() {
 			updated_at
 		) VALUES (?, ?, ?)`
 
-	_, err := database.Exec(
+	_, err := s.testDB.Exec(
 		query,
 		existingUser.ID,
 		existingUser.CreatedAt,
@@ -629,7 +650,7 @@ func (s *SqliteSuite) TestFindUser() {
 	)
 	s.Require().NoError(err)
 
-	user, err := database.FindUser(context.Background(), userID)
+	user, err := database.Users.Find(context.Background(), userID)
 	s.Require().NoError(err)
 
 	s.Require().Equal(existingUser, user)
@@ -638,22 +659,21 @@ func (s *SqliteSuite) TestFindUser() {
 func (s *SqliteSuite) TestFindUser_DoesNotExist() {
 	database := s.getTestDB(true)
 
-	user, err := database.FindUser(context.Background(), id.New())
+	user, err := database.Users.Find(context.Background(), id.New())
 	s.Require().NoError(err)
 	s.Require().Nil(user)
 }
 
-func (s *SqliteSuite) createFile(database *db.Sqlite, name string) *snips.File {
+func (s *SqliteSuite) createFile(database *db.DB, name string) *snips.File {
 	file := &snips.File{
-		Size:       11,
-		RawContent: []byte("hello world"),
-		Private:    false,
-		Type:       "plaintext",
-		UserID:     id.New(),
-		Name:       name,
+		Size:    11,
+		Private: false,
+		Type:    "plaintext",
+		UserID:  id.New(),
+		Name:    name,
 	}
 
-	err := database.CreateFile(context.Background(), file, 0)
+	err := database.Files.Create(context.Background(), file, []byte("hello world"), false, 0)
 	s.Require().NoError(err)
 
 	return file
@@ -664,7 +684,7 @@ func (s *SqliteSuite) TestCreateFile_WithName() {
 
 	file := s.createFile(database, "deploy-notes")
 
-	found, err := database.FindFile(context.Background(), file.ID)
+	found, err := database.Files.Find(context.Background(), file.ID)
 	s.Require().NoError(err)
 	s.Require().NotNil(found)
 	s.Require().Equal("deploy-notes", found.Name)
@@ -675,21 +695,21 @@ func (s *SqliteSuite) TestUpdateFile_SetAndClearName() {
 
 	file := s.createFile(database, "")
 
-	found, err := database.FindFile(context.Background(), file.ID)
+	found, err := database.Files.Find(context.Background(), file.ID)
 	s.Require().NoError(err)
 	s.Require().Empty(found.Name)
 
 	file.Name = "deploy-notes"
-	s.Require().NoError(database.UpdateFile(context.Background(), file))
+	s.Require().NoError(database.Files.Update(context.Background(), file))
 
-	found, err = database.FindFile(context.Background(), file.ID)
+	found, err = database.Files.Find(context.Background(), file.ID)
 	s.Require().NoError(err)
 	s.Require().Equal("deploy-notes", found.Name)
 
 	file.Name = ""
-	s.Require().NoError(database.UpdateFile(context.Background(), file))
+	s.Require().NoError(database.Files.Update(context.Background(), file))
 
-	found, err = database.FindFile(context.Background(), file.ID)
+	found, err = database.Files.Find(context.Background(), file.ID)
 	s.Require().NoError(err)
 	s.Require().Empty(found.Name)
 }
@@ -705,7 +725,7 @@ func (s *SqliteSuite) TestNames_NotUniqueAcrossUsers() {
 	s.Require().NotEqual(first.UserID, second.UserID)
 
 	for _, f := range []*snips.File{first, second} {
-		found, err := database.FindFile(context.Background(), f.ID)
+		found, err := database.Files.Find(context.Background(), f.ID)
 		s.Require().NoError(err)
 		s.Require().Equal("deploy-notes", found.Name)
 	}
@@ -717,41 +737,38 @@ func (s *SqliteSuite) TestNames_UniquePerUser() {
 	first := s.createFile(database, "deploy-notes")
 
 	duplicate := &snips.File{
-		Size:       11,
-		RawContent: []byte("hello world"),
-		Type:       "plaintext",
-		UserID:     first.UserID,
-		Name:       "Deploy-Notes", // same name, different case
+		Size:   11,
+		Type:   "plaintext",
+		UserID: first.UserID,
+		Name:   "Deploy-Notes", // same name, different case
 	}
-	err := database.CreateFile(context.Background(), duplicate, 0)
+	err := database.Files.Create(context.Background(), duplicate, []byte("hello world"), false, 0)
 	s.Require().ErrorIs(err, db.ErrNameTaken)
 
 	// renaming another file to a taken name fails too
 	other := &snips.File{
-		Size:       11,
-		RawContent: []byte("hello world"),
-		Type:       "plaintext",
-		UserID:     first.UserID,
+		Size:   11,
+		Type:   "plaintext",
+		UserID: first.UserID,
 	}
-	s.Require().NoError(database.CreateFile(context.Background(), other, 0))
+	s.Require().NoError(database.Files.Create(context.Background(), other, []byte("hello world"), false, 0))
 
 	other.Name = "DEPLOY-NOTES"
-	err = database.UpdateFile(context.Background(), other)
+	err = database.Files.Update(context.Background(), other)
 	s.Require().ErrorIs(err, db.ErrNameTaken)
 
 	// updating a file without changing its own name is fine
 	first.Size = 22
-	s.Require().NoError(database.UpdateFile(context.Background(), first))
+	s.Require().NoError(database.Files.Update(context.Background(), first))
 
 	// unnamed files don't participate in the index: many per user are fine
 	for range 2 {
 		unnamed := &snips.File{
-			Size:       11,
-			RawContent: []byte("hello world"),
-			Type:       "plaintext",
-			UserID:     first.UserID,
+			Size:   11,
+			Type:   "plaintext",
+			UserID: first.UserID,
 		}
-		s.Require().NoError(database.CreateFile(context.Background(), unnamed, 0))
+		s.Require().NoError(database.Files.Create(context.Background(), unnamed, []byte("hello world"), false, 0))
 	}
 }
 
@@ -760,7 +777,7 @@ func (s *SqliteSuite) TestFindFilesByUser_IncludesName() {
 
 	file := s.createFile(database, "deploy-notes")
 
-	files, err := database.FindFilesByUser(context.Background(), file.UserID)
+	files, err := database.Files.FindByUser(context.Background(), file.UserID)
 	s.Require().NoError(err)
 	s.Require().Len(files, 1)
 	s.Require().Equal("deploy-notes", files[0].Name)
@@ -775,19 +792,21 @@ func (s *SqliteSuite) TestFindFileByName() {
 	// another user's file with the same name is out of scope
 	s.createFile(database, "deploy-notes")
 
-	// case-insensitive, scoped to the user, includes content
-	file, err := database.FindFileByName(context.Background(), first.UserID, "DEPLOY-NOTES")
+	// case-insensitive and scoped to the user
+	file, err := database.Files.FindByName(context.Background(), first.UserID, "DEPLOY-NOTES")
 	s.Require().NoError(err)
 	s.Require().NotNil(file)
 	s.Require().Equal(first.ID, file.ID)
-	s.Require().Equal(first.RawContent, file.RawContent)
+	content, err := database.Files.GetContent(context.Background(), file.ID)
+	s.Require().NoError(err)
+	s.Require().Equal([]byte("hello world"), content)
 
-	file, err = database.FindFileByName(context.Background(), first.UserID, "nope")
+	file, err = database.Files.FindByName(context.Background(), first.UserID, "nope")
 	s.Require().NoError(err)
 	s.Require().Nil(file)
 }
 
-func (s *SqliteSuite) insertFileForPaging(database *db.Sqlite, userID string, updatedAt time.Time, fileID string) *snips.File {
+func (s *SqliteSuite) insertFileForPaging(database *db.DB, userID string, updatedAt time.Time, fileID string) *snips.File {
 	file := &snips.File{
 		ID:        fileID,
 		CreatedAt: updatedAt,
@@ -828,27 +847,27 @@ func (s *SqliteSuite) TestFindFilesByUser_Pagination() {
 	s.insertFileForPaging(database, id.New(), base.Add(time.Hour), "other-user-file")
 
 	// first page: newest first
-	page, err := database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2))
+	page, err := database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2))
 	s.Require().NoError(err)
 	s.Require().Len(page, 2)
 	s.Require().Equal("file-4", page[0].ID)
 	s.Require().Equal("file-3", page[1].ID)
 
 	// second page continues at the offset
-	page, err = database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(2))
+	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(2))
 	s.Require().NoError(err)
 	s.Require().Len(page, 2)
 	s.Require().Equal("file-2", page[0].ID)
 	s.Require().Equal("file-1", page[1].ID)
 
 	// final partial page
-	page, err = database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(4))
+	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(4))
 	s.Require().NoError(err)
 	s.Require().Len(page, 1)
 	s.Require().Equal("file-0", page[0].ID)
 
 	// past the end
-	page, err = database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(5))
+	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(5))
 	s.Require().NoError(err)
 	s.Require().Empty(page)
 }
@@ -863,13 +882,13 @@ func (s *SqliteSuite) TestFindFilesByUser_PaginationTieBreaksOnID() {
 		s.insertFileForPaging(database, userID, ts, fileID)
 	}
 
-	page, err := database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2))
+	page, err := database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2))
 	s.Require().NoError(err)
 	s.Require().Len(page, 2)
 	s.Require().Equal("ccc", page[0].ID)
 	s.Require().Equal("bbb", page[1].ID)
 
-	page, err = database.FindFilesByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(2))
+	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(2))
 	s.Require().NoError(err)
 	s.Require().Len(page, 1)
 	s.Require().Equal("aaa", page[0].ID)
@@ -881,30 +900,52 @@ func (s *SqliteSuite) TestFindRevisionsByFileID_Pagination() {
 
 	for i := 0; i < 5; i++ {
 		rev := &snips.Revision{
-			FileID:  fileID,
-			RawDiff: []byte("diff"),
-			Size:    4,
-			Type:    "plaintext",
+			FileID: fileID,
+			Size:   4,
+			Type:   "plaintext",
 		}
-		s.Require().NoError(database.CreateRevision(context.TODO(), rev, 0))
+		s.Require().NoError(database.Revisions.Create(context.TODO(), rev, []byte("diff"), false, 0))
 	}
 
-	page, err := database.FindRevisionsByFileID(context.TODO(), fileID, db.WithLimit(2))
+	page, err := database.Revisions.FindByFileID(context.TODO(), fileID, db.WithLimit(2))
 	s.Require().NoError(err)
 	s.Require().Len(page, 2)
 	s.Require().Equal(int64(5), page[0].Sequence)
 	s.Require().Equal(int64(4), page[1].Sequence)
 
-	page, err = database.FindRevisionsByFileID(context.TODO(), fileID, db.WithLimit(2), db.WithOffset(2))
+	page, err = database.Revisions.FindByFileID(context.TODO(), fileID, db.WithLimit(2), db.WithOffset(2))
 	s.Require().NoError(err)
 	s.Require().Len(page, 2)
 	s.Require().Equal(int64(3), page[0].Sequence)
 	s.Require().Equal(int64(2), page[1].Sequence)
 
-	page, err = database.FindRevisionsByFileID(context.TODO(), fileID, db.WithLimit(2), db.WithOffset(4))
+	page, err = database.Revisions.FindByFileID(context.TODO(), fileID, db.WithLimit(2), db.WithOffset(4))
 	s.Require().NoError(err)
 	s.Require().Len(page, 1)
 	s.Require().Equal(int64(1), page[0].Sequence)
+}
+
+func (s *SqliteSuite) TestGetRevisionDiff() {
+	database := s.getTestDB(true)
+	revision := &snips.Revision{
+		FileID: id.New(),
+		Size:   11,
+		Type:   "plaintext",
+	}
+
+	s.Require().NoError(database.Revisions.Create(context.TODO(), revision, []byte("+hello world"), true, 0))
+
+	diff, err := database.Revisions.GetDiff(context.TODO(), revision.ID)
+	s.Require().NoError(err)
+	s.Require().Equal([]byte("+hello world"), diff)
+}
+
+func (s *SqliteSuite) TestGetRevisionDiffNotFound() {
+	database := s.getTestDB(true)
+
+	diff, err := database.Revisions.GetDiff(context.TODO(), "missing")
+	s.Require().NoError(err)
+	s.Require().Nil(diff)
 }
 
 func (s *SqliteSuite) TestCreateAPIKey() {
@@ -921,11 +962,11 @@ func (s *SqliteSuite) TestCreateAPIKey() {
 		UserID:    id.New(),
 	}
 
-	s.Require().NoError(database.CreateAPIKey(context.TODO(), key, 16))
+	s.Require().NoError(database.APIKeys.Create(context.TODO(), key, 16))
 	s.Require().NotEmpty(key.ID)
 	s.Require().NotEmpty(key.CreatedAt)
 
-	found, err := database.FindAPIKeyByTokenHash(context.TODO(), hash)
+	found, err := database.APIKeys.FindByTokenHash(context.TODO(), hash)
 	s.Require().NoError(err)
 	s.Require().NotNil(found)
 	s.Require().Equal(key.ID, found.ID)
@@ -941,19 +982,19 @@ func (s *SqliteSuite) TestCreateAPIKey_Limit() {
 	for i := 0; i < 2; i++ {
 		_, hash, err := snips.NewAPIKeyToken()
 		s.Require().NoError(err)
-		s.Require().NoError(database.CreateAPIKey(context.TODO(), &snips.APIKey{TokenHash: hash, UserID: userID}, 2))
+		s.Require().NoError(database.APIKeys.Create(context.TODO(), &snips.APIKey{TokenHash: hash, UserID: userID}, 2))
 	}
 
 	_, hash, err := snips.NewAPIKeyToken()
 	s.Require().NoError(err)
-	err = database.CreateAPIKey(context.TODO(), &snips.APIKey{TokenHash: hash, UserID: userID}, 2)
+	err = database.APIKeys.Create(context.TODO(), &snips.APIKey{TokenHash: hash, UserID: userID}, 2)
 	s.Require().ErrorIs(err, db.ErrAPIKeyLimit)
 }
 
 func (s *SqliteSuite) TestFindAPIKeyByTokenHash_DoesNotExist() {
 	database := s.getTestDB(true)
 
-	key, err := database.FindAPIKeyByTokenHash(context.TODO(), snips.HashAPIKeyToken("nope"))
+	key, err := database.APIKeys.FindByTokenHash(context.TODO(), snips.HashAPIKeyToken("nope"))
 	s.Require().NoError(err)
 	s.Require().Nil(key)
 }
@@ -967,16 +1008,16 @@ func (s *SqliteSuite) TestFindAPIKeysByUser() {
 		_, hash, err := snips.NewAPIKeyToken()
 		s.Require().NoError(err)
 		key := &snips.APIKey{TokenHash: hash, UserID: userID}
-		s.Require().NoError(database.CreateAPIKey(context.TODO(), key, 16))
+		s.Require().NoError(database.APIKeys.Create(context.TODO(), key, 16))
 		ids = append(ids, key.ID)
 	}
 
 	// another user's key must never appear
 	_, hash, err := snips.NewAPIKeyToken()
 	s.Require().NoError(err)
-	s.Require().NoError(database.CreateAPIKey(context.TODO(), &snips.APIKey{TokenHash: hash, UserID: id.New()}, 16))
+	s.Require().NoError(database.APIKeys.Create(context.TODO(), &snips.APIKey{TokenHash: hash, UserID: id.New()}, 16))
 
-	keys, err := database.FindAPIKeysByUser(context.TODO(), userID)
+	keys, err := database.APIKeys.FindByUser(context.TODO(), userID)
 	s.Require().NoError(err)
 	s.Require().Len(keys, 3)
 	for _, key := range keys {
@@ -992,18 +1033,18 @@ func (s *SqliteSuite) TestDeleteAPIKey() {
 	_, hash, err := snips.NewAPIKeyToken()
 	s.Require().NoError(err)
 	key := &snips.APIKey{TokenHash: hash, UserID: userID}
-	s.Require().NoError(database.CreateAPIKey(context.TODO(), key, 16))
+	s.Require().NoError(database.APIKeys.Create(context.TODO(), key, 16))
 
 	// another user cannot delete it
-	deleted, err := database.DeleteAPIKey(context.TODO(), key.ID, id.New())
+	deleted, err := database.APIKeys.Delete(context.TODO(), key.ID, id.New())
 	s.Require().NoError(err)
 	s.Require().False(deleted)
 
-	deleted, err = database.DeleteAPIKey(context.TODO(), key.ID, userID)
+	deleted, err = database.APIKeys.Delete(context.TODO(), key.ID, userID)
 	s.Require().NoError(err)
 	s.Require().True(deleted)
 
-	found, err := database.FindAPIKeyByTokenHash(context.TODO(), hash)
+	found, err := database.APIKeys.FindByTokenHash(context.TODO(), hash)
 	s.Require().NoError(err)
 	s.Require().Nil(found)
 }
@@ -1014,11 +1055,11 @@ func (s *SqliteSuite) TestTouchAPIKey() {
 	_, hash, err := snips.NewAPIKeyToken()
 	s.Require().NoError(err)
 	key := &snips.APIKey{TokenHash: hash, UserID: id.New()}
-	s.Require().NoError(database.CreateAPIKey(context.TODO(), key, 16))
+	s.Require().NoError(database.APIKeys.Create(context.TODO(), key, 16))
 
-	s.Require().NoError(database.TouchAPIKey(context.TODO(), key.ID))
+	s.Require().NoError(database.APIKeys.Touch(context.TODO(), key.ID))
 
-	found, err := database.FindAPIKeyByTokenHash(context.TODO(), hash)
+	found, err := database.APIKeys.FindByTokenHash(context.TODO(), hash)
 	s.Require().NoError(err)
 	s.Require().NotNil(found.LastUsedAt)
 }
@@ -1036,9 +1077,9 @@ func (s *SqliteSuite) TestCreateAPIKey_WithExpiry() {
 		UserID:    id.New(),
 		ExpiresAt: &expires,
 	}
-	s.Require().NoError(database.CreateAPIKey(context.TODO(), key, 16))
+	s.Require().NoError(database.APIKeys.Create(context.TODO(), key, 16))
 
-	found, err := database.FindAPIKeyByTokenHash(context.TODO(), hash)
+	found, err := database.APIKeys.FindByTokenHash(context.TODO(), hash)
 	s.Require().NoError(err)
 	s.Require().NotNil(found.ExpiresAt)
 	s.Require().Equal(expires, found.ExpiresAt.UTC())
@@ -1048,9 +1089,9 @@ func (s *SqliteSuite) TestCreateAPIKey_WithExpiry() {
 	_, hash, err = snips.NewAPIKeyToken()
 	s.Require().NoError(err)
 	expired := &snips.APIKey{Name: "stale", TokenHash: hash, UserID: id.New(), ExpiresAt: &past}
-	s.Require().NoError(database.CreateAPIKey(context.TODO(), expired, 16))
+	s.Require().NoError(database.APIKeys.Create(context.TODO(), expired, 16))
 
-	found, err = database.FindAPIKeyByTokenHash(context.TODO(), hash)
+	found, err = database.APIKeys.FindByTokenHash(context.TODO(), hash)
 	s.Require().NoError(err)
 	s.Require().True(found.IsExpired())
 }

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/robherley/snips.sh/internal/config"
-	"github.com/robherley/snips.sh/internal/db"
+	dbmock "github.com/robherley/snips.sh/internal/db/mock"
 	"github.com/robherley/snips.sh/internal/signer"
 	"github.com/robherley/snips.sh/internal/testutil"
 	"github.com/robherley/snips.sh/internal/web"
@@ -24,7 +24,7 @@ type HTTPServiceSuite struct {
 
 	config  *config.Config
 	assets  web.Assets
-	mockDB  *db.MockDB
+	mockDB  *dbmock.Database
 	service *web.Service
 }
 
@@ -41,10 +41,10 @@ func (suite *HTTPServiceSuite) SetupSuite() {
 }
 
 func (suite *HTTPServiceSuite) SetupTest() {
-	suite.mockDB = db.NewMockDB(suite.T())
+	suite.mockDB = dbmock.NewDB(suite.T())
 
 	var err error
-	suite.service, err = web.New(suite.config, suite.mockDB, suite.assets)
+	suite.service, err = web.New(suite.config, suite.mockDB.DB, suite.assets)
 	suite.Require().NoError(err)
 }
 
@@ -117,7 +117,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 			path:     "/f/foobar",
 			expected: 404,
 			setup: func() {
-				suite.mockDB.EXPECT().FindFile(mock.Anything, "foobar").Return(nil, nil)
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, "foobar").Return(nil, nil)
 			},
 		},
 		{
@@ -130,8 +130,9 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.ID = "eLcyRMrrgP"
 				file.Name = "my-notes"
 
-				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
-				suite.mockDB.EXPECT().CountRevisionsByFileID(mock.Anything, file.ID).Return(int64(0), nil)
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.Files.EXPECT().GetContent(mock.Anything, file.ID).Return([]byte("hello world"), nil)
+				suite.mockDB.Revisions.EXPECT().CountByFileID(mock.Anything, file.ID).Return(int64(0), nil)
 			},
 		},
 		{
@@ -144,7 +145,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.ID = "wrongname1"
 				file.Name = "my-notes"
 
-				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
 			},
 		},
 		{
@@ -157,7 +158,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.ID = "unnamed123"
 				file.Name = ""
 
-				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
 			},
 		},
 		{
@@ -170,8 +171,8 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.ID = "namedrev12"
 				file.Name = "my-notes"
 
-				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
-				suite.mockDB.EXPECT().FindRevisionsByFileID(mock.Anything, file.ID).Return(nil, nil)
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.Revisions.EXPECT().FindByFileID(mock.Anything, file.ID).Return(nil, nil)
 			},
 		},
 		{
@@ -183,8 +184,9 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file := testutil.Fixtures.File(suite.T())
 				file.ID = "eLcyRMrrgP"
 
-				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
-				suite.mockDB.EXPECT().CountRevisionsByFileID(mock.Anything, file.ID).Return(int64(0), nil)
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.Files.EXPECT().GetContent(mock.Anything, file.ID).Return([]byte("hello world"), nil)
+				suite.mockDB.Revisions.EXPECT().CountByFileID(mock.Anything, file.ID).Return(int64(0), nil)
 			},
 		},
 		{
@@ -197,7 +199,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.ID = signedFileID
 				file.Private = true
 
-				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
 			},
 		},
 		{
@@ -210,8 +212,9 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.ID = signedFileID
 				file.Private = true
 
-				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
-				suite.mockDB.EXPECT().CountRevisionsByFileID(mock.Anything, file.ID).Return(int64(0), nil)
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.Files.EXPECT().GetContent(mock.Anything, file.ID).Return([]byte("hello world"), nil)
+				suite.mockDB.Revisions.EXPECT().CountByFileID(mock.Anything, file.ID).Return(int64(0), nil)
 			},
 		},
 		{
@@ -224,7 +227,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.ID = signedFileID
 				file.Private = true
 
-				suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
 			},
 		},
 	}
@@ -302,7 +305,8 @@ func (suite *HTTPServiceSuite) TestFileMarkdownAccept() {
 		file := testutil.Fixtures.File(suite.T())
 		file.ID = "mdtest1"
 		file.Type = "go"
-		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+		suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
+		suite.mockDB.Files.EXPECT().GetContent(mock.Anything, file.ID).Return([]byte("hello world"), nil)
 
 		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
 		suite.Require().NoError(err)
@@ -329,9 +333,8 @@ func (suite *HTTPServiceSuite) TestFileMarkdownAccept() {
 		file := testutil.Fixtures.File(suite.T())
 		file.ID = "mdtest2"
 		file.Type = "markdown"
-		err := file.SetContent([]byte("# Hello\n\nworld\n"), true)
-		suite.Require().NoError(err)
-		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+		suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
+		suite.mockDB.Files.EXPECT().GetContent(mock.Anything, file.ID).Return([]byte("# Hello\n\nworld\n"), nil)
 
 		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
 		suite.Require().NoError(err)
@@ -353,7 +356,8 @@ func (suite *HTTPServiceSuite) TestFileMarkdownAccept() {
 		file := testutil.Fixtures.File(suite.T())
 		file.ID = "mdtest3"
 		file.Type = "binary"
-		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+		suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
+		suite.mockDB.Files.EXPECT().GetContent(mock.Anything, file.ID).Return([]byte("hello world"), nil)
 
 		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
 		suite.Require().NoError(err)
@@ -374,7 +378,8 @@ func (suite *HTTPServiceSuite) TestFileMarkdownAccept() {
 		file := testutil.Fixtures.File(suite.T())
 		file.ID = "mdtest4"
 		file.Type = "go"
-		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
+		suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
+		suite.mockDB.Files.EXPECT().GetContent(mock.Anything, file.ID).Return([]byte("hello world"), nil)
 
 		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
 		suite.Require().NoError(err)
@@ -391,8 +396,9 @@ func (suite *HTTPServiceSuite) TestFileMarkdownAccept() {
 		file := testutil.Fixtures.File(suite.T())
 		file.ID = "mdtest5"
 		file.Type = "go"
-		suite.mockDB.EXPECT().FindFile(mock.Anything, file.ID).Return(&file, nil)
-		suite.mockDB.EXPECT().CountRevisionsByFileID(mock.Anything, file.ID).Return(int64(0), nil)
+		suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
+		suite.mockDB.Files.EXPECT().GetContent(mock.Anything, file.ID).Return([]byte("hello world"), nil)
+		suite.mockDB.Revisions.EXPECT().CountByFileID(mock.Anything, file.ID).Return(int64(0), nil)
 
 		req, err := http.NewRequest("GET", ts.URL+"/f/"+file.ID, nil)
 		suite.Require().NoError(err)

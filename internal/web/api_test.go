@@ -12,6 +12,7 @@ import (
 
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	dbmock "github.com/robherley/snips.sh/internal/db/mock"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/testutil"
 	"github.com/robherley/snips.sh/internal/web"
@@ -24,7 +25,7 @@ type APISuite struct {
 
 	config *config.Config
 	assets web.Assets
-	mockDB *db.MockDB
+	mockDB *dbmock.Database
 	server *httptest.Server
 
 	token  string
@@ -45,9 +46,9 @@ func (suite *APISuite) SetupSuite() {
 }
 
 func (suite *APISuite) SetupTest() {
-	suite.mockDB = db.NewMockDB(suite.T())
+	suite.mockDB = dbmock.NewDB(suite.T())
 
-	service, err := web.New(suite.config, suite.mockDB, suite.assets)
+	service, err := web.New(suite.config, suite.mockDB.DB, suite.assets)
 	suite.Require().NoError(err)
 
 	suite.server = httptest.NewServer(service.Handler)
@@ -70,8 +71,8 @@ func (suite *APISuite) TearDownTest() {
 
 // expectAuth wires the mock calls every authenticated request makes.
 func (suite *APISuite) expectAuth() {
-	suite.mockDB.EXPECT().FindAPIKeyByTokenHash(mock.Anything, snips.HashAPIKeyToken(suite.token)).Return(suite.apiKey, nil).Once()
-	suite.mockDB.EXPECT().TouchAPIKey(mock.Anything, suite.apiKey.ID).Return(nil).Once()
+	suite.mockDB.APIKeys.EXPECT().FindByTokenHash(mock.Anything, snips.HashAPIKeyToken(suite.token)).Return(suite.apiKey, nil).Once()
+	suite.mockDB.APIKeys.EXPECT().Touch(mock.Anything, suite.apiKey.ID).Return(nil).Once()
 }
 
 func (suite *APISuite) request(method, path string, body io.Reader, authed bool) *http.Response {
@@ -102,7 +103,6 @@ func (suite *APISuite) file(id string, private bool) *snips.File {
 		Type:      "plaintext",
 		UserID:    suite.userID,
 	}
-	suite.Require().NoError(file.SetContent([]byte("hello world"), false))
 	file.Size = 11
 
 	return file
@@ -138,7 +138,7 @@ func (suite *APISuite) TestUnauthorized() {
 		}
 
 		if strings.HasPrefix(header, "Bearer "+snips.APIKeyTokenPrefix) {
-			suite.mockDB.EXPECT().FindAPIKeyByTokenHash(mock.Anything, mock.Anything).Return(nil, nil).Once()
+			suite.mockDB.APIKeys.EXPECT().FindByTokenHash(mock.Anything, mock.Anything).Return(nil, nil).Once()
 		}
 
 		res, err := suite.server.Client().Do(req)
@@ -150,7 +150,7 @@ func (suite *APISuite) TestUnauthorized() {
 
 func (suite *APISuite) TestGetUser() {
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindUser(mock.Anything, suite.userID).Return(&snips.User{ID: suite.userID, CreatedAt: time.Now().UTC()}, nil).Once()
+	suite.mockDB.Users.EXPECT().Find(mock.Anything, suite.userID).Return(&snips.User{ID: suite.userID, CreatedAt: time.Now().UTC()}, nil).Once()
 
 	res := suite.request("GET", "/api/v1/user", nil, true)
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -168,7 +168,7 @@ func (suite *APISuite) TestListFiles_Paginated() {
 
 	// page size 2 → the handler asks for 3 and returns a next_cursor
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFilesByUser(mock.Anything, suite.userID, mock.Anything, mock.Anything).Return(files, nil).Once()
+	suite.mockDB.Files.EXPECT().FindByUser(mock.Anything, suite.userID, mock.Anything, mock.Anything).Return(files, nil).Once()
 
 	res := suite.request("GET", "/api/v1/files?limit=2", nil, true)
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -184,7 +184,7 @@ func (suite *APISuite) TestListFiles_Paginated() {
 
 	// following the cursor resumes at the encoded offset
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFilesByUser(mock.Anything, suite.userID, mock.Anything, mock.Anything).Return(files[2:], nil).Once()
+	suite.mockDB.Files.EXPECT().FindByUser(mock.Anything, suite.userID, mock.Anything, mock.Anything).Return(files[2:], nil).Once()
 
 	res = suite.request("GET", "/api/v1/files?limit=2&cursor="+page.NextCursor, nil, true)
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -213,7 +213,7 @@ func (suite *APISuite) TestListFiles_ByName() {
 	file.Name = "notes"
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFileByName(mock.Anything, suite.userID, "notes").Return(file, nil).Once()
+	suite.mockDB.Files.EXPECT().FindByName(mock.Anything, suite.userID, "notes").Return(file, nil).Once()
 
 	res := suite.request("GET", "/api/v1/files?name=notes", nil, true)
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -228,8 +228,8 @@ func (suite *APISuite) TestListFiles_ByName() {
 
 func (suite *APISuite) TestCreateFile() {
 	suite.expectAuth()
-	suite.mockDB.EXPECT().CreateFile(mock.Anything, mock.Anything, suite.config.Limits.FilesPerUser).RunAndReturn(
-		func(_ context.Context, file *snips.File, _ uint64) error {
+	suite.mockDB.Files.EXPECT().Create(mock.Anything, mock.Anything, []byte("hello world"), suite.config.FileCompression, suite.config.Limits.FilesPerUser).RunAndReturn(
+		func(_ context.Context, file *snips.File, _ []byte, _ bool, _ uint64) error {
 			file.ID = "newfile"
 			return nil
 		}).Once()
@@ -265,14 +265,14 @@ func (suite *APISuite) TestCreateFile_Errors() {
 
 	// name taken
 	suite.expectAuth()
-	suite.mockDB.EXPECT().CreateFile(mock.Anything, mock.Anything, mock.Anything).Return(db.ErrNameTaken).Once()
+	suite.mockDB.Files.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(db.ErrNameTaken).Once()
 	res = suite.request("POST", "/api/v1/files?name=taken", strings.NewReader("hi"), true)
 	res.Body.Close()
 	suite.Equal(http.StatusConflict, res.StatusCode)
 
 	// file limit
 	suite.expectAuth()
-	suite.mockDB.EXPECT().CreateFile(mock.Anything, mock.Anything, mock.Anything).Return(db.ErrFileLimit).Once()
+	suite.mockDB.Files.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(db.ErrFileLimit).Once()
 	res = suite.request("POST", "/api/v1/files", strings.NewReader("hi"), true)
 	res.Body.Close()
 	suite.Equal(http.StatusUnprocessableEntity, res.StatusCode)
@@ -282,7 +282,7 @@ func (suite *APISuite) TestGetFile_Visibility() {
 	// own private file is visible
 	private := suite.file("mine", true)
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "mine").Return(private, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "mine").Return(private, nil).Once()
 	res := suite.request("GET", "/api/v1/files/mine", nil, true)
 	res.Body.Close()
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -291,7 +291,7 @@ func (suite *APISuite) TestGetFile_Visibility() {
 	public := suite.file("theirs-public", false)
 	public.UserID = "someone-else"
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "theirs-public").Return(public, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "theirs-public").Return(public, nil).Once()
 	res = suite.request("GET", "/api/v1/files/theirs-public", nil, true)
 	res.Body.Close()
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -300,14 +300,14 @@ func (suite *APISuite) TestGetFile_Visibility() {
 	hidden := suite.file("theirs-private", true)
 	hidden.UserID = "someone-else"
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "theirs-private").Return(hidden, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "theirs-private").Return(hidden, nil).Once()
 	res = suite.request("GET", "/api/v1/files/theirs-private", nil, true)
 	res.Body.Close()
 	suite.Equal(http.StatusNotFound, res.StatusCode)
 
 	// nonexistent file is a 404
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "nope").Return(nil, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "nope").Return(nil, nil).Once()
 	res = suite.request("GET", "/api/v1/files/nope", nil, true)
 	res.Body.Close()
 	suite.Equal(http.StatusNotFound, res.StatusCode)
@@ -317,8 +317,8 @@ func (suite *APISuite) TestUpdateFile() {
 	file := suite.file("file1", false)
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(file, nil).Once()
-	suite.mockDB.EXPECT().UpdateFile(mock.Anything, mock.Anything).Return(nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
+	suite.mockDB.Files.EXPECT().Update(mock.Anything, mock.Anything).Return(nil).Once()
 
 	res := suite.request("PATCH", "/api/v1/files/file1", strings.NewReader(`{"name":"renamed","private":true}`), true)
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -335,7 +335,7 @@ func (suite *APISuite) TestUpdateFile_MutationsAreOwnerOnly() {
 
 	// even a public file 404s for non-owners on mutation
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "theirs").Return(public, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "theirs").Return(public, nil).Once()
 	res := suite.request("PATCH", "/api/v1/files/theirs", strings.NewReader(`{"private":true}`), true)
 	res.Body.Close()
 	suite.Equal(http.StatusNotFound, res.StatusCode)
@@ -345,7 +345,7 @@ func (suite *APISuite) TestUpdateFile_EmptyPatch() {
 	file := suite.file("file1", false)
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(file, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
 
 	res := suite.request("PATCH", "/api/v1/files/file1", strings.NewReader(`{}`), true)
 	res.Body.Close()
@@ -356,8 +356,8 @@ func (suite *APISuite) TestDeleteFile() {
 	file := suite.file("file1", false)
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(file, nil).Once()
-	suite.mockDB.EXPECT().DeleteFile(mock.Anything, "file1").Return(nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
+	suite.mockDB.Files.EXPECT().Delete(mock.Anything, "file1").Return(nil).Once()
 
 	res := suite.request("DELETE", "/api/v1/files/file1", nil, true)
 	res.Body.Close()
@@ -368,7 +368,8 @@ func (suite *APISuite) TestGetFileContent() {
 	file := suite.file("file1", false)
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(file, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
+	suite.mockDB.Files.EXPECT().GetContent(mock.Anything, "file1").Return([]byte("hello world"), nil).Once()
 
 	res := suite.request("GET", "/api/v1/files/file1/content", nil, true)
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -384,10 +385,11 @@ func (suite *APISuite) TestUpdateFileContent() {
 	file := suite.file("file1", false)
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(file, nil).Once()
-	suite.mockDB.EXPECT().CountRevisionsByFileID(mock.Anything, "file1").Return(0, nil).Once()
-	suite.mockDB.EXPECT().CreateRevision(mock.Anything, mock.Anything, suite.config.Limits.RevisionsPerFile).Return(nil).Once()
-	suite.mockDB.EXPECT().UpdateFile(mock.Anything, mock.Anything).Return(nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
+	suite.mockDB.Files.EXPECT().GetContent(mock.Anything, "file1").Return([]byte("hello world"), nil).Once()
+	suite.mockDB.Revisions.EXPECT().CountByFileID(mock.Anything, "file1").Return(0, nil).Once()
+	suite.mockDB.Revisions.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything, suite.config.FileCompression, suite.config.Limits.RevisionsPerFile).Return(nil).Once()
+	suite.mockDB.Files.EXPECT().UpdateContent(mock.Anything, mock.Anything, []byte("hello new world"), suite.config.FileCompression).Return(nil).Once()
 
 	res := suite.request("PUT", "/api/v1/files/file1/content", strings.NewReader("hello new world"), true)
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -405,8 +407,8 @@ func (suite *APISuite) TestListRevisions() {
 	}
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(file, nil).Once()
-	suite.mockDB.EXPECT().FindRevisionsByFileID(mock.Anything, "file1", mock.Anything, mock.Anything).Return(revisions, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
+	suite.mockDB.Revisions.EXPECT().FindByFileID(mock.Anything, "file1", mock.Anything, mock.Anything).Return(revisions, nil).Once()
 
 	res := suite.request("GET", "/api/v1/files/file1/revisions?limit=1", nil, true)
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -424,11 +426,11 @@ func (suite *APISuite) TestListRevisions() {
 func (suite *APISuite) TestGetRevision() {
 	file := suite.file("file1", false)
 	rev := &snips.Revision{ID: "rev1", Sequence: 1, FileID: "file1", CreatedAt: time.Now().UTC()}
-	suite.Require().NoError(rev.SetDiff([]byte("+hello"), false))
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(file, nil).Once()
-	suite.mockDB.EXPECT().FindRevisionByFileIDAndSequence(mock.Anything, "file1", int64(1)).Return(rev, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
+	suite.mockDB.Revisions.EXPECT().FindByFileIDAndSequence(mock.Anything, "file1", int64(1)).Return(rev, nil).Once()
+	suite.mockDB.Revisions.EXPECT().GetDiff(mock.Anything, "rev1").Return([]byte("+hello"), nil).Once()
 
 	res := suite.request("GET", "/api/v1/files/file1/revisions/1", nil, true)
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -442,7 +444,7 @@ func (suite *APISuite) TestSignFile() {
 	private := suite.file("file1", true)
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(private, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(private, nil).Once()
 
 	res := suite.request("POST", "/api/v1/files/file1/sign", strings.NewReader(`{"ttl_seconds":3600}`), true)
 	suite.Equal(http.StatusCreated, res.StatusCode)
@@ -458,7 +460,7 @@ func (suite *APISuite) TestSignFile_PublicRejected() {
 	public := suite.file("file1", false)
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(public, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(public, nil).Once()
 
 	res := suite.request("POST", "/api/v1/files/file1/sign", strings.NewReader(`{"ttl_seconds":3600}`), true)
 	res.Body.Close()
@@ -469,7 +471,7 @@ func (suite *APISuite) TestSignFile_TTLOverflowRejected() {
 	private := suite.file("file1", true)
 
 	suite.expectAuth()
-	suite.mockDB.EXPECT().FindFile(mock.Anything, "file1").Return(private, nil).Once()
+	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(private, nil).Once()
 
 	res := suite.request("POST", "/api/v1/files/file1/sign", strings.NewReader(`{"ttl_seconds":9223372037}`), true)
 	defer res.Body.Close()

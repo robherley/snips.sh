@@ -1,3 +1,4 @@
+-- SQLite
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE `api_keys` (

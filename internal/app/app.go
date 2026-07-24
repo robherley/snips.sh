@@ -11,6 +11,7 @@ import (
 
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/sqlite"
 	"github.com/robherley/snips.sh/internal/ssh"
 	"github.com/robherley/snips.sh/internal/web"
 )
@@ -18,7 +19,7 @@ import (
 type App struct {
 	SSH        *ssh.Service
 	HTTP       *web.Service
-	DB         db.DB
+	DB         *db.DB
 	OnShutdown func(context.Context)
 }
 
@@ -93,7 +94,7 @@ func (app *App) shutdown(ctx context.Context) {
 }
 
 func New(cfg *config.Config, assets web.Assets) (*App, error) {
-	database, err := db.NewSqlite(cfg.DB.FilePath)
+	database, err := sqlite.New(cfg.DB.FilePath)
 	if err != nil {
 		return nil, err
 	}

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robherley/snips.sh/internal/db"
+	dbmock "github.com/robherley/snips.sh/internal/db/mock"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/web"
 	"github.com/stretchr/testify/assert"
@@ -36,10 +36,10 @@ func TestWithAuthentication(t *testing.T) {
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				// no DB expectations: malformed credentials must never hit the database
-				database := db.NewMockDB(t)
+				database := dbmock.NewDB(t)
 
 				nextCalled := false
-				handler := web.WithAuthentication(database, func(w http.ResponseWriter, r *http.Request) {
+				handler := web.WithAuthentication(database.DB, func(w http.ResponseWriter, r *http.Request) {
 					nextCalled = true
 				})
 
@@ -63,11 +63,11 @@ func TestWithAuthentication(t *testing.T) {
 	t.Run("rejects unknown tokens", func(t *testing.T) {
 		token, hash := newToken(t)
 
-		database := db.NewMockDB(t)
-		database.EXPECT().FindAPIKeyByTokenHash(mock.Anything, hash).Return(nil, nil).Once()
+		database := dbmock.NewDB(t)
+		database.APIKeys.EXPECT().FindByTokenHash(mock.Anything, hash).Return(nil, nil).Once()
 
 		nextCalled := false
-		handler := web.WithAuthentication(database, func(w http.ResponseWriter, r *http.Request) {
+		handler := web.WithAuthentication(database.DB, func(w http.ResponseWriter, r *http.Request) {
 			nextCalled = true
 		})
 
@@ -87,11 +87,11 @@ func TestWithAuthentication(t *testing.T) {
 	t.Run("fails closed on database errors", func(t *testing.T) {
 		token, hash := newToken(t)
 
-		database := db.NewMockDB(t)
-		database.EXPECT().FindAPIKeyByTokenHash(mock.Anything, hash).Return(nil, errors.New("boom")).Once()
+		database := dbmock.NewDB(t)
+		database.APIKeys.EXPECT().FindByTokenHash(mock.Anything, hash).Return(nil, errors.New("boom")).Once()
 
 		nextCalled := false
-		handler := web.WithAuthentication(database, func(w http.ResponseWriter, r *http.Request) {
+		handler := web.WithAuthentication(database.DB, func(w http.ResponseWriter, r *http.Request) {
 			nextCalled = true
 		})
 
@@ -110,15 +110,15 @@ func TestWithAuthentication(t *testing.T) {
 		token, hash := newToken(t)
 		key := &snips.APIKey{ID: "key123", TokenHash: hash, UserID: "user123"}
 
-		database := db.NewMockDB(t)
-		database.EXPECT().FindAPIKeyByTokenHash(mock.Anything, hash).Return(key, nil).Once()
-		database.EXPECT().TouchAPIKey(mock.Anything, "key123").Return(nil).Once()
+		database := dbmock.NewDB(t)
+		database.APIKeys.EXPECT().FindByTokenHash(mock.Anything, hash).Return(key, nil).Once()
+		database.APIKeys.EXPECT().Touch(mock.Anything, "key123").Return(nil).Once()
 
 		var (
 			gotUserID string
 			gotOK     bool
 		)
-		handler := web.WithAuthentication(database, func(w http.ResponseWriter, r *http.Request) {
+		handler := web.WithAuthentication(database.DB, func(w http.ResponseWriter, r *http.Request) {
 			gotUserID, gotOK = web.UserID(r.Context())
 		})
 
@@ -137,12 +137,12 @@ func TestWithAuthentication(t *testing.T) {
 		token, hash := newToken(t)
 		key := &snips.APIKey{ID: "key123", TokenHash: hash, UserID: "user123"}
 
-		database := db.NewMockDB(t)
-		database.EXPECT().FindAPIKeyByTokenHash(mock.Anything, hash).Return(key, nil).Once()
-		database.EXPECT().TouchAPIKey(mock.Anything, "key123").Return(errors.New("boom")).Once()
+		database := dbmock.NewDB(t)
+		database.APIKeys.EXPECT().FindByTokenHash(mock.Anything, hash).Return(key, nil).Once()
+		database.APIKeys.EXPECT().Touch(mock.Anything, "key123").Return(errors.New("boom")).Once()
 
 		nextCalled := false
-		handler := web.WithAuthentication(database, func(w http.ResponseWriter, r *http.Request) {
+		handler := web.WithAuthentication(database.DB, func(w http.ResponseWriter, r *http.Request) {
 			nextCalled = true
 		})
 
@@ -203,11 +203,11 @@ func TestWithAuthentication_ExpiredKey(t *testing.T) {
 	past := time.Now().UTC().Add(-time.Minute)
 	key := &snips.APIKey{ID: "key123", TokenHash: hash, UserID: "user123", ExpiresAt: &past}
 
-	database := db.NewMockDB(t)
-	database.EXPECT().FindAPIKeyByTokenHash(mock.Anything, hash).Return(key, nil).Once()
+	database := dbmock.NewDB(t)
+	database.APIKeys.EXPECT().FindByTokenHash(mock.Anything, hash).Return(key, nil).Once()
 
 	nextCalled := false
-	handler := web.WithAuthentication(database, func(w http.ResponseWriter, r *http.Request) {
+	handler := web.WithAuthentication(database.DB, func(w http.ResponseWriter, r *http.Request) {
 		nextCalled = true
 	})
 

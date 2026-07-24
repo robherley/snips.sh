@@ -7,7 +7,7 @@ import (
 
 	"charm.land/wish/v2/testsession"
 	cssh "github.com/charmbracelet/ssh"
-	"github.com/robherley/snips.sh/internal/db"
+	dbmock "github.com/robherley/snips.sh/internal/db/mock"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"
 	"github.com/robherley/snips.sh/internal/snips"
@@ -41,15 +41,17 @@ func testPrivateKeyAuth(key []byte) gossh.AuthMethod {
 
 func TestAssignUser(t *testing.T) {
 	t.Run("creates new user", func(t *testing.T) {
-		database := db.NewMockDB(t)
+		database := dbmock.NewDB(t)
 
 		userID := id.New()
-		database.EXPECT().
-			FindPublicKeyByFingerprint(mock.Anything, fingerprint).Return(nil, nil)
-		database.EXPECT().
-			CreateUserWithPublicKey(mock.Anything, mock.Anything).Return(&snips.User{
-			ID: userID,
-		}, nil)
+		database.PublicKeys.EXPECT().FindByFingerprint(
+			mock.Anything, fingerprint).
+			Return(nil, nil)
+		database.Users.EXPECT().CreateWithPublicKey(
+			mock.Anything, mock.Anything).
+			Return(&snips.User{
+				ID: userID,
+			}, nil)
 
 		nextFunc := func(sesh cssh.Session) {
 			assert.Equal(t, userID, sesh.Context().Value(ssh.UserIDContextKey))
@@ -57,7 +59,7 @@ func TestAssignUser(t *testing.T) {
 		}
 
 		session := testsession.New(t, &cssh.Server{
-			Handler: ssh.AssignUser(database, *testHost)(nextFunc),
+			Handler: ssh.AssignUser(database.DB, *testHost)(nextFunc),
 			PublicKeyHandler: func(_ cssh.Context, _ cssh.PublicKey) bool {
 				return true
 			},
@@ -72,17 +74,19 @@ func TestAssignUser(t *testing.T) {
 	})
 
 	t.Run("matches existing user by fingerprint", func(t *testing.T) {
-		database := db.NewMockDB(t)
+		database := dbmock.NewDB(t)
 
 		userID := id.New()
-		database.EXPECT().
-			FindPublicKeyByFingerprint(mock.Anything, fingerprint).Return(&snips.PublicKey{
-			UserID: userID,
-		}, nil)
-		database.EXPECT().
-			FindUser(mock.Anything, userID).Return(&snips.User{
-			ID: userID,
-		}, nil)
+		database.PublicKeys.EXPECT().FindByFingerprint(
+			mock.Anything, fingerprint).
+			Return(&snips.PublicKey{
+				UserID: userID,
+			}, nil)
+		database.Users.EXPECT().Find(
+			mock.Anything, userID).
+			Return(&snips.User{
+				ID: userID,
+			}, nil)
 
 		nextFunc := func(sesh cssh.Session) {
 			assert.Equal(t, userID, sesh.Context().Value(ssh.UserIDContextKey))
@@ -90,7 +94,7 @@ func TestAssignUser(t *testing.T) {
 		}
 
 		session := testsession.New(t, &cssh.Server{
-			Handler: ssh.AssignUser(database, *testHost)(nextFunc),
+			Handler: ssh.AssignUser(database.DB, *testHost)(nextFunc),
 			PublicKeyHandler: func(_ cssh.Context, _ cssh.PublicKey) bool {
 				return true
 			},

@@ -58,7 +58,7 @@ func (m Code) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetHeight(h)
 	case msgs.FileLoaded:
 		m.file = msg.File
-		m.content = m.renderContent(msg.File)
+		m.content = m.renderContent(msg.File, msg.Content)
 		m.viewport.GotoTop()
 		m.viewport.SetContent(m.content)
 	case msgs.FileDeselected:
@@ -98,15 +98,9 @@ func (m Code) titleRow() string {
 	return styles.BC(m.theme, m.file.DisplayName()) + styles.C(styles.Colors.Muted, " · "+meta)
 }
 
-func (m Code) renderContent(file *snips.File) string {
+func (m Code) renderContent(file *snips.File, fileContent []byte) string {
 	if file == nil {
 		return ""
-	}
-
-	fileContent, err := file.GetContent()
-	if err != nil {
-		slog.Error("unable to get file content", "err", err)
-		return "error getting file content"
 	}
 
 	content, err := renderer.ToSyntaxHighlightedTerm(file.Type, fileContent)

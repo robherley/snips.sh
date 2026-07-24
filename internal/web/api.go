@@ -43,10 +43,10 @@ var (
 
 type API struct {
 	cfg *config.Config
-	db  db.DB
+	db  *db.DB
 }
 
-func NewAPI(cfg *config.Config, database db.DB) *API {
+func NewAPI(cfg *config.Config, database *db.DB) *API {
 	return &API{cfg: cfg, db: database}
 }
 
@@ -114,7 +114,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 // exist is a 404, and so is another user's file when it's private (or when
 // the operation is owner-only), so existence isn't leaked.
 func (a *API) findFile(w http.ResponseWriter, r *http.Request, ownerOnly bool) *snips.File {
-	file, err := a.db.FindFile(r.Context(), r.PathValue("fileID"))
+	file, err := a.db.Files.Find(r.Context(), r.PathValue("fileID"))
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return nil
@@ -221,7 +221,7 @@ func (a *API) Meta(w http.ResponseWriter, r *http.Request) {
 func (a *API) User(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 
-	user, err := a.db.FindUser(r.Context(), userID)
+	user, err := a.db.Users.Find(r.Context(), userID)
 	if err != nil || user == nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -240,7 +240,7 @@ func (a *API) ListFiles(w http.ResponseWriter, r *http.Request) {
 
 	// names are unique per user, so a name filter returns at most one file
 	if name := r.URL.Query().Get("name"); name != "" {
-		file, err := a.db.FindFileByName(r.Context(), userID, name)
+		file, err := a.db.Files.FindByName(r.Context(), userID, name)
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
@@ -266,7 +266,7 @@ func (a *API) ListFiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// fetch one extra row to learn whether another page exists
-	userFiles, err := a.db.FindFilesByUser(r.Context(), userID, db.WithLimit(limit+1), db.WithOffset(offset))
+	userFiles, err := a.db.Files.FindByUser(r.Context(), userID, db.WithLimit(limit+1), db.WithOffset(offset))
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -324,12 +324,7 @@ func (a *API) CreateFile(w http.ResponseWriter, r *http.Request) {
 		Name:    name,
 	}
 
-	if err := file.SetContent(content, a.cfg.FileCompression); err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	if err := a.db.CreateFile(r.Context(), file, a.cfg.Limits.FilesPerUser); err != nil {
+	if err := a.db.Files.Create(r.Context(), file, content, a.cfg.FileCompression, a.cfg.Limits.FilesPerUser); err != nil {
 		switch {
 		case errors.Is(err, db.ErrNameTaken):
 			http.Error(w, "you already have a file with that name", http.StatusConflict)
@@ -408,7 +403,7 @@ func (a *API) UpdateFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		content, err := file.GetContent()
+		content, err := a.db.Files.GetContent(r.Context(), file.ID)
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
@@ -416,7 +411,7 @@ func (a *API) UpdateFile(w http.ResponseWriter, r *http.Request) {
 		file.Type = renderer.DetectFileType(content, extension, a.cfg.EnableGuesser)
 	}
 
-	if err := a.db.UpdateFile(r.Context(), file); err != nil {
+	if err := a.db.Files.Update(r.Context(), file); err != nil {
 		if errors.Is(err, db.ErrNameTaken) {
 			http.Error(w, "you already have a file with that name", http.StatusConflict)
 			return
@@ -437,7 +432,7 @@ func (a *API) DeleteFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.db.DeleteFile(r.Context(), file.ID); err != nil {
+	if err := a.db.Files.Delete(r.Context(), file.ID); err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -454,7 +449,7 @@ func (a *API) GetFileContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := file.GetContent()
+	content, err := a.db.Files.GetContent(r.Context(), file.ID)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -518,7 +513,7 @@ func (a *API) ListRevisions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// fetch one extra row to learn whether another page exists
-	revisions, err := a.db.FindRevisionsByFileID(r.Context(), file.ID, db.WithLimit(limit+1), db.WithOffset(offset))
+	revisions, err := a.db.Revisions.FindByFileID(r.Context(), file.ID, db.WithLimit(limit+1), db.WithOffset(offset))
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -550,7 +545,7 @@ func (a *API) GetRevision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rev, err := a.db.FindRevisionByFileIDAndSequence(r.Context(), file.ID, sequence)
+	rev, err := a.db.Revisions.FindByFileIDAndSequence(r.Context(), file.ID, sequence)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -561,7 +556,7 @@ func (a *API) GetRevision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	diff, err := rev.GetDiff()
+	diff, err := a.db.Revisions.GetDiff(r.Context(), rev.ID)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return

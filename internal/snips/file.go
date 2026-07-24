@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/klauspost/compress/zstd"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/signer"
 )
@@ -16,15 +15,14 @@ const (
 )
 
 type File struct {
-	ID         string    `json:"id"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	Size       uint64    `json:"size"`
-	RawContent []byte    `json:"-"`
-	Private    bool      `json:"private"`
-	Type       string    `json:"type"`
-	UserID     string    `json:"-"`
-	Name       string    `json:"name,omitempty"`
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Size      uint64    `json:"size"`
+	Private   bool      `json:"private"`
+	Type      string    `json:"type"`
+	UserID    string    `json:"-"`
+	Name      string    `json:"name,omitempty"`
 }
 
 func (f *File) DisplayName() string {
@@ -60,33 +58,4 @@ func (f *File) Visibility() string {
 	}
 
 	return "public"
-}
-
-func (f *File) GetContent() ([]byte, error) {
-	if !IsZSTDCompressed(f.RawContent) {
-		return f.RawContent, nil
-	}
-
-	decoder, err := zstd.NewReader(nil)
-	if err != nil {
-		return nil, err
-	}
-
-	defer decoder.Close()
-	return decoder.DecodeAll(f.RawContent, nil)
-}
-
-func (f *File) SetContent(in []byte, compress bool) error {
-	if !compress {
-		f.RawContent = in
-		return nil
-	}
-
-	encoder, err := zstd.NewWriter(nil)
-	if err != nil {
-		return err
-	}
-
-	f.RawContent = encoder.EncodeAll(in, nil)
-	return encoder.Close()
 }

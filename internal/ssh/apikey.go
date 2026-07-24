@@ -75,7 +75,7 @@ func (h *SessionHandler) CreateAPIKey(sesh *UserSession, args []string) {
 		key.ExpiresAt = &expires
 	}
 
-	if err := h.DB.CreateAPIKey(sesh.Context(), key, h.Config.Limits.APIKeysPerUser); err != nil {
+	if err := h.DB.APIKeys.Create(sesh.Context(), key, h.Config.Limits.APIKeysPerUser); err != nil {
 		if errors.Is(err, db.ErrAPIKeyLimit) {
 			sesh.Error(err, "Unable to create api key", "You already have the maximum of %d api keys. Remove one with: api-key rm <id>", h.Config.Limits.APIKeysPerUser)
 			return
@@ -123,7 +123,7 @@ func (h *SessionHandler) CreateAPIKey(sesh *UserSession, args []string) {
 }
 
 func (h *SessionHandler) ListAPIKeys(sesh *UserSession) {
-	keys, err := h.DB.FindAPIKeysByUser(sesh.Context(), sesh.UserID())
+	keys, err := h.DB.APIKeys.FindByUser(sesh.Context(), sesh.UserID())
 	if err != nil {
 		sesh.Error(err, "Unable to list api keys", "There was an error listing your api keys. Please try again.")
 		return
@@ -176,7 +176,7 @@ func (h *SessionHandler) RemoveAPIKey(sesh *UserSession, args []string) {
 	}
 
 	// keys are referenced by name when they have one, so accept either
-	keys, err := h.DB.FindAPIKeysByUser(sesh.Context(), sesh.UserID())
+	keys, err := h.DB.APIKeys.FindByUser(sesh.Context(), sesh.UserID())
 	if err != nil {
 		sesh.Error(err, "Unable to remove api key", "There was an error removing api key: %q", args[0])
 		return
@@ -195,7 +195,7 @@ func (h *SessionHandler) RemoveAPIKey(sesh *UserSession, args []string) {
 		return
 	}
 
-	deleted, err := h.DB.DeleteAPIKey(sesh.Context(), target.ID, sesh.UserID())
+	deleted, err := h.DB.APIKeys.Delete(sesh.Context(), target.ID, sesh.UserID())
 	if err != nil || !deleted {
 		sesh.Error(err, "Unable to remove api key", "There was an error removing api key: %q", args[0])
 		return

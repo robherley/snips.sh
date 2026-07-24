@@ -35,7 +35,7 @@ type dialog interface {
 type env struct {
 	ctx  context.Context
 	cfg  *config.Config
-	db   db.DB
+	db   *db.DB
 	file *snips.File
 }
 

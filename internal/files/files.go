@@ -16,7 +16,7 @@ import (
 // UpdateContent replaces a file's content and persists it, re-detecting the
 // file type (optionally hinted by extension) and recording a revision diff
 // for non-binary files. Revision bookkeeping failures are logged, not fatal.
-func UpdateContent(ctx context.Context, database db.DB, cfg *config.Config, file *snips.File, content []byte, extension string) error {
+func UpdateContent(ctx context.Context, database *db.DB, cfg *config.Config, file *snips.File, content []byte, extension string) error {
 	log := logger.From(ctx)
 
 	file.Size = uint64(len(content))
@@ -24,11 +24,11 @@ func UpdateContent(ctx context.Context, database db.DB, cfg *config.Config, file
 
 	// Compute diff for revision history (skip binary files)
 	if !file.IsBinary() {
-		oldContent, err := file.GetContent()
+		oldContent, err := database.Files.GetContent(ctx, file.ID)
 		if err != nil {
 			log.Warn("unable to get old content for diff", "err", err)
 		} else {
-			revCount, err := database.CountRevisionsByFileID(ctx, file.ID)
+			revCount, err := database.Revisions.CountByFileID(ctx, file.ID)
 			if err != nil {
 				log.Warn("unable to count revisions", "err", err)
 			}
@@ -49,18 +49,12 @@ func UpdateContent(ctx context.Context, database db.DB, cfg *config.Config, file
 					Size:   file.Size,
 					Type:   file.Type,
 				}
-				if err := revision.SetDiff([]byte(diff), cfg.FileCompression); err != nil {
-					log.Warn("unable to compress diff", "err", err)
-				} else if err := database.CreateRevision(ctx, revision, cfg.Limits.RevisionsPerFile); err != nil {
+				if err := database.Revisions.Create(ctx, revision, []byte(diff), cfg.FileCompression, cfg.Limits.RevisionsPerFile); err != nil {
 					log.Warn("unable to create revision", "err", err)
 				}
 			}
 		}
 	}
 
-	if err := file.SetContent(content, cfg.FileCompression); err != nil {
-		return err
-	}
-
-	return database.UpdateFile(ctx, file)
+	return database.Files.UpdateContent(ctx, file, content, cfg.FileCompression)
 }

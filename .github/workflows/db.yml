@@ -3,7 +3,7 @@ name: Database Check
 on:
   pull_request:
     paths:
-      - 'internal/db/migrations/*.sql'
+      - 'internal/db/**/*.sql'
 
 permissions:
   contents: read
@@ -28,7 +28,7 @@ jobs:
         echo '' >> diff-output.md
         echo 'Changed migration files:' >> diff-output.md
         echo '```' >> diff-output.md
-        git diff --name-only "origin/${BASE_REF}...HEAD" -- 'internal/db/migrations/*.sql' >> diff-output.md
+        git diff --name-only "origin/${BASE_REF}...HEAD" -- ':(glob)internal/db/**/*.sql' >> diff-output.md
         echo '```' >> diff-output.md
     - name: Add comment and label
       uses: actions/github-script@v9

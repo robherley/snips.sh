@@ -1,3 +1,4 @@
+-- SQLite
 -- +goose Up
 -- +goose StatementBegin
 ALTER TABLE `files` ADD COLUMN `name` text;
