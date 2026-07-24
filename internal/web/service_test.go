@@ -405,6 +405,40 @@ func (suite *HTTPServiceSuite) TestFileMarkdownAccept() {
 	})
 }
 
+func (suite *HTTPServiceSuite) TestPprofEndpoints() {
+	suite.Run("pprof unavailable when debug is off", func() {
+		// Default config has Debug=false, so the route is not registered.
+		ts := httptest.NewServer(suite.service.Handler)
+		defer ts.Close()
+
+		req, err := http.NewRequest("GET", ts.URL+"/_debug/pprof/goroutine", nil)
+		suite.Require().NoError(err)
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(http.StatusNotFound, resp.StatusCode)
+	})
+
+	suite.Run("pprof accessible from localhost when debug is on", func() {
+		debugCfg := *suite.config
+		debugCfg.Debug = true
+
+		svc, err := web.New(&debugCfg, suite.mockDB, suite.assets)
+		suite.Require().NoError(err)
+
+		ts := httptest.NewServer(svc.Handler)
+		defer ts.Close()
+
+		// httptest connects from 127.0.0.1, so WithLocalhostOnly should pass.
+		req, err := http.NewRequest("GET", ts.URL+"/_debug/pprof/goroutine", nil)
+		suite.Require().NoError(err)
+
+		resp, err := ts.Client().Do(req)
+		suite.Require().NoError(err)
+		suite.Require().Equal(http.StatusOK, resp.StatusCode)
+	})
+}
+
 func (suite *HTTPServiceSuite) TestAssetCaching() {
 	ts := httptest.NewServer(suite.service.Handler)
 	defer ts.Close()

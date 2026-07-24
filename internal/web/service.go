@@ -32,7 +32,7 @@ func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
 	NewAPI(cfg, database).Register(mux)
 
 	if cfg.Debug {
-		mux.HandleFunc("/_debug/pprof/{profile}", ProfileHandler)
+		mux.HandleFunc("/_debug/pprof/{profile}", WithLocalhostOnly(ProfileHandler))
 	}
 
 	return &Service{

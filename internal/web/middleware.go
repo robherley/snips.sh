@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"log/slog"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -39,6 +40,23 @@ func WithMiddleware(handler http.Handler, middlewares ...Middleware) http.Handle
 func UserID(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value(UserIDContextKey).(string)
 	return userID, ok
+}
+
+// WithLocalhostOnly rejects requests that do not originate from a loopback address.
+func WithLocalhostOnly(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		host, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		ip := net.ParseIP(host)
+		if ip == nil || !ip.IsLoopback() {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		next(w, r)
+	}
 }
 
 // WithAuthentication authenticates a request with a bearer token.
