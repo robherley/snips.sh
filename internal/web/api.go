@@ -324,7 +324,7 @@ func (a *API) CreateFile(w http.ResponseWriter, r *http.Request) {
 		Name:    name,
 	}
 
-	if err := a.db.Files.Create(r.Context(), file, content, a.cfg.FileCompression, a.cfg.Limits.FilesPerUser); err != nil {
+	if err := a.db.Files.Create(r.Context(), file, content, a.cfg.Limits.FilesPerUser); err != nil {
 		switch {
 		case errors.Is(err, db.ErrNameTaken):
 			http.Error(w, "you already have a file with that name", http.StatusConflict)
@@ -444,14 +444,15 @@ func (a *API) DeleteFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) GetFileContent(w http.ResponseWriter, r *http.Request) {
-	file := a.findFile(w, r, false)
-	if file == nil {
+	file, content, err := a.db.Files.FindWithContent(r.Context(), r.PathValue("fileID"))
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	content, err := a.db.Files.GetContent(r.Context(), file.ID)
-	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+	userID, _ := UserID(r.Context())
+	if file == nil || (file.UserID != userID && file.Private) {
+		http.Error(w, "file not found", http.StatusNotFound)
 		return
 	}
 

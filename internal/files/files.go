@@ -49,12 +49,12 @@ func UpdateContent(ctx context.Context, database *db.DB, cfg *config.Config, fil
 					Size:   file.Size,
 					Type:   file.Type,
 				}
-				if err := database.Revisions.Create(ctx, revision, []byte(diff), cfg.FileCompression, cfg.Limits.RevisionsPerFile); err != nil {
+				if err := database.Revisions.Create(ctx, revision, []byte(diff), cfg.Limits.RevisionsPerFile); err != nil {
 					log.Warn("unable to create revision", "err", err)
 				}
 			}
 		}
 	}
 
-	return database.Files.UpdateContent(ctx, file, content, cfg.FileCompression)
+	return database.Files.UpdateContent(ctx, file, content)
 }

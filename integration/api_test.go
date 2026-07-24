@@ -248,7 +248,7 @@ func newAPIClient(s *APIIntegrationSuite) *apiClient {
 	s.Require().NoError(err)
 	cfg.EnableGuesser = false
 
-	database, err := sqlite.New(s.T().TempDir() + "/snips.db")
+	database, err := sqlite.New(s.T().TempDir()+"/snips.db", cfg.FileCompression)
 	s.Require().NoError(err)
 	s.T().Cleanup(func() {
 		s.Assert().NoError(database.Close())

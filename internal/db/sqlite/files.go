@@ -13,7 +13,10 @@ import (
 	"github.com/robherley/snips.sh/internal/snips"
 )
 
-type files struct{ *sql.DB }
+type files struct {
+	*sql.DB
+	compress bool
+}
 
 func (s *files) Find(ctx context.Context, id string) (*snips.File, error) {
 	const query = `
@@ -23,6 +26,44 @@ func (s *files) Find(ctx context.Context, id string) (*snips.File, error) {
 	`
 
 	return scanFile(s.QueryRowContext(ctx, query, id))
+}
+
+func (s *files) FindWithContent(ctx context.Context, id string) (*snips.File, []byte, error) {
+	const query = `
+		SELECT id, created_at, updated_at, size, content, private, type, user_id, name
+		FROM files
+		WHERE id = ?
+	`
+
+	file := &snips.File{}
+	name := sql.NullString{}
+	var content []byte
+
+	if err := s.QueryRowContext(ctx, query, id).Scan(
+		&file.ID,
+		&file.CreatedAt,
+		&file.UpdatedAt,
+		&file.Size,
+		&content,
+		&file.Private,
+		&file.Type,
+		&file.UserID,
+		&name,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil, nil
+		}
+
+		return nil, nil, err
+	}
+
+	file.Name = name.String
+	decoded, err := snips.DecodeContent(content)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return file, decoded, nil
 }
 
 func scanFile(row *sql.Row) (*snips.File, error) {
@@ -61,7 +102,7 @@ func nameConstraintErr(err error) error {
 	return err
 }
 
-func (s *files) Create(ctx context.Context, file *snips.File, content []byte, compress bool, maxFileCount uint64) error {
+func (s *files) Create(ctx context.Context, file *snips.File, content []byte, maxFileCount uint64) error {
 	const countQuery = `SELECT COUNT(*) FROM files WHERE user_id = ?`
 
 	var count uint64
@@ -71,7 +112,7 @@ func (s *files) Create(ctx context.Context, file *snips.File, content []byte, co
 	if maxFileCount > 0 && count >= maxFileCount {
 		return db.ErrFileLimit
 	}
-	storedContent, err := snips.EncodeContent(content, compress)
+	storedContent, err := snips.EncodeContent(content, s.compress)
 	if err != nil {
 		return err
 	}
@@ -79,6 +120,7 @@ func (s *files) Create(ctx context.Context, file *snips.File, content []byte, co
 	file.ID = id.New()
 	file.CreatedAt = time.Now().UTC()
 	file.UpdatedAt = time.Now().UTC()
+	file.Size = uint64(len(content))
 
 	const insertQuery = `
 		INSERT INTO files (
@@ -140,13 +182,14 @@ func (s *files) GetContent(ctx context.Context, id string) ([]byte, error) {
 	return snips.DecodeContent(content)
 }
 
-func (s *files) UpdateContent(ctx context.Context, file *snips.File, content []byte, compress bool) error {
-	storedContent, err := snips.EncodeContent(content, compress)
+func (s *files) UpdateContent(ctx context.Context, file *snips.File, content []byte) error {
+	storedContent, err := snips.EncodeContent(content, s.compress)
 	if err != nil {
 		return err
 	}
 
 	file.UpdatedAt = time.Now().UTC()
+	file.Size = uint64(len(content))
 	const query = `
 		UPDATE files
 		SET updated_at = ?, size = ?, content = ?, private = ?, type = ?, name = ?

@@ -106,16 +106,16 @@ func (_c *MockRevisions_CountByFileID_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // Create provides a mock function for the type MockRevisions
-func (_mock *MockRevisions) Create(ctx context.Context, revision *snips.Revision, diff []byte, compress bool, maxRevisions uint64) error {
-	ret := _mock.Called(ctx, revision, diff, compress, maxRevisions)
+func (_mock *MockRevisions) Create(ctx context.Context, revision *snips.Revision, diff []byte, maxRevisions uint64) error {
+	ret := _mock.Called(ctx, revision, diff, maxRevisions)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *snips.Revision, []byte, bool, uint64) error); ok {
-		r0 = returnFunc(ctx, revision, diff, compress, maxRevisions)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *snips.Revision, []byte, uint64) error); ok {
+		r0 = returnFunc(ctx, revision, diff, maxRevisions)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -131,13 +131,12 @@ type MockRevisions_Create_Call struct {
 //   - ctx context.Context
 //   - revision *snips.Revision
 //   - diff []byte
-//   - compress bool
 //   - maxRevisions uint64
-func (_e *MockRevisions_Expecter) Create(ctx any, revision any, diff any, compress any, maxRevisions any) *MockRevisions_Create_Call {
-	return &MockRevisions_Create_Call{Call: _e.mock.On("Create", ctx, revision, diff, compress, maxRevisions)}
+func (_e *MockRevisions_Expecter) Create(ctx any, revision any, diff any, maxRevisions any) *MockRevisions_Create_Call {
+	return &MockRevisions_Create_Call{Call: _e.mock.On("Create", ctx, revision, diff, maxRevisions)}
 }
 
-func (_c *MockRevisions_Create_Call) Run(run func(ctx context.Context, revision *snips.Revision, diff []byte, compress bool, maxRevisions uint64)) *MockRevisions_Create_Call {
+func (_c *MockRevisions_Create_Call) Run(run func(ctx context.Context, revision *snips.Revision, diff []byte, maxRevisions uint64)) *MockRevisions_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -151,20 +150,15 @@ func (_c *MockRevisions_Create_Call) Run(run func(ctx context.Context, revision 
 		if args[2] != nil {
 			arg2 = args[2].([]byte)
 		}
-		var arg3 bool
+		var arg3 uint64
 		if args[3] != nil {
-			arg3 = args[3].(bool)
-		}
-		var arg4 uint64
-		if args[4] != nil {
-			arg4 = args[4].(uint64)
+			arg3 = args[3].(uint64)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
-			arg4,
 		)
 	})
 	return _c
@@ -175,7 +169,7 @@ func (_c *MockRevisions_Create_Call) Return(err error) *MockRevisions_Create_Cal
 	return _c
 }
 
-func (_c *MockRevisions_Create_Call) RunAndReturn(run func(ctx context.Context, revision *snips.Revision, diff []byte, compress bool, maxRevisions uint64) error) *MockRevisions_Create_Call {
+func (_c *MockRevisions_Create_Call) RunAndReturn(run func(ctx context.Context, revision *snips.Revision, diff []byte, maxRevisions uint64) error) *MockRevisions_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }

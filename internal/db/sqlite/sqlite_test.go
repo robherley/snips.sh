@@ -27,7 +27,11 @@ func TestSqliteSuite(t *testing.T) {
 }
 
 func (s *SqliteSuite) getTestDB(migrate bool) *db.DB {
-	database := sqlite.NewWithDB(s.testDB)
+	return s.newTestDB(migrate, false)
+}
+
+func (s *SqliteSuite) newTestDB(migrate, compress bool) *db.DB {
+	database := sqlite.NewWithDB(s.testDB, compress)
 
 	if migrate {
 		err := database.Migrate(context.TODO())
@@ -116,14 +120,13 @@ func (s *SqliteSuite) TestFindFile_DoesNotExist() {
 }
 
 func (s *SqliteSuite) TestGetFileContent() {
-	database := s.getTestDB(true)
+	database := s.newTestDB(true, true)
 	file := &snips.File{
-		Size:   11,
 		Type:   "plaintext",
 		UserID: id.New(),
 	}
 
-	err := database.Files.Create(context.TODO(), file, []byte("hello world"), true, 0)
+	err := database.Files.Create(context.TODO(), file, []byte("hello world"), 0)
 	s.Require().NoError(err)
 
 	content, err := database.Files.GetContent(context.TODO(), file.ID)
@@ -139,6 +142,31 @@ func (s *SqliteSuite) TestGetFileContent_DoesNotExist() {
 	s.Require().Nil(content)
 }
 
+func (s *SqliteSuite) TestFindFileWithContent() {
+	database := s.newTestDB(true, true)
+	file := &snips.File{
+		Type:   "plaintext",
+		UserID: id.New(),
+	}
+
+	err := database.Files.Create(context.TODO(), file, []byte("hello world"), 0)
+	s.Require().NoError(err)
+
+	found, content, err := database.Files.FindWithContent(context.TODO(), file.ID)
+	s.Require().NoError(err)
+	s.Require().Equal(file, found)
+	s.Require().Equal([]byte("hello world"), content)
+}
+
+func (s *SqliteSuite) TestFindFileWithContent_DoesNotExist() {
+	database := s.getTestDB(true)
+
+	found, content, err := database.Files.FindWithContent(context.TODO(), id.New())
+	s.Require().NoError(err)
+	s.Require().Nil(found)
+	s.Require().Nil(content)
+}
+
 func (s *SqliteSuite) TestCreateFile() {
 	database := s.getTestDB(true)
 
@@ -149,7 +177,7 @@ func (s *SqliteSuite) TestCreateFile() {
 		UserID:  id.New(),
 	}
 
-	err := database.Files.Create(context.TODO(), file, []byte("hello world"), false, 1337)
+	err := database.Files.Create(context.TODO(), file, []byte("hello world"), 1337)
 	s.Require().NoError(err)
 
 	s.Require().NotEmpty(file.ID)
@@ -190,26 +218,18 @@ func (s *SqliteSuite) TestCreateFile_FileLimit() {
 
 	for i := uint64(0); i < maxFiles; i++ {
 		err := database.Files.Create(context.TODO(), &snips.File{
-			Size:    11,
 			Private: false,
 			Type:    "plaintext",
 			UserID:  userID,
-		}, []byte("hello world"), false,
-
-			maxFiles)
-
+		}, []byte("hello world"), maxFiles)
 		s.Require().NoError(err)
 	}
 
 	err := database.Files.Create(context.TODO(), &snips.File{
-		Size:    11,
 		Private: false,
 		Type:    "plaintext",
 		UserID:  userID,
-	}, []byte("hello world"), false,
-
-		maxFiles)
-
+	}, []byte("hello world"), maxFiles)
 	s.Require().ErrorIs(err, db.ErrFileLimit)
 }
 
@@ -253,11 +273,10 @@ func (s *SqliteSuite) TestUpdateFile() {
 	)
 	s.Require().NoError(err)
 
-	existingFile.Size = 22
 	existingFile.Private = true
 	existingFile.Type = "markdown"
 
-	err = database.Files.UpdateContent(context.TODO(), existingFile, []byte("hello world hello world"), false)
+	err = database.Files.UpdateContent(context.TODO(), existingFile, []byte("hello world hello world"))
 	s.Require().NoError(err)
 
 	var (
@@ -283,6 +302,20 @@ func (s *SqliteSuite) TestUpdateFile() {
 	s.Require().Equal(existingFile.Private, private)
 	s.Require().Equal(existingFile.Type, fileType)
 	s.Require().Equal(existingFile.UserID, userID)
+}
+
+func (s *SqliteSuite) TestUpdateFile_PreservesContent() {
+	database := s.getTestDB(true)
+
+	file := s.createFile(database, "")
+
+	file.Private = true
+	file.Type = "markdown"
+	s.Require().NoError(database.Files.Update(context.Background(), file))
+
+	content, err := database.Files.GetContent(context.Background(), file.ID)
+	s.Require().NoError(err)
+	s.Require().Equal([]byte("hello world"), content)
 }
 
 func (s *SqliteSuite) TestDeleteFile() {
@@ -673,7 +706,7 @@ func (s *SqliteSuite) createFile(database *db.DB, name string) *snips.File {
 		Name:    name,
 	}
 
-	err := database.Files.Create(context.Background(), file, []byte("hello world"), false, 0)
+	err := database.Files.Create(context.Background(), file, []byte("hello world"), 0)
 	s.Require().NoError(err)
 
 	return file
@@ -742,7 +775,7 @@ func (s *SqliteSuite) TestNames_UniquePerUser() {
 		UserID: first.UserID,
 		Name:   "Deploy-Notes", // same name, different case
 	}
-	err := database.Files.Create(context.Background(), duplicate, []byte("hello world"), false, 0)
+	err := database.Files.Create(context.Background(), duplicate, []byte("hello world"), 0)
 	s.Require().ErrorIs(err, db.ErrNameTaken)
 
 	// renaming another file to a taken name fails too
@@ -751,7 +784,7 @@ func (s *SqliteSuite) TestNames_UniquePerUser() {
 		Type:   "plaintext",
 		UserID: first.UserID,
 	}
-	s.Require().NoError(database.Files.Create(context.Background(), other, []byte("hello world"), false, 0))
+	s.Require().NoError(database.Files.Create(context.Background(), other, []byte("hello world"), 0))
 
 	other.Name = "DEPLOY-NOTES"
 	err = database.Files.Update(context.Background(), other)
@@ -768,7 +801,7 @@ func (s *SqliteSuite) TestNames_UniquePerUser() {
 			Type:   "plaintext",
 			UserID: first.UserID,
 		}
-		s.Require().NoError(database.Files.Create(context.Background(), unnamed, []byte("hello world"), false, 0))
+		s.Require().NoError(database.Files.Create(context.Background(), unnamed, []byte("hello world"), 0))
 	}
 }
 
@@ -904,7 +937,7 @@ func (s *SqliteSuite) TestFindRevisionsByFileID_Pagination() {
 			Size:   4,
 			Type:   "plaintext",
 		}
-		s.Require().NoError(database.Revisions.Create(context.TODO(), rev, []byte("diff"), false, 0))
+		s.Require().NoError(database.Revisions.Create(context.TODO(), rev, []byte("diff"), 0))
 	}
 
 	page, err := database.Revisions.FindByFileID(context.TODO(), fileID, db.WithLimit(2))
@@ -926,21 +959,21 @@ func (s *SqliteSuite) TestFindRevisionsByFileID_Pagination() {
 }
 
 func (s *SqliteSuite) TestGetRevisionDiff() {
-	database := s.getTestDB(true)
+	database := s.newTestDB(true, true)
 	revision := &snips.Revision{
 		FileID: id.New(),
 		Size:   11,
 		Type:   "plaintext",
 	}
 
-	s.Require().NoError(database.Revisions.Create(context.TODO(), revision, []byte("+hello world"), true, 0))
+	s.Require().NoError(database.Revisions.Create(context.TODO(), revision, []byte("+hello world"), 0))
 
 	diff, err := database.Revisions.GetDiff(context.TODO(), revision.ID)
 	s.Require().NoError(err)
 	s.Require().Equal([]byte("+hello world"), diff)
 }
 
-func (s *SqliteSuite) TestGetRevisionDiffNotFound() {
+func (s *SqliteSuite) TestGetRevisionDiff_DoesNotExist() {
 	database := s.getTestDB(true)
 
 	diff, err := database.Revisions.GetDiff(context.TODO(), "missing")

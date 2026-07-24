@@ -11,10 +11,13 @@ import (
 	"github.com/robherley/snips.sh/internal/snips"
 )
 
-type revisions struct{ *sql.DB }
+type revisions struct {
+	*sql.DB
+	compress bool
+}
 
-func (s *revisions) Create(ctx context.Context, revision *snips.Revision, diff []byte, compress bool, maxRevisions uint64) error {
-	storedDiff, err := snips.EncodeContent(diff, compress)
+func (s *revisions) Create(ctx context.Context, revision *snips.Revision, diff []byte, maxRevisions uint64) error {
+	storedDiff, err := snips.EncodeContent(diff, s.compress)
 	if err != nil {
 		return err
 	}

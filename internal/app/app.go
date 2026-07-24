@@ -91,10 +91,14 @@ func (app *App) shutdown(ctx context.Context) {
 	}
 
 	wg.Wait()
+
+	if err := app.DB.Close(); err != nil {
+		slog.Warn("unable to close database", "err", err)
+	}
 }
 
 func New(cfg *config.Config, assets web.Assets) (*App, error) {
-	database, err := sqlite.New(cfg.DB.FilePath)
+	database, err := sqlite.New(cfg.DB.FilePath, cfg.FileCompression)
 	if err != nil {
 		return nil, err
 	}

@@ -106,16 +106,16 @@ func (_c *MockFiles_CountByUser_Call) RunAndReturn(run func(ctx context.Context,
 }
 
 // Create provides a mock function for the type MockFiles
-func (_mock *MockFiles) Create(ctx context.Context, file *snips.File, content []byte, compress bool, maxFiles uint64) error {
-	ret := _mock.Called(ctx, file, content, compress, maxFiles)
+func (_mock *MockFiles) Create(ctx context.Context, file *snips.File, content []byte, maxFiles uint64) error {
+	ret := _mock.Called(ctx, file, content, maxFiles)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *snips.File, []byte, bool, uint64) error); ok {
-		r0 = returnFunc(ctx, file, content, compress, maxFiles)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *snips.File, []byte, uint64) error); ok {
+		r0 = returnFunc(ctx, file, content, maxFiles)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -131,13 +131,12 @@ type MockFiles_Create_Call struct {
 //   - ctx context.Context
 //   - file *snips.File
 //   - content []byte
-//   - compress bool
 //   - maxFiles uint64
-func (_e *MockFiles_Expecter) Create(ctx any, file any, content any, compress any, maxFiles any) *MockFiles_Create_Call {
-	return &MockFiles_Create_Call{Call: _e.mock.On("Create", ctx, file, content, compress, maxFiles)}
+func (_e *MockFiles_Expecter) Create(ctx any, file any, content any, maxFiles any) *MockFiles_Create_Call {
+	return &MockFiles_Create_Call{Call: _e.mock.On("Create", ctx, file, content, maxFiles)}
 }
 
-func (_c *MockFiles_Create_Call) Run(run func(ctx context.Context, file *snips.File, content []byte, compress bool, maxFiles uint64)) *MockFiles_Create_Call {
+func (_c *MockFiles_Create_Call) Run(run func(ctx context.Context, file *snips.File, content []byte, maxFiles uint64)) *MockFiles_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -151,20 +150,15 @@ func (_c *MockFiles_Create_Call) Run(run func(ctx context.Context, file *snips.F
 		if args[2] != nil {
 			arg2 = args[2].([]byte)
 		}
-		var arg3 bool
+		var arg3 uint64
 		if args[3] != nil {
-			arg3 = args[3].(bool)
-		}
-		var arg4 uint64
-		if args[4] != nil {
-			arg4 = args[4].(uint64)
+			arg3 = args[3].(uint64)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
-			arg4,
 		)
 	})
 	return _c
@@ -175,7 +169,7 @@ func (_c *MockFiles_Create_Call) Return(err error) *MockFiles_Create_Call {
 	return _c
 }
 
-func (_c *MockFiles_Create_Call) RunAndReturn(run func(ctx context.Context, file *snips.File, content []byte, compress bool, maxFiles uint64) error) *MockFiles_Create_Call {
+func (_c *MockFiles_Create_Call) RunAndReturn(run func(ctx context.Context, file *snips.File, content []byte, maxFiles uint64) error) *MockFiles_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -528,6 +522,82 @@ func (_c *MockFiles_FindByUser_Call) RunAndReturn(run func(ctx context.Context, 
 	return _c
 }
 
+// FindWithContent provides a mock function for the type MockFiles
+func (_mock *MockFiles) FindWithContent(ctx context.Context, id string) (*snips.File, []byte, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindWithContent")
+	}
+
+	var r0 *snips.File
+	var r1 []byte
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*snips.File, []byte, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *snips.File); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*snips.File)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) []byte); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]byte)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = returnFunc(ctx, id)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockFiles_FindWithContent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindWithContent'
+type MockFiles_FindWithContent_Call struct {
+	*mock.Call
+}
+
+// FindWithContent is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *MockFiles_Expecter) FindWithContent(ctx any, id any) *MockFiles_FindWithContent_Call {
+	return &MockFiles_FindWithContent_Call{Call: _e.mock.On("FindWithContent", ctx, id)}
+}
+
+func (_c *MockFiles_FindWithContent_Call) Run(run func(ctx context.Context, id string)) *MockFiles_FindWithContent_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFiles_FindWithContent_Call) Return(file *snips.File, bytes []byte, err error) *MockFiles_FindWithContent_Call {
+	_c.Call.Return(file, bytes, err)
+	return _c
+}
+
+func (_c *MockFiles_FindWithContent_Call) RunAndReturn(run func(ctx context.Context, id string) (*snips.File, []byte, error)) *MockFiles_FindWithContent_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetContent provides a mock function for the type MockFiles
 func (_mock *MockFiles) GetContent(ctx context.Context, id string) ([]byte, error) {
 	ret := _mock.Called(ctx, id)
@@ -654,16 +724,16 @@ func (_c *MockFiles_Update_Call) RunAndReturn(run func(ctx context.Context, file
 }
 
 // UpdateContent provides a mock function for the type MockFiles
-func (_mock *MockFiles) UpdateContent(ctx context.Context, file *snips.File, content []byte, compress bool) error {
-	ret := _mock.Called(ctx, file, content, compress)
+func (_mock *MockFiles) UpdateContent(ctx context.Context, file *snips.File, content []byte) error {
+	ret := _mock.Called(ctx, file, content)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateContent")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *snips.File, []byte, bool) error); ok {
-		r0 = returnFunc(ctx, file, content, compress)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *snips.File, []byte) error); ok {
+		r0 = returnFunc(ctx, file, content)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -679,12 +749,11 @@ type MockFiles_UpdateContent_Call struct {
 //   - ctx context.Context
 //   - file *snips.File
 //   - content []byte
-//   - compress bool
-func (_e *MockFiles_Expecter) UpdateContent(ctx any, file any, content any, compress any) *MockFiles_UpdateContent_Call {
-	return &MockFiles_UpdateContent_Call{Call: _e.mock.On("UpdateContent", ctx, file, content, compress)}
+func (_e *MockFiles_Expecter) UpdateContent(ctx any, file any, content any) *MockFiles_UpdateContent_Call {
+	return &MockFiles_UpdateContent_Call{Call: _e.mock.On("UpdateContent", ctx, file, content)}
 }
 
-func (_c *MockFiles_UpdateContent_Call) Run(run func(ctx context.Context, file *snips.File, content []byte, compress bool)) *MockFiles_UpdateContent_Call {
+func (_c *MockFiles_UpdateContent_Call) Run(run func(ctx context.Context, file *snips.File, content []byte)) *MockFiles_UpdateContent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -698,15 +767,10 @@ func (_c *MockFiles_UpdateContent_Call) Run(run func(ctx context.Context, file *
 		if args[2] != nil {
 			arg2 = args[2].([]byte)
 		}
-		var arg3 bool
-		if args[3] != nil {
-			arg3 = args[3].(bool)
-		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -717,7 +781,7 @@ func (_c *MockFiles_UpdateContent_Call) Return(err error) *MockFiles_UpdateConte
 	return _c
 }
 
-func (_c *MockFiles_UpdateContent_Call) RunAndReturn(run func(ctx context.Context, file *snips.File, content []byte, compress bool) error) *MockFiles_UpdateContent_Call {
+func (_c *MockFiles_UpdateContent_Call) RunAndReturn(run func(ctx context.Context, file *snips.File, content []byte) error) *MockFiles_UpdateContent_Call {
 	_c.Call.Return(run)
 	return _c
 }

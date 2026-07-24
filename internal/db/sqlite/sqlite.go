@@ -15,24 +15,26 @@ var sqliteMigrations embed.FS
 
 type migrator struct{ *sql.DB }
 
-func New(dsn string) (*db.DB, error) {
+// New builds a SQLite backend. When compress is true, file content and
+// revision diffs are stored zstd-compressed.
+func New(dsn string, compress bool) (*db.DB, error) {
 	database, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewWithDB(database), nil
+	return NewWithDB(database, compress), nil
 }
 
 // NewWithDB builds a SQLite backend around an existing connection pool.
-func NewWithDB(database *sql.DB) *db.DB {
+func NewWithDB(database *sql.DB, compress bool) *db.DB {
 	return &db.DB{
 		Migrator:   &migrator{DB: database},
 		Closer:     database,
-		Files:      &files{DB: database},
+		Files:      &files{DB: database, compress: compress},
 		PublicKeys: &publicKeys{DB: database},
 		Users:      &users{DB: database},
-		Revisions:  &revisions{DB: database},
+		Revisions:  &revisions{DB: database, compress: compress},
 		APIKeys:    &apiKeys{DB: database},
 	}
 }

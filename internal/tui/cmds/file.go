@@ -25,17 +25,13 @@ func DeselectFile() tea.Cmd {
 
 func LoadFile(database *db.DB, id string) tea.Cmd {
 	return func() tea.Msg {
-		file, err := database.Files.Find(context.Background(), id)
+		file, content, err := database.Files.FindWithContent(context.Background(), id)
 		if err != nil {
 			return msgs.Error{Err: err}
 		}
 
 		if file == nil {
 			return msgs.Error{Err: errors.New("file not found")}
-		}
-		content, err := database.Files.GetContent(context.Background(), id)
-		if err != nil {
-			return msgs.Error{Err: err}
 		}
 
 		return msgs.FileLoaded{

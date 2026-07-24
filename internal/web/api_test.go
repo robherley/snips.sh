@@ -228,8 +228,8 @@ func (suite *APISuite) TestListFiles_ByName() {
 
 func (suite *APISuite) TestCreateFile() {
 	suite.expectAuth()
-	suite.mockDB.Files.EXPECT().Create(mock.Anything, mock.Anything, []byte("hello world"), suite.config.FileCompression, suite.config.Limits.FilesPerUser).RunAndReturn(
-		func(_ context.Context, file *snips.File, _ []byte, _ bool, _ uint64) error {
+	suite.mockDB.Files.EXPECT().Create(mock.Anything, mock.Anything, []byte("hello world"), suite.config.Limits.FilesPerUser).RunAndReturn(
+		func(_ context.Context, file *snips.File, _ []byte, _ uint64) error {
 			file.ID = "newfile"
 			return nil
 		}).Once()
@@ -265,14 +265,14 @@ func (suite *APISuite) TestCreateFile_Errors() {
 
 	// name taken
 	suite.expectAuth()
-	suite.mockDB.Files.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(db.ErrNameTaken).Once()
+	suite.mockDB.Files.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(db.ErrNameTaken).Once()
 	res = suite.request("POST", "/api/v1/files?name=taken", strings.NewReader("hi"), true)
 	res.Body.Close()
 	suite.Equal(http.StatusConflict, res.StatusCode)
 
 	// file limit
 	suite.expectAuth()
-	suite.mockDB.Files.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(db.ErrFileLimit).Once()
+	suite.mockDB.Files.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(db.ErrFileLimit).Once()
 	res = suite.request("POST", "/api/v1/files", strings.NewReader("hi"), true)
 	res.Body.Close()
 	suite.Equal(http.StatusUnprocessableEntity, res.StatusCode)
@@ -368,8 +368,7 @@ func (suite *APISuite) TestGetFileContent() {
 	file := suite.file("file1", false)
 
 	suite.expectAuth()
-	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
-	suite.mockDB.Files.EXPECT().GetContent(mock.Anything, "file1").Return([]byte("hello world"), nil).Once()
+	suite.mockDB.Files.EXPECT().FindWithContent(mock.Anything, "file1").Return(file, []byte("hello world"), nil).Once()
 
 	res := suite.request("GET", "/api/v1/files/file1/content", nil, true)
 	suite.Equal(http.StatusOK, res.StatusCode)
@@ -388,8 +387,8 @@ func (suite *APISuite) TestUpdateFileContent() {
 	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(file, nil).Once()
 	suite.mockDB.Files.EXPECT().GetContent(mock.Anything, "file1").Return([]byte("hello world"), nil).Once()
 	suite.mockDB.Revisions.EXPECT().CountByFileID(mock.Anything, "file1").Return(0, nil).Once()
-	suite.mockDB.Revisions.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything, suite.config.FileCompression, suite.config.Limits.RevisionsPerFile).Return(nil).Once()
-	suite.mockDB.Files.EXPECT().UpdateContent(mock.Anything, mock.Anything, []byte("hello new world"), suite.config.FileCompression).Return(nil).Once()
+	suite.mockDB.Revisions.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything, suite.config.Limits.RevisionsPerFile).Return(nil).Once()
+	suite.mockDB.Files.EXPECT().UpdateContent(mock.Anything, mock.Anything, []byte("hello new world")).Return(nil).Once()
 
 	res := suite.request("PUT", "/api/v1/files/file1/content", strings.NewReader("hello new world"), true)
 	suite.Equal(http.StatusOK, res.StatusCode)

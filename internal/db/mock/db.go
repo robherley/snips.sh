@@ -5,6 +5,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type nopCloser struct{}
+
+func (nopCloser) Close() error { return nil }
+
 // Database bundles a DB with its table-level mocks.
 type Database struct {
 	DB         *db.DB
@@ -31,6 +35,7 @@ func NewDB(t interface {
 	}
 	mocks.DB = &db.DB{
 		Migrator:   mocks.Migrator,
+		Closer:     nopCloser{},
 		Files:      mocks.Files,
 		PublicKeys: mocks.PublicKeys,
 		Users:      mocks.Users,

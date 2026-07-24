@@ -587,7 +587,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		Name:    name,
 	}
 
-	if err := h.DB.Files.Create(sesh.Context(), &file, content, h.Config.FileCompression, h.Config.Limits.FilesPerUser); err != nil {
+	if err := h.DB.Files.Create(sesh.Context(), &file, content, h.Config.Limits.FilesPerUser); err != nil {
 		if errors.Is(err, db.ErrNameTaken) {
 			sesh.Error(err, "Unable to create file", "You already have a file named %q.", name)
 			return

@@ -26,14 +26,16 @@ type Migrator interface {
 type Files interface {
 	// Find returns a file by its ID. It does not include file content.
 	Find(ctx context.Context, id string) (*snips.File, error)
-	// Create creates a new file. If a user has more than maxFiles, an error is returned.
-	Create(ctx context.Context, file *snips.File, content []byte, compress bool, maxFiles uint64) error
+	// FindWithContent returns a file and its decompressed content by ID in a single query.
+	FindWithContent(ctx context.Context, id string) (*snips.File, []byte, error)
+	// Create creates a new file, setting file.Size from content. If a user has more than maxFiles, an error is returned.
+	Create(ctx context.Context, file *snips.File, content []byte, maxFiles uint64) error
 	// GetContent returns a file's decompressed content by ID.
 	GetContent(ctx context.Context, id string) ([]byte, error)
-	// Update updates a file.
+	// Update updates a file's metadata, never its content.
 	Update(ctx context.Context, file *snips.File) error
-	// UpdateContent updates a file and replaces its content.
-	UpdateContent(ctx context.Context, file *snips.File, content []byte, compress bool) error
+	// UpdateContent updates a file and replaces its content, setting file.Size.
+	UpdateContent(ctx context.Context, file *snips.File, content []byte) error
 	// Delete deletes a file by its ID.
 	Delete(ctx context.Context, id string) error
 	// DeleteByUser deletes all of a user's files and their revisions, returning the number of files deleted.
@@ -62,7 +64,7 @@ type Users interface {
 
 type Revisions interface {
 	// Create creates a new file revision. If maxRevisions > 0, prunes oldest revisions exceeding the limit.
-	Create(ctx context.Context, revision *snips.Revision, diff []byte, compress bool, maxRevisions uint64) error
+	Create(ctx context.Context, revision *snips.Revision, diff []byte, maxRevisions uint64) error
 	// GetDiff returns a revision's decompressed diff by ID.
 	GetDiff(ctx context.Context, id string) ([]byte, error)
 	// FindByFileID returns a file's revisions, newest first. It does not include diff content.
