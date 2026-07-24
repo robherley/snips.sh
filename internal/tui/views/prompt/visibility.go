@@ -48,7 +48,7 @@ func (d *visibilityDialog) submit(e env) tea.Cmd {
 
 	e.file.Private = !e.file.Private
 
-	if err := e.db.UpdateFile(e.ctx, e.file); err != nil {
+	if err := e.db.Files.Update(e.ctx, e.file); err != nil {
 		return SetPromptErrorCmd(err)
 	}
 

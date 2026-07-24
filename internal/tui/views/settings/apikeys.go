@@ -75,7 +75,7 @@ func (m apiKeysView) enter() (apiKeysView, error) {
 
 // reload refreshes the key list from the database.
 func (m apiKeysView) reload(into *apiKeysView) error {
-	keys, err := m.db.FindAPIKeysByUser(m.ctx, m.user.ID)
+	keys, err := m.db.APIKeys.FindByUser(m.ctx, m.user.ID)
 	if err != nil {
 		return fmt.Errorf("failed to load api keys: %w", err)
 	}
@@ -207,7 +207,7 @@ func (m apiKeysView) create() (apiKeysView, result) {
 		ExpiresAt: expiresAt,
 	}
 
-	if err := m.db.CreateAPIKey(m.ctx, key, m.cfg.Limits.APIKeysPerUser); err != nil {
+	if err := m.db.APIKeys.Create(m.ctx, key, m.cfg.Limits.APIKeysPerUser); err != nil {
 		if errors.Is(err, db.ErrAPIKeyLimit) {
 			m.feedback = feedback.Error(fmt.Sprintf("api key limit reached (%d)", m.cfg.Limits.APIKeysPerUser))
 		} else {
@@ -242,7 +242,7 @@ func (m apiKeysView) deleteKey() (apiKeysView, result) {
 		return m, result{}
 	}
 
-	deleted, err := m.db.DeleteAPIKey(m.ctx, selected.ID, m.user.ID)
+	deleted, err := m.db.APIKeys.Delete(m.ctx, selected.ID, m.user.ID)
 	if err != nil || !deleted {
 		msg := "failed to delete api key"
 		if err != nil {

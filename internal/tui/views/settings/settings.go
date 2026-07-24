@@ -46,7 +46,7 @@ var entries = []entry{
 type deps struct {
 	ctx  context.Context
 	cfg  *config.Config
-	db   db.DB
+	db   *db.DB
 	user *snips.User
 }
 
@@ -79,7 +79,7 @@ type Settings struct {
 	delete  deleteView
 }
 
-func New(ctx context.Context, cfg *config.Config, width, height int, database db.DB, user *snips.User, fingerprint string) Settings {
+func New(ctx context.Context, cfg *config.Config, width, height int, database *db.DB, user *snips.User, fingerprint string) Settings {
 	d := deps{
 		ctx:  ctx,
 		cfg:  cfg,

@@ -23,9 +23,9 @@ func DeselectFile() tea.Cmd {
 	}
 }
 
-func LoadFile(database db.DB, id string) tea.Cmd {
+func LoadFile(database *db.DB, id string) tea.Cmd {
 	return func() tea.Msg {
-		file, err := database.FindFile(context.Background(), id)
+		file, content, err := database.Files.FindWithContent(context.Background(), id)
 		if err != nil {
 			return msgs.Error{Err: err}
 		}
@@ -35,14 +35,15 @@ func LoadFile(database db.DB, id string) tea.Cmd {
 		}
 
 		return msgs.FileLoaded{
-			File: file,
+			File:    file,
+			Content: content,
 		}
 	}
 }
 
-func ReloadFiles(database db.DB, userID string) tea.Cmd {
+func ReloadFiles(database *db.DB, userID string) tea.Cmd {
 	return func() tea.Msg {
-		files, err := database.FindFilesByUser(context.Background(), userID)
+		files, err := database.Files.FindByUser(context.Background(), userID)
 		if err != nil {
 			return msgs.Error{Err: err}
 		}

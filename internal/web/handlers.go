@@ -193,13 +193,13 @@ func DocOGImageHandler(cfg *config.Config, assets Assets) http.HandlerFunc {
 // findFile resolves the {fileID} path segment. When the route carries an
 // /n/{name} segment, it must match the file's name (case-insensitively)
 // or the file is treated as not found, so named links can't be spoofed.
-func findFile(r *http.Request, database db.DB) (*snips.File, error) {
+func findFile(r *http.Request, database *db.DB) (*snips.File, error) {
 	fileID := r.PathValue("fileID")
 	if fileID == "" {
 		return nil, nil
 	}
 
-	file, err := database.FindFile(r.Context(), fileID)
+	file, err := database.Files.Find(r.Context(), fileID)
 	if err != nil || file == nil {
 		return nil, err
 	}
@@ -225,7 +225,7 @@ func filePath(r *http.Request, file *snips.File) string {
 	return fmt.Sprintf("/f/%s", file.ID)
 }
 
-func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+func FileHandler(cfg *config.Config, database *db.DB, assets Assets) http.HandlerFunc {
 	signer := signer.New(cfg.HMACKey)
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
@@ -250,7 +250,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			return
 		}
 
-		content, err := file.GetContent()
+		content, err := database.Files.FindContent(r.Context(), file.ID)
 		if err != nil {
 			log.Error("unable to get file content", "err", err)
 			http.Error(w, "unable to get file content", http.StatusInternalServerError)
@@ -313,7 +313,7 @@ func FileHandler(cfg *config.Config, database db.DB, assets Assets) http.Handler
 			css = renderer.GetSyntaxCSS()
 		}
 
-		revisionCount, err := database.CountRevisionsByFileID(r.Context(), file.ID)
+		revisionCount, err := database.Revisions.CountByFileID(r.Context(), file.ID)
 		if err != nil {
 			log.Warn("unable to count revisions", "err", err)
 		}
@@ -383,7 +383,7 @@ func newOGRenderer(assets Assets) *opengraph.Renderer {
 	return renderer
 }
 
-func OGImageHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+func OGImageHandler(cfg *config.Config, database *db.DB, assets Assets) http.HandlerFunc {
 	sgnr := signer.New(cfg.HMACKey)
 	renderer := newOGRenderer(assets)
 
@@ -426,7 +426,7 @@ func OGImageHandler(cfg *config.Config, database db.DB, assets Assets) http.Hand
 	}
 }
 
-func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+func RevisionsHandler(cfg *config.Config, database *db.DB, assets Assets) http.HandlerFunc {
 	sgnr := signer.New(cfg.HMACKey)
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
@@ -451,7 +451,7 @@ func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.Ha
 			return
 		}
 
-		revisions, err := database.FindRevisionsByFileID(r.Context(), file.ID)
+		revisions, err := database.Revisions.FindByFileID(r.Context(), file.ID)
 		if err != nil {
 			log.Error("unable to lookup revisions", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -496,7 +496,7 @@ func RevisionsHandler(cfg *config.Config, database db.DB, assets Assets) http.Ha
 	}
 }
 
-func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http.HandlerFunc {
+func RevisionDiffHandler(cfg *config.Config, database *db.DB, assets Assets) http.HandlerFunc {
 	sgnr := signer.New(cfg.HMACKey)
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.From(r.Context())
@@ -533,7 +533,7 @@ func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http
 			return
 		}
 
-		revision, err := database.FindRevisionByFileIDAndSequence(r.Context(), file.ID, seq)
+		revision, err := database.Revisions.FindByFileIDAndSequence(r.Context(), file.ID, seq)
 		if err != nil {
 			log.Error("unable to lookup revision", "err", err)
 			http.NotFound(w, r)
@@ -545,7 +545,7 @@ func RevisionDiffHandler(cfg *config.Config, database db.DB, assets Assets) http
 			return
 		}
 
-		diffContent, err := revision.GetDiff()
+		diffContent, err := database.Revisions.FindDiff(r.Context(), revision.ID)
 		if err != nil {
 			log.Error("unable to decompress diff", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)

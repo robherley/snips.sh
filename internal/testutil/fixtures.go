@@ -13,6 +13,8 @@ type fixtures struct{}
 var Fixtures = &fixtures{}
 
 func (f *fixtures) File(t *testing.T) snips.File {
+	t.Helper()
+
 	file := snips.File{
 		ID:        id.New(),
 		CreatedAt: time.Now().Add(-5 * time.Minute),
@@ -20,11 +22,6 @@ func (f *fixtures) File(t *testing.T) snips.File {
 		Size:      100,
 		Private:   false,
 		UserID:    id.New(),
-	}
-
-	err := file.SetContent([]byte("hello world"), true)
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	return file

@@ -28,7 +28,7 @@ import (
 
 type SessionHandler struct {
 	Config *config.Config
-	DB     db.DB
+	DB     *db.DB
 }
 
 func (h *SessionHandler) HandleFunc(_ ssh.Handler) ssh.Handler {
@@ -64,13 +64,13 @@ func (h *SessionHandler) Interactive(sesh *UserSession) {
 
 	pty, winChan, _ := sesh.Pty()
 
-	files, err := h.DB.FindFilesByUser(sesh.Context(), sesh.UserID())
+	files, err := h.DB.Files.FindByUser(sesh.Context(), sesh.UserID())
 	if err != nil {
 		sesh.Error(err, "Failed to retrieve files", "There was an error retrieving your files. Please try again.")
 		return
 	}
 
-	user, err := h.DB.FindUser(sesh.Context(), sesh.UserID())
+	user, err := h.DB.Users.Find(sesh.Context(), sesh.UserID())
 	if err != nil || user == nil {
 		sesh.Error(err, "Failed to load user", "There was an error loading your user. Please try again.")
 		return
@@ -135,10 +135,10 @@ func (h *SessionHandler) FileRequest(sesh *UserSession) {
 
 	if sesh.IsNamedFileRequest() {
 		identifier = sesh.RequestedFileName()
-		file, err = h.DB.FindFileByName(sesh.Context(), userID, identifier)
+		file, err = h.DB.Files.FindByName(sesh.Context(), userID, identifier)
 	} else {
 		identifier = sesh.RequestedFileID()
-		file, err = h.DB.FindFile(sesh.Context(), identifier)
+		file, err = h.DB.Files.Find(sesh.Context(), identifier)
 	}
 
 	if err != nil {
@@ -216,7 +216,7 @@ func (h *SessionHandler) RenameFile(sesh *UserSession, file *snips.File) {
 
 		oldName := file.Name
 		file.Name = ""
-		if err := h.DB.UpdateFile(sesh.Context(), file); err != nil {
+		if err := h.DB.Files.Update(sesh.Context(), file); err != nil {
 			file.Name = oldName
 			sesh.Error(err, "Unable to rename file", "There was an error renaming file: %q", file.ID)
 			return
@@ -258,7 +258,7 @@ func (h *SessionHandler) RenameFile(sesh *UserSession, file *snips.File) {
 
 	previous := file.Name
 	file.Name = normalized
-	if err := h.DB.UpdateFile(sesh.Context(), file); err != nil {
+	if err := h.DB.Files.Update(sesh.Context(), file); err != nil {
 		file.Name = previous
 		if errors.Is(err, db.ErrNameTaken) {
 			sesh.Error(err, "Unable to rename file", "You already have a file named %q.", normalized)
@@ -321,7 +321,7 @@ func (h *SessionHandler) DeleteFile(sesh *UserSession, file *snips.File) {
 		}
 	}
 
-	if err := h.DB.DeleteFile(sesh.Context(), file.ID); err != nil {
+	if err := h.DB.Files.Delete(sesh.Context(), file.ID); err != nil {
 		sesh.Error(err, "Unable to delete file", "There was an error deleting file: %q", file.ID)
 		return
 	}
@@ -391,7 +391,7 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 }
 
 func (h *SessionHandler) DownloadFile(sesh *UserSession, file *snips.File) {
-	content, err := file.GetContent()
+	content, err := h.DB.Files.FindContent(sesh.Context(), file.ID)
 	if err != nil {
 		sesh.Error(err, "Unable to download file", "There was an error downloading the file: %q", file.ID)
 	} else {
@@ -587,11 +587,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 		Name:    name,
 	}
 
-	if err := file.SetContent(content, h.Config.FileCompression); err != nil {
-		sesh.Error(err, "Unable to create file", "There was an error creating the file: %s", err.Error())
-	}
-
-	if err := h.DB.CreateFile(sesh.Context(), &file, h.Config.Limits.FilesPerUser); err != nil {
+	if err := h.DB.Files.Create(sesh.Context(), &file, content, h.Config.Limits.FilesPerUser); err != nil {
 		if errors.Is(err, db.ErrNameTaken) {
 			sesh.Error(err, "Unable to create file", "You already have a file named %q.", name)
 			return

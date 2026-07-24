@@ -60,7 +60,7 @@ func WithLocalhostOnly(next http.HandlerFunc) http.HandlerFunc {
 }
 
 // WithAuthentication authenticates a request with a bearer token.
-func WithAuthentication(database db.DB, next http.HandlerFunc) http.HandlerFunc {
+func WithAuthentication(database *db.DB, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 		if !ok || !strings.HasPrefix(token, snips.APIKeyTokenPrefix) {
@@ -69,7 +69,7 @@ func WithAuthentication(database db.DB, next http.HandlerFunc) http.HandlerFunc 
 			return
 		}
 
-		key, err := database.FindAPIKeyByTokenHash(r.Context(), snips.HashAPIKeyToken(token))
+		key, err := database.APIKeys.FindByTokenHash(r.Context(), snips.HashAPIKeyToken(token))
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
@@ -87,7 +87,7 @@ func WithAuthentication(database db.DB, next http.HandlerFunc) http.HandlerFunc 
 			return
 		}
 
-		if err := database.TouchAPIKey(r.Context(), key.ID); err != nil {
+		if err := database.APIKeys.Touch(r.Context(), key.ID); err != nil {
 			logger.From(r.Context()).Warn("unable to touch api key", "err", err, "api_key_id", key.ID)
 		}
 

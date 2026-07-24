@@ -86,7 +86,7 @@ func (d *extensionDialog) submit(e env) tea.Cmd {
 	old := e.file.Type
 	e.file.Type = item.name
 
-	if err := e.db.UpdateFile(e.ctx, e.file); err != nil {
+	if err := e.db.Files.Update(e.ctx, e.file); err != nil {
 		return SetPromptErrorCmd(err)
 	}
 

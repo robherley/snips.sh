@@ -34,7 +34,7 @@ func (d *deleteDialog) submit(e env) tea.Cmd {
 		return SetPromptErrorCmd(errors.New("please specify the file id to confirm"))
 	}
 
-	if err := e.db.DeleteFile(e.ctx, e.file.ID); err != nil {
+	if err := e.db.Files.Delete(e.ctx, e.file.ID); err != nil {
 		return SetPromptErrorCmd(err)
 	}
 

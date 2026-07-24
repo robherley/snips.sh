@@ -9,7 +9,8 @@ type FileSelected struct {
 type FileDeselected struct{}
 
 type FileLoaded struct {
-	File *snips.File
+	File    *snips.File
+	Content []byte
 }
 
 type ReloadFiles struct {

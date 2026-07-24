@@ -17,7 +17,7 @@ import (
 
 // AssignUser will attempt to match a user with a public key fingerprint.
 // If a user is not found, one will be created with the current fingerprint attached.
-func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) ssh.Handler {
+func AssignUser(database *db.DB, externalAddress url.URL) func(next ssh.Handler) ssh.Handler {
 	return func(next ssh.Handler) ssh.Handler {
 		return func(sesh ssh.Session) {
 			fingerprint := gossh.FingerprintSHA256(sesh.PublicKey())
@@ -30,7 +30,7 @@ func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) 
 			)
 
 			// try to find a public key
-			pubkey, err = database.FindPublicKeyByFingerprint(sesh.Context(), fingerprint)
+			pubkey, err = database.PublicKeys.FindByFingerprint(sesh.Context(), fingerprint)
 			if err != nil {
 				slog.Error("unable to find publickey", "err", err)
 				wish.Fatalln(sesh, "❌ Unable to authenticate")
@@ -49,7 +49,7 @@ func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) 
 					Type:        sesh.PublicKey().Type(),
 				}
 
-				user, err = database.CreateUserWithPublicKey(sesh.Context(), pubkey)
+				user, err = database.Users.CreateWithPublicKey(sesh.Context(), pubkey)
 				if err != nil {
 					slog.Error("unable to create user", "err", err)
 					wish.Fatalln(sesh, "❌ Unable to authenticate")
@@ -58,7 +58,7 @@ func AssignUser(database db.DB, externalAddress url.URL) func(next ssh.Handler) 
 				metrics.IncrCounter([]string{"user", "create"}, 1)
 			} else {
 				// find user
-				user, err = database.FindUser(sesh.Context(), pubkey.UserID)
+				user, err = database.Users.Find(sesh.Context(), pubkey.UserID)
 				if err != nil || user == nil {
 					slog.Error("unable to find user", "err", err)
 					wish.Fatalln(sesh, "❌ Unable to authenticate")

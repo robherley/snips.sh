@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFileContent(t *testing.T) {
+func TestContentEncoding(t *testing.T) {
 	testcases := []struct {
 		name       string
 		in         []byte
@@ -38,15 +38,13 @@ func TestFileContent(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			var f File
-			err := f.SetContent(tc.in, tc.compressed)
+			rawContent, err := EncodeContent(tc.in, tc.compressed)
 			assert.NoError(t, err)
 
-			gotContent, err := f.GetContent()
+			gotContent, err := DecodeContent(rawContent)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.want["getContent"], gotContent)
-			assert.Equal(t, tc.want["rawContent"], f.RawContent)
-
+			assert.Equal(t, tc.want["rawContent"], rawContent)
 		})
 	}
 }

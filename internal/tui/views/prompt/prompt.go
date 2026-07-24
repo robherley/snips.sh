@@ -21,7 +21,7 @@ import (
 type Prompt struct {
 	ctx    context.Context
 	cfg    *config.Config
-	db     db.DB
+	db     *db.DB
 	width  int
 	height int
 	theme  color.Color
@@ -39,7 +39,7 @@ func contentWidth(width int) int {
 	return max(styles.ModalMinWidth, min(width-10, 76))
 }
 
-func New(ctx context.Context, cfg *config.Config, db db.DB, width, height int, theme color.Color) Prompt {
+func New(ctx context.Context, cfg *config.Config, db *db.DB, width, height int, theme color.Color) Prompt {
 	return Prompt{
 		ctx:    ctx,
 		cfg:    cfg,

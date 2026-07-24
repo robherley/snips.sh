@@ -38,7 +38,7 @@ func newDeleteView(d deps) deleteView {
 
 // enter counts the files at stake and focuses the confirmation input.
 func (m deleteView) enter() (deleteView, tea.Cmd, error) {
-	count, err := m.db.CountFilesByUser(m.ctx, m.user.ID)
+	count, err := m.db.Files.CountByUser(m.ctx, m.user.ID)
 	if err != nil {
 		return m, nil, fmt.Errorf("failed to count files: %w", err)
 	}
@@ -68,7 +68,7 @@ func (m deleteView) update(msg tea.KeyPressMsg) (deleteView, result) {
 }
 
 func (m deleteView) deleteEverything() (deleteView, result) {
-	count, err := m.db.DeleteFilesByUser(m.ctx, m.user.ID)
+	count, err := m.db.Files.DeleteByUser(m.ctx, m.user.ID)
 	if err != nil {
 		m.feedback = feedback.Error("failed to delete: " + err.Error())
 		return m, result{}

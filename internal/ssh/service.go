@@ -11,7 +11,7 @@ type Service struct {
 	*ssh.Server
 }
 
-func New(cfg *config.Config, db db.DB) (*Service, error) {
+func New(cfg *config.Config, db *db.DB) (*Service, error) {
 	sessionHandler := &SessionHandler{
 		Config: cfg,
 		DB:     db,

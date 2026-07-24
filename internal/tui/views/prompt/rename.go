@@ -48,7 +48,7 @@ func (d *renameDialog) submit(e env) tea.Cmd {
 
 	previous := e.file.Name
 	e.file.Name = normalized
-	if err := e.db.UpdateFile(e.ctx, e.file); err != nil {
+	if err := e.db.Files.Update(e.ctx, e.file); err != nil {
 		e.file.Name = previous
 		if errors.Is(err, db.ErrNameTaken) {
 			return SetPromptErrorCmd(fmt.Errorf("you already have a file named %q", normalized))
@@ -70,7 +70,7 @@ func (d *renameDialog) removeName(e env) tea.Cmd {
 
 	old := e.file.Name
 	e.file.Name = ""
-	if err := e.db.UpdateFile(e.ctx, e.file); err != nil {
+	if err := e.db.Files.Update(e.ctx, e.file); err != nil {
 		e.file.Name = old
 		return SetPromptErrorCmd(err)
 	}

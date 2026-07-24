@@ -27,7 +27,7 @@ import (
 type TUI struct {
 	UserID      string
 	Fingerprint string
-	DB          db.DB
+	DB          *db.DB
 
 	ctx    context.Context
 	cfg    *config.Config
@@ -41,7 +41,7 @@ type TUI struct {
 	theme  color.Color
 }
 
-func New(ctx context.Context, cfg *config.Config, width, height int, user *snips.User, fingerprint string, database db.DB, files []*snips.File) TUI {
+func New(ctx context.Context, cfg *config.Config, width, height int, user *snips.User, fingerprint string, database *db.DB, files []*snips.File) TUI {
 	t := TUI{
 		UserID:      user.ID,
 		Fingerprint: fingerprint,

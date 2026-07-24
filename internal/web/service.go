@@ -11,7 +11,7 @@ type Service struct {
 	*http.Server
 }
 
-func New(cfg *config.Config, database db.DB, assets Assets) (*Service, error) {
+func New(cfg *config.Config, database *db.DB, assets Assets) (*Service, error) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /{$}", LandingHandler(cfg, assets))
