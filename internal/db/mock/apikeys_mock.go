@@ -64,7 +64,7 @@ type MockAPIKeys_Create_Call struct {
 //   - ctx context.Context
 //   - key *snips.APIKey
 //   - maxKeys uint64
-func (_e *MockAPIKeys_Expecter) Create(ctx interface{}, key interface{}, maxKeys interface{}) *MockAPIKeys_Create_Call {
+func (_e *MockAPIKeys_Expecter) Create(ctx any, key any, maxKeys any) *MockAPIKeys_Create_Call {
 	return &MockAPIKeys_Create_Call{Call: _e.mock.On("Create", ctx, key, maxKeys)}
 }
 
@@ -136,7 +136,7 @@ type MockAPIKeys_Delete_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - userID string
-func (_e *MockAPIKeys_Expecter) Delete(ctx interface{}, id interface{}, userID interface{}) *MockAPIKeys_Delete_Call {
+func (_e *MockAPIKeys_Expecter) Delete(ctx any, id any, userID any) *MockAPIKeys_Delete_Call {
 	return &MockAPIKeys_Delete_Call{Call: _e.mock.On("Delete", ctx, id, userID)}
 }
 
@@ -209,7 +209,7 @@ type MockAPIKeys_FindByTokenHash_Call struct {
 // FindByTokenHash is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tokenHash string
-func (_e *MockAPIKeys_Expecter) FindByTokenHash(ctx interface{}, tokenHash interface{}) *MockAPIKeys_FindByTokenHash_Call {
+func (_e *MockAPIKeys_Expecter) FindByTokenHash(ctx any, tokenHash any) *MockAPIKeys_FindByTokenHash_Call {
 	return &MockAPIKeys_FindByTokenHash_Call{Call: _e.mock.On("FindByTokenHash", ctx, tokenHash)}
 }
 
@@ -277,7 +277,7 @@ type MockAPIKeys_FindByUser_Call struct {
 // FindByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockAPIKeys_Expecter) FindByUser(ctx interface{}, userID interface{}) *MockAPIKeys_FindByUser_Call {
+func (_e *MockAPIKeys_Expecter) FindByUser(ctx any, userID any) *MockAPIKeys_FindByUser_Call {
 	return &MockAPIKeys_FindByUser_Call{Call: _e.mock.On("FindByUser", ctx, userID)}
 }
 
@@ -334,7 +334,7 @@ type MockAPIKeys_Touch_Call struct {
 // Touch is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockAPIKeys_Expecter) Touch(ctx interface{}, id interface{}) *MockAPIKeys_Touch_Call {
+func (_e *MockAPIKeys_Expecter) Touch(ctx any, id any) *MockAPIKeys_Touch_Call {
 	return &MockAPIKeys_Touch_Call{Call: _e.mock.On("Touch", ctx, id)}
 }
 

@@ -74,7 +74,7 @@ type MockPublicKeys_FindByFingerprint_Call struct {
 // FindByFingerprint is a helper method to define mock.On call
 //   - ctx context.Context
 //   - fingerprint string
-func (_e *MockPublicKeys_Expecter) FindByFingerprint(ctx interface{}, fingerprint interface{}) *MockPublicKeys_FindByFingerprint_Call {
+func (_e *MockPublicKeys_Expecter) FindByFingerprint(ctx any, fingerprint any) *MockPublicKeys_FindByFingerprint_Call {
 	return &MockPublicKeys_FindByFingerprint_Call{Call: _e.mock.On("FindByFingerprint", ctx, fingerprint)}
 }
 

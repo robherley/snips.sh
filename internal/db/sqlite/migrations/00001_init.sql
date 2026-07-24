@@ -1,4 +1,3 @@
--- SQLite
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS `users` (

@@ -73,7 +73,7 @@ type MockFiles_CountByUser_Call struct {
 // CountByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockFiles_Expecter) CountByUser(ctx interface{}, userID interface{}) *MockFiles_CountByUser_Call {
+func (_e *MockFiles_Expecter) CountByUser(ctx any, userID any) *MockFiles_CountByUser_Call {
 	return &MockFiles_CountByUser_Call{Call: _e.mock.On("CountByUser", ctx, userID)}
 }
 
@@ -133,7 +133,7 @@ type MockFiles_Create_Call struct {
 //   - content []byte
 //   - compress bool
 //   - maxFiles uint64
-func (_e *MockFiles_Expecter) Create(ctx interface{}, file interface{}, content interface{}, compress interface{}, maxFiles interface{}) *MockFiles_Create_Call {
+func (_e *MockFiles_Expecter) Create(ctx any, file any, content any, compress any, maxFiles any) *MockFiles_Create_Call {
 	return &MockFiles_Create_Call{Call: _e.mock.On("Create", ctx, file, content, compress, maxFiles)}
 }
 
@@ -205,7 +205,7 @@ type MockFiles_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockFiles_Expecter) Delete(ctx interface{}, id interface{}) *MockFiles_Delete_Call {
+func (_e *MockFiles_Expecter) Delete(ctx any, id any) *MockFiles_Delete_Call {
 	return &MockFiles_Delete_Call{Call: _e.mock.On("Delete", ctx, id)}
 }
 
@@ -271,7 +271,7 @@ type MockFiles_DeleteByUser_Call struct {
 // DeleteByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockFiles_Expecter) DeleteByUser(ctx interface{}, userID interface{}) *MockFiles_DeleteByUser_Call {
+func (_e *MockFiles_Expecter) DeleteByUser(ctx any, userID any) *MockFiles_DeleteByUser_Call {
 	return &MockFiles_DeleteByUser_Call{Call: _e.mock.On("DeleteByUser", ctx, userID)}
 }
 
@@ -339,7 +339,7 @@ type MockFiles_Find_Call struct {
 // Find is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockFiles_Expecter) Find(ctx interface{}, id interface{}) *MockFiles_Find_Call {
+func (_e *MockFiles_Expecter) Find(ctx any, id any) *MockFiles_Find_Call {
 	return &MockFiles_Find_Call{Call: _e.mock.On("Find", ctx, id)}
 }
 
@@ -408,7 +408,7 @@ type MockFiles_FindByName_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - name string
-func (_e *MockFiles_Expecter) FindByName(ctx interface{}, userID interface{}, name interface{}) *MockFiles_FindByName_Call {
+func (_e *MockFiles_Expecter) FindByName(ctx any, userID any, name any) *MockFiles_FindByName_Call {
 	return &MockFiles_FindByName_Call{Call: _e.mock.On("FindByName", ctx, userID, name)}
 }
 
@@ -488,9 +488,9 @@ type MockFiles_FindByUser_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - opts ...db.PageOption
-func (_e *MockFiles_Expecter) FindByUser(ctx interface{}, userID interface{}, opts ...interface{}) *MockFiles_FindByUser_Call {
+func (_e *MockFiles_Expecter) FindByUser(ctx any, userID any, opts ...any) *MockFiles_FindByUser_Call {
 	return &MockFiles_FindByUser_Call{Call: _e.mock.On("FindByUser",
-		append([]interface{}{ctx, userID}, opts...)...)}
+		append([]any{ctx, userID}, opts...)...)}
 }
 
 func (_c *MockFiles_FindByUser_Call) Run(run func(ctx context.Context, userID string, opts ...db.PageOption)) *MockFiles_FindByUser_Call {
@@ -564,7 +564,7 @@ type MockFiles_GetContent_Call struct {
 // GetContent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockFiles_Expecter) GetContent(ctx interface{}, id interface{}) *MockFiles_GetContent_Call {
+func (_e *MockFiles_Expecter) GetContent(ctx any, id any) *MockFiles_GetContent_Call {
 	return &MockFiles_GetContent_Call{Call: _e.mock.On("GetContent", ctx, id)}
 }
 
@@ -621,7 +621,7 @@ type MockFiles_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - file *snips.File
-func (_e *MockFiles_Expecter) Update(ctx interface{}, file interface{}) *MockFiles_Update_Call {
+func (_e *MockFiles_Expecter) Update(ctx any, file any) *MockFiles_Update_Call {
 	return &MockFiles_Update_Call{Call: _e.mock.On("Update", ctx, file)}
 }
 
@@ -680,7 +680,7 @@ type MockFiles_UpdateContent_Call struct {
 //   - file *snips.File
 //   - content []byte
 //   - compress bool
-func (_e *MockFiles_Expecter) UpdateContent(ctx interface{}, file interface{}, content interface{}, compress interface{}) *MockFiles_UpdateContent_Call {
+func (_e *MockFiles_Expecter) UpdateContent(ctx any, file any, content any, compress any) *MockFiles_UpdateContent_Call {
 	return &MockFiles_UpdateContent_Call{Call: _e.mock.On("UpdateContent", ctx, file, content, compress)}
 }
 

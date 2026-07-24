@@ -61,7 +61,7 @@ type MockMigrator_Migrate_Call struct {
 
 // Migrate is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockMigrator_Expecter) Migrate(ctx interface{}) *MockMigrator_Migrate_Call {
+func (_e *MockMigrator_Expecter) Migrate(ctx any) *MockMigrator_Migrate_Call {
 	return &MockMigrator_Migrate_Call{Call: _e.mock.On("Migrate", ctx)}
 }
 

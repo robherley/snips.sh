@@ -73,7 +73,7 @@ type MockRevisions_CountByFileID_Call struct {
 // CountByFileID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - fileID string
-func (_e *MockRevisions_Expecter) CountByFileID(ctx interface{}, fileID interface{}) *MockRevisions_CountByFileID_Call {
+func (_e *MockRevisions_Expecter) CountByFileID(ctx any, fileID any) *MockRevisions_CountByFileID_Call {
 	return &MockRevisions_CountByFileID_Call{Call: _e.mock.On("CountByFileID", ctx, fileID)}
 }
 
@@ -133,7 +133,7 @@ type MockRevisions_Create_Call struct {
 //   - diff []byte
 //   - compress bool
 //   - maxRevisions uint64
-func (_e *MockRevisions_Expecter) Create(ctx interface{}, revision interface{}, diff interface{}, compress interface{}, maxRevisions interface{}) *MockRevisions_Create_Call {
+func (_e *MockRevisions_Expecter) Create(ctx any, revision any, diff any, compress any, maxRevisions any) *MockRevisions_Create_Call {
 	return &MockRevisions_Create_Call{Call: _e.mock.On("Create", ctx, revision, diff, compress, maxRevisions)}
 }
 
@@ -223,9 +223,9 @@ type MockRevisions_FindByFileID_Call struct {
 //   - ctx context.Context
 //   - fileID string
 //   - opts ...db.PageOption
-func (_e *MockRevisions_Expecter) FindByFileID(ctx interface{}, fileID interface{}, opts ...interface{}) *MockRevisions_FindByFileID_Call {
+func (_e *MockRevisions_Expecter) FindByFileID(ctx any, fileID any, opts ...any) *MockRevisions_FindByFileID_Call {
 	return &MockRevisions_FindByFileID_Call{Call: _e.mock.On("FindByFileID",
-		append([]interface{}{ctx, fileID}, opts...)...)}
+		append([]any{ctx, fileID}, opts...)...)}
 }
 
 func (_c *MockRevisions_FindByFileID_Call) Run(run func(ctx context.Context, fileID string, opts ...db.PageOption)) *MockRevisions_FindByFileID_Call {
@@ -300,7 +300,7 @@ type MockRevisions_FindByFileIDAndSequence_Call struct {
 //   - ctx context.Context
 //   - fileID string
 //   - sequence int64
-func (_e *MockRevisions_Expecter) FindByFileIDAndSequence(ctx interface{}, fileID interface{}, sequence interface{}) *MockRevisions_FindByFileIDAndSequence_Call {
+func (_e *MockRevisions_Expecter) FindByFileIDAndSequence(ctx any, fileID any, sequence any) *MockRevisions_FindByFileIDAndSequence_Call {
 	return &MockRevisions_FindByFileIDAndSequence_Call{Call: _e.mock.On("FindByFileIDAndSequence", ctx, fileID, sequence)}
 }
 
@@ -373,7 +373,7 @@ type MockRevisions_GetDiff_Call struct {
 // GetDiff is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockRevisions_Expecter) GetDiff(ctx interface{}, id interface{}) *MockRevisions_GetDiff_Call {
+func (_e *MockRevisions_Expecter) GetDiff(ctx any, id any) *MockRevisions_GetDiff_Call {
 	return &MockRevisions_GetDiff_Call{Call: _e.mock.On("GetDiff", ctx, id)}
 }
 

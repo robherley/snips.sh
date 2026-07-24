@@ -74,7 +74,7 @@ type MockUsers_CreateWithPublicKey_Call struct {
 // CreateWithPublicKey is a helper method to define mock.On call
 //   - ctx context.Context
 //   - publickey *snips.PublicKey
-func (_e *MockUsers_Expecter) CreateWithPublicKey(ctx interface{}, publickey interface{}) *MockUsers_CreateWithPublicKey_Call {
+func (_e *MockUsers_Expecter) CreateWithPublicKey(ctx any, publickey any) *MockUsers_CreateWithPublicKey_Call {
 	return &MockUsers_CreateWithPublicKey_Call{Call: _e.mock.On("CreateWithPublicKey", ctx, publickey)}
 }
 
@@ -142,7 +142,7 @@ type MockUsers_Find_Call struct {
 // Find is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockUsers_Expecter) Find(ctx interface{}, id interface{}) *MockUsers_Find_Call {
+func (_e *MockUsers_Expecter) Find(ctx any, id any) *MockUsers_Find_Call {
 	return &MockUsers_Find_Call{Call: _e.mock.On("Find", ctx, id)}
 }
 
@@ -199,7 +199,7 @@ type MockUsers_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - user *snips.User
-func (_e *MockUsers_Expecter) Update(ctx interface{}, user interface{}) *MockUsers_Update_Call {
+func (_e *MockUsers_Expecter) Update(ctx any, user any) *MockUsers_Update_Call {
 	return &MockUsers_Update_Call{Call: _e.mock.On("Update", ctx, user)}
 }
 
