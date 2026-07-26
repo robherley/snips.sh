@@ -1,10 +1,10 @@
 package opengraph
 
 import (
-	"bytes"
 	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"strings"
 	"time"
 
@@ -47,35 +47,23 @@ type Fonts struct {
 
 // Renderer holds parsed fonts and a pre-loaded logo for generating OG images.
 type Renderer struct {
-	fontCode      font.Face
-	fontTitle     font.Face
-	fontTitleLine font.Face
+	fontCode      *opentype.Font
+	fontTitle     *opentype.Font
+	fontTitleLine *opentype.Font
 	logo          image.Image
 }
 
 // NewRenderer parses fonts and prepares a reusable renderer.
 func NewRenderer(fonts *Fonts, logo image.Image) (*Renderer, error) {
-	parseFace := func(ttf []byte, size float64) (font.Face, error) {
-		f, err := opentype.Parse(ttf)
-		if err != nil {
-			return nil, err
-		}
-		return opentype.NewFace(f, &opentype.FaceOptions{
-			Size:    size,
-			DPI:     72,
-			Hinting: font.HintingFull,
-		})
-	}
-
-	fontCode, err := parseFace(fonts.Regular, 48)
+	fontCode, err := opentype.Parse(fonts.Regular)
 	if err != nil {
 		return nil, err
 	}
-	fontTitle, err := parseFace(fonts.Display, 148)
+	fontTitle, err := opentype.Parse(fonts.Display)
 	if err != nil {
 		return nil, err
 	}
-	fontTitleLine, err := parseFace(fonts.DisplayLine, 148)
+	fontTitleLine, err := opentype.Parse(fonts.DisplayLine)
 	if err != nil {
 		return nil, err
 	}
@@ -86,6 +74,16 @@ func NewRenderer(fonts *Fonts, logo image.Image) (*Renderer, error) {
 		fontTitleLine: fontTitleLine,
 		logo:          logo,
 	}, nil
+}
+
+func newFace(f *opentype.Font, size float64) (font.Face, error) {
+	// opentype.Face uses mutable buffers and is not safe for concurrent use.
+	// so we need to recreate a new face for each request.
+	return opentype.NewFace(f, &opentype.FaceOptions{
+		Size:    size,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
 }
 
 func abbreviate(s string, max int) string {
@@ -103,8 +101,21 @@ type FileInfo struct {
 	UpdatedAt time.Time
 }
 
-// GenerateImage creates a 1200x630 PNG open graph image.
-func (r *Renderer) GenerateImage(info *FileInfo) ([]byte, error) {
+// WriteImage writes a 1200x630 PNG open graph image to w.
+func (r *Renderer) WriteImage(w io.Writer, info *FileInfo) error {
+	fontCode, err := newFace(r.fontCode, 48)
+	if err != nil {
+		return err
+	}
+	fontTitle, err := newFace(r.fontTitle, 148)
+	if err != nil {
+		return err
+	}
+	fontTitleLine, err := newFace(r.fontTitleLine, 148)
+	if err != nil {
+		return err
+	}
+
 	dc := gg.NewContext(imgWidth, imgHeight)
 
 	dc.SetColor(colorBackground)
@@ -135,10 +146,10 @@ func (r *Renderer) GenerateImage(info *FileInfo) ([]byte, error) {
 
 	titleX, titleY := 60.0, 95.0
 
-	dc.SetFontFace(r.fontTitleLine)
+	dc.SetFontFace(fontTitleLine)
 	dc.SetColor(color.NRGBA{0x71, 0x71, 0x74, 0xFF})
 	dc.DrawStringAnchored("snips.sh", titleX-10, titleY, 0, 0.5)
-	dc.SetFontFace(r.fontTitle)
+	dc.SetFontFace(fontTitle)
 	dc.SetColor(colorWhite)
 	dc.DrawStringAnchored("snips.sh", titleX, titleY, 0, 0.5)
 
@@ -190,7 +201,7 @@ func (r *Renderer) GenerateImage(info *FileInfo) ([]byte, error) {
 	}
 	lines = append(lines, []token{{"}", colorWhite}})
 
-	dc.SetFontFace(r.fontCode)
+	dc.SetFontFace(fontCode)
 	y := 250.0
 	lineHeight := 50.0
 	for _, line := range lines {
@@ -204,12 +215,7 @@ func (r *Renderer) GenerateImage(info *FileInfo) ([]byte, error) {
 		y += lineHeight
 	}
 
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, dc.Image()); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
+	return png.Encode(w, dc.Image())
 }
 
 // drawStripeBar draws a diagonal stripe bar across the full width at the given y position.
