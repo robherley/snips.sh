@@ -1,10 +1,10 @@
 package opengraph
 
 import (
-	"bytes"
 	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"strings"
 	"time"
 
@@ -103,8 +103,8 @@ type FileInfo struct {
 	UpdatedAt time.Time
 }
 
-// GenerateImage creates a 1200x630 PNG open graph image.
-func (r *Renderer) GenerateImage(info *FileInfo) ([]byte, error) {
+// WriteImage writes a 1200x630 PNG open graph image to w.
+func (r *Renderer) WriteImage(w io.Writer, info *FileInfo) error {
 	dc := gg.NewContext(imgWidth, imgHeight)
 
 	dc.SetColor(colorBackground)
@@ -204,12 +204,7 @@ func (r *Renderer) GenerateImage(info *FileInfo) ([]byte, error) {
 		y += lineHeight
 	}
 
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, dc.Image()); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
+	return png.Encode(w, dc.Image())
 }
 
 // drawStripeBar draws a diagonal stripe bar across the full width at the given y position.

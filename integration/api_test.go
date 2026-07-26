@@ -14,6 +14,7 @@ import (
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db/sqlite"
 	"github.com/robherley/snips.sh/internal/snips"
+	"github.com/robherley/snips.sh/internal/testutil"
 	"github.com/robherley/snips.sh/internal/web"
 	"github.com/stretchr/testify/suite"
 )
@@ -272,7 +273,7 @@ func newAPIClient(s *APIIntegrationSuite) *apiClient {
 	mux := http.NewServeMux()
 	web.NewAPI(cfg, database).Register(mux)
 	// Raw signed-file access is part of the API signing flow.
-	mux.HandleFunc("GET /f/{fileID}", web.FileHandler(cfg, database, nil))
+	mux.HandleFunc("GET /f/{fileID}", web.NewUI(cfg, database, testutil.Assets(s.T())).File)
 	server := httptest.NewServer(web.WithMiddleware(mux))
 	s.T().Cleanup(server.Close)
 

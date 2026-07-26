@@ -14,21 +14,9 @@ type Service struct {
 func New(cfg *config.Config, database *db.DB, assets Assets) (*Service, error) {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /{$}", LandingHandler(cfg, assets))
-	mux.HandleFunc("GET /docs/{name}", DocHandler(cfg, assets))
-	mux.HandleFunc("GET /og.png", DocOGImageHandler(cfg, assets))
-	mux.HandleFunc("GET /docs/{name}/og.png", DocOGImageHandler(cfg, assets))
 	mux.HandleFunc("GET /health", HealthHandler)
-	mux.HandleFunc("GET /f/{fileID}", FileHandler(cfg, database, assets))
-	mux.HandleFunc("GET /f/{fileID}/rev", RevisionsHandler(cfg, database, assets))
-	mux.HandleFunc("GET /f/{fileID}/rev/{revisionID}", RevisionDiffHandler(cfg, database, assets))
-	mux.HandleFunc("GET /f/{fileID}/og.png", OGImageHandler(cfg, database, assets))
-	mux.HandleFunc("GET /f/{fileID}/n/{name}", FileHandler(cfg, database, assets))
-	mux.HandleFunc("GET /f/{fileID}/n/{name}/rev", RevisionsHandler(cfg, database, assets))
-	mux.HandleFunc("GET /f/{fileID}/n/{name}/rev/{revisionID}", RevisionDiffHandler(cfg, database, assets))
-	mux.HandleFunc("GET /f/{fileID}/n/{name}/og.png", OGImageHandler(cfg, database, assets))
-	mux.HandleFunc("GET /assets/{asset...}", assets.Serve)
 
+	NewUI(cfg, database, assets).Register(mux)
 	NewAPI(cfg, database).Register(mux)
 
 	if cfg.Debug {
