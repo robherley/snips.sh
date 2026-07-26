@@ -1,11 +1,54 @@
 package config_test
 
 import (
+	"bytes"
+	"log/slog"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/testutil"
 )
+
+func TestConfig_DatabaseURL(t *testing.T) {
+	t.Run("legacy filepath warns and is used as fallback", func(t *testing.T) {
+		t.Setenv("SNIPS_DB_URL", "temporarily-set-so-it-can-be-unset")
+		if err := os.Unsetenv("SNIPS_DB_URL"); err != nil {
+			t.Fatal(err)
+		}
+		t.Setenv("SNIPS_DB_FILEPATH", "legacy.db")
+
+		var logs bytes.Buffer
+		previousLogger := slog.Default()
+		slog.SetDefault(slog.New(slog.NewTextHandler(&logs, nil)))
+		t.Cleanup(func() { slog.SetDefault(previousLogger) })
+
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.DB.URL != "legacy.db" {
+			t.Fatalf("DB.URL = %q, want legacy.db", cfg.DB.URL)
+		}
+		if !strings.Contains(logs.String(), "SNIPS_DB_FILEPATH is deprecated") {
+			t.Fatalf("expected deprecation warning, got %q", logs.String())
+		}
+	})
+
+	t.Run("url takes precedence over legacy filepath", func(t *testing.T) {
+		t.Setenv("SNIPS_DB_URL", "current.db")
+		t.Setenv("SNIPS_DB_FILEPATH", "legacy.db")
+
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.DB.URL != "current.db" {
+			t.Fatalf("DB.URL = %q, want current.db", cfg.DB.URL)
+		}
+	})
+}
 
 func TestConfig_SSHAuthorizedKeys(t *testing.T) {
 	t.Run("no keys", func(t *testing.T) {

@@ -165,31 +165,44 @@ func pageSize(w http.ResponseWriter, r *http.Request) (uint64, bool) {
 	return limit, true
 }
 
-// cursors are opaque so the pagination scheme can change without breaking
-// clients; today they are just the base64-encoded row offset of the next page
-func encodeCursor(offset uint64) string {
-	return base64.RawURLEncoding.EncodeToString([]byte(strconv.FormatUint(offset, 10)))
+type pageCursor struct {
+	Kind   string `json:"k"`
+	Offset uint64 `json:"o"`
+	ID     string `json:"i,omitempty"`
 }
 
-func decodeCursor(w http.ResponseWriter, r *http.Request) (uint64, bool) {
+// Cursors are opaque so each backend can use its preferred pagination scheme.
+func encodeCursor(cursor pageCursor) string {
+	raw, err := json.Marshal(cursor)
+	if err != nil {
+		panic(err)
+	}
+	return base64.RawURLEncoding.EncodeToString(raw)
+}
+
+func decodeCursor(w http.ResponseWriter, r *http.Request, kind string) (pageCursor, bool) {
 	cursor := r.URL.Query().Get("cursor")
 	if cursor == "" {
-		return 0, true
+		return pageCursor{Kind: kind}, true
 	}
 
 	raw, err := base64.RawURLEncoding.DecodeString(cursor)
 	if err != nil {
 		http.Error(w, "invalid cursor", http.StatusBadRequest)
-		return 0, false
+		return pageCursor{}, false
 	}
 
-	offset, err := strconv.ParseUint(string(raw), 10, 64)
-	if err != nil {
+	decoded := pageCursor{}
+	if err := json.Unmarshal(raw, &decoded); err != nil || decoded.Kind != kind {
 		http.Error(w, "invalid cursor", http.StatusBadRequest)
-		return 0, false
+		return pageCursor{}, false
+	}
+	if decoded.ID == "" {
+		http.Error(w, "invalid cursor", http.StatusBadRequest)
+		return pageCursor{}, false
 	}
 
-	return offset, true
+	return decoded, true
 }
 
 func (a *API) Meta(w http.ResponseWriter, r *http.Request) {
@@ -260,13 +273,16 @@ func (a *API) ListFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	offset, ok := decodeCursor(w, r)
+	cursor, ok := decodeCursor(w, r, "files")
 	if !ok {
 		return
 	}
 
 	// fetch one extra row to learn whether another page exists
-	userFiles, err := a.db.Files.FindByUser(r.Context(), userID, db.WithLimit(limit+1), db.WithOffset(offset))
+	userFiles, err := a.db.Files.FindByUser(r.Context(), userID,
+		db.WithLimit(limit+1),
+		db.WithCursor(db.Cursor{Offset: cursor.Offset, ID: cursor.ID}),
+	)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -275,7 +291,10 @@ func (a *API) ListFiles(w http.ResponseWriter, r *http.Request) {
 	resp := response{Files: userFiles}
 	if uint64(len(userFiles)) > limit {
 		resp.Files = userFiles[:limit]
-		resp.NextCursor = encodeCursor(offset + limit)
+		last := resp.Files[len(resp.Files)-1]
+		resp.NextCursor = encodeCursor(pageCursor{
+			Kind: "files", Offset: cursor.Offset + limit, ID: last.ID,
+		})
 	}
 
 	writeJSON(w, http.StatusOK, resp)
@@ -508,13 +527,16 @@ func (a *API) ListRevisions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	offset, ok := decodeCursor(w, r)
+	cursor, ok := decodeCursor(w, r, "revisions")
 	if !ok {
 		return
 	}
 
 	// fetch one extra row to learn whether another page exists
-	revisions, err := a.db.Revisions.FindByFileID(r.Context(), file.ID, db.WithLimit(limit+1), db.WithOffset(offset))
+	revisions, err := a.db.Revisions.FindByFileID(r.Context(), file.ID,
+		db.WithLimit(limit+1),
+		db.WithCursor(db.Cursor{Offset: cursor.Offset, ID: cursor.ID}),
+	)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -528,7 +550,10 @@ func (a *API) ListRevisions(w http.ResponseWriter, r *http.Request) {
 	resp := response{Revisions: revisions}
 	if uint64(len(revisions)) > limit {
 		resp.Revisions = revisions[:limit]
-		resp.NextCursor = encodeCursor(offset + limit)
+		last := resp.Revisions[len(resp.Revisions)-1]
+		resp.NextCursor = encodeCursor(pageCursor{
+			Kind: "revisions", Offset: cursor.Offset + limit, ID: last.ID,
+		})
 	}
 
 	writeJSON(w, http.StatusOK, resp)

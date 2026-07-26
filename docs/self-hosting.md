@@ -48,7 +48,7 @@ SNIPS_LIMITS_FILESIZE          Unsigned Integer  1048576                maximum 
 SNIPS_LIMITS_FILESPERUSER      Unsigned Integer  100                    maximum number of files per user
 SNIPS_LIMITS_SESSIONDURATION   Duration          15m                    maximum ssh session duration
 SNIPS_LIMITS_REVISIONSPERFILE  Unsigned Integer  64                     maximum number of revisions per file
-SNIPS_DB_FILEPATH              String            data/snips.db          path to database file
+SNIPS_DB_URL                   String            data/snips.db          database URL or DSN
 SNIPS_HTTP_INTERNAL            URL               http://localhost:8080  internal address to listen for http requests
 SNIPS_HTTP_EXTERNAL            URL               http://localhost:8080  external http address displayed in commands
 SNIPS_HTML_EXTENDHEADFILE      String                                   path to html file for extra content in <head>
@@ -84,7 +84,10 @@ SNIPS_SSH_EXTERNAL=ssh://snips.example.com:22
 
 ### Database
 
-The file specified at `SNIPS_DB_FILEPATH` is the SQLite database that holds all user data. For more information managing the database, see [`database.md`](/docs/database.md).
+The backend is inferred from `SNIPS_DB_URL`. A path or SQLite DSN selects SQLite;
+a `postgres://` or `postgresql://` URL selects PostgreSQL. `SNIPS_DB_FILEPATH` is
+a deprecated fallback that logs a warning and is used only when `SNIPS_DB_URL`
+is unset. For more information, see [`database.md`](/docs/database.md).
 
 Setting `SNIPS_FILECOMPRESSION` to `false` will disable compression when storing file content to disk. If this option was disabled at any point (or files were created before this option existed), it will not retroactively compress existing files.
 

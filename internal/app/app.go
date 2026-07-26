@@ -11,6 +11,8 @@ import (
 
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
+	"github.com/robherley/snips.sh/internal/db/dsn"
+	"github.com/robherley/snips.sh/internal/db/postgres"
 	"github.com/robherley/snips.sh/internal/db/sqlite"
 	"github.com/robherley/snips.sh/internal/ssh"
 	"github.com/robherley/snips.sh/internal/web"
@@ -98,7 +100,14 @@ func (app *App) shutdown(ctx context.Context) {
 }
 
 func New(cfg *config.Config, assets web.Assets) (*App, error) {
-	database, err := sqlite.New(cfg.DB.FilePath, cfg.FileCompression)
+	connection := dsn.Parse(cfg.DB.URL)
+	var database *db.DB
+	var err error
+	if connection.Driver == dsn.Postgres {
+		database, err = postgres.New(connection.Value, cfg.FileCompression)
+	} else {
+		database, err = sqlite.New(connection.Value, cfg.FileCompression)
+	}
 	if err != nil {
 		return nil, err
 	}

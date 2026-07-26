@@ -45,7 +45,7 @@ type Config struct {
 	}
 
 	DB struct {
-		FilePath string `default:"data/snips.db" desc:"path to database file"`
+		URL string `default:"data/snips.db" desc:"database URL or DSN"`
 	}
 
 	HTTP struct {
@@ -144,6 +144,13 @@ func Load() (*Config, error) {
 
 	if err := envconfig.Process(ApplicationName, cfg); err != nil {
 		return nil, err
+	}
+
+	if filePath, ok := os.LookupEnv("SNIPS_DB_FILEPATH"); ok {
+		slog.Warn("SNIPS_DB_FILEPATH is deprecated; use SNIPS_DB_URL instead")
+		if _, hasURL := os.LookupEnv("SNIPS_DB_URL"); !hasURL {
+			cfg.DB.URL = filePath
+		}
 	}
 
 	cfg.EnableGuesser = cfg.EnableGuesser && GuessingSupported
