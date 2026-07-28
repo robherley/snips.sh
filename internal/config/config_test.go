@@ -49,16 +49,21 @@ func withCaptureLogger(t *testing.T) *captureHandler {
 	return h
 }
 
-func TestLoad_DefaultHMACKeyWarning(t *testing.T) {
-	t.Run("warns when default key is used", func(t *testing.T) {
+func TestLoad_EphemeralHMACKeyWarning(t *testing.T) {
+	t.Run("warns and generates ephemeral key when unset", func(t *testing.T) {
 		h := withCaptureLogger(t)
 
-		if _, err := config.Load(); err != nil {
+		cfg, err := config.Load()
+		if err != nil {
 			t.Fatal(err)
 		}
 
+		if cfg.HMACKey == "" {
+			t.Error("expected generated HMAC key, got empty string")
+		}
+
 		if !h.hasWarn("SNIPS_HMACKEY") {
-			t.Error("expected a warning about the default HMAC key, got none")
+			t.Error("expected a warning about the unset HMAC key, got none")
 		}
 	})
 

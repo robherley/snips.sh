@@ -2,6 +2,8 @@ package config
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -20,9 +22,8 @@ var (
 )
 
 const (
-	ApplicationName    = "snips"
-	defaultHMACKey     = "hmac-and-cheese"
-	UsageFormat        = `
+	ApplicationName = "snips"
+	UsageFormat     = `
 KEY	TYPE	DEFAULT	DESCRIPTION
 {{range .}}{{usage_key .}}	{{usage_type .}}	{{usage_default .}}	{{usage_description .}}
 {{end}}`
@@ -33,7 +34,7 @@ type Config struct {
 
 	EnableGuesser bool `default:"True" desc:"enable AI model to detect file types"`
 
-	HMACKey string `default:"hmac-and-cheese" desc:"symmetric key used to sign URLs"`
+	HMACKey string `desc:"symmetric key used to sign URLs"`
 
 	FileCompression bool `default:"True" desc:"enable compression of file contents"`
 
@@ -149,8 +150,13 @@ func Load() (*Config, error) {
 
 	cfg.EnableGuesser = cfg.EnableGuesser && GuessingSupported
 
-	if cfg.HMACKey == defaultHMACKey {
-		slog.Warn("SNIPS_HMACKEY is set to the default value — private file URLs can be forged; set a strong secret before exposing this instance publicly")
+	if cfg.HMACKey == "" {
+		key := make([]byte, 32)
+		if _, err := rand.Read(key); err != nil {
+			return nil, fmt.Errorf("generate ephemeral HMAC key: %w", err)
+		}
+		cfg.HMACKey = base64.RawURLEncoding.EncodeToString(key)
+		slog.Warn("SNIPS_HMACKEY is unset; generated an ephemeral HMAC key — signed URLs will be invalid after restart; set a strong secret before exposing this instance publicly")
 	}
 
 	return cfg, nil
