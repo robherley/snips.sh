@@ -1,15 +1,86 @@
 package config_test
 
 import (
-	"bytes"
+	"context"
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/testutil"
 )
+
+// captureHandler records slog records for assertion in tests.
+type captureHandler struct {
+	mu      sync.Mutex
+	records []slog.Record
+}
+
+func (h *captureHandler) Enabled(_ context.Context, _ slog.Level) bool { return true }
+
+func (h *captureHandler) Handle(_ context.Context, r slog.Record) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.records = append(h.records, r)
+	return nil
+}
+
+func (h *captureHandler) WithAttrs(_ []slog.Attr) slog.Handler { return h }
+func (h *captureHandler) WithGroup(_ string) slog.Handler      { return h }
+
+func (h *captureHandler) hasWarn(substr string) bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for _, r := range h.records {
+		if r.Level == slog.LevelWarn && strings.Contains(r.Message, substr) {
+			return true
+		}
+	}
+	return false
+}
+
+func withCaptureLogger(t *testing.T) *captureHandler {
+	t.Helper()
+	h := &captureHandler{}
+	orig := slog.Default()
+	slog.SetDefault(slog.New(h))
+	t.Cleanup(func() { slog.SetDefault(orig) })
+	return h
+}
+
+func TestLoad_EphemeralHMACKeyWarning(t *testing.T) {
+	t.Run("warns and generates ephemeral key when unset", func(t *testing.T) {
+		h := withCaptureLogger(t)
+
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if cfg.HMACKey == "" {
+			t.Error("expected generated HMAC key, got empty string")
+		}
+
+		if !h.hasWarn("SNIPS_HMACKEY") {
+			t.Error("expected a warning about the unset HMAC key, got none")
+		}
+	})
+
+	t.Run("no warning when custom key is set", func(t *testing.T) {
+		t.Setenv("SNIPS_HMACKEY", "a-custom-secret-key-that-is-not-the-default")
+		h := withCaptureLogger(t)
+
+		if _, err := config.Load(); err != nil {
+			t.Fatal(err)
+		}
+
+		if h.hasWarn("SNIPS_HMACKEY") {
+			t.Error("unexpected warning about HMAC key when a custom key is set")
+		}
+	})
+}
 
 func TestConfig_DatabaseURL(t *testing.T) {
 	t.Run("legacy filepath warns and is used as fallback", func(t *testing.T) {
@@ -18,11 +89,7 @@ func TestConfig_DatabaseURL(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Setenv("SNIPS_DB_FILEPATH", "legacy.db")
-
-		var logs bytes.Buffer
-		previousLogger := slog.Default()
-		slog.SetDefault(slog.New(slog.NewTextHandler(&logs, nil)))
-		t.Cleanup(func() { slog.SetDefault(previousLogger) })
+		h := withCaptureLogger(t)
 
 		cfg, err := config.Load()
 		if err != nil {
@@ -31,8 +98,8 @@ func TestConfig_DatabaseURL(t *testing.T) {
 		if cfg.DB.URL != "legacy.db" {
 			t.Fatalf("DB.URL = %q, want legacy.db", cfg.DB.URL)
 		}
-		if !strings.Contains(logs.String(), "SNIPS_DB_FILEPATH is deprecated") {
-			t.Fatalf("expected deprecation warning, got %q", logs.String())
+		if !h.hasWarn("SNIPS_DB_FILEPATH is deprecated") {
+			t.Error("expected deprecation warning")
 		}
 	})
 
