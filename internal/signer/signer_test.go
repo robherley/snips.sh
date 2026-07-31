@@ -147,6 +147,34 @@ func TestSigner_VerifyURL(t *testing.T) {
 	}
 }
 
+func TestSigner_SignURLWithBurnAfterRead(t *testing.T) {
+	hmacSigner := signer.New(testKey)
+
+	signed, _ := hmacSigner.SignURLWithOptions(parseURL("https://snips.sh/f/5yiAwU0Ax"), 5*time.Minute, true)
+	if got := signed.Query().Get(signer.BurnQueryParameter); got != "1" {
+		t.Fatalf("got burn=%q, want 1", got)
+	}
+	if !hmacSigner.VerifyURLAndNotExpired(signed) {
+		t.Fatal("expected signed burn url to verify")
+	}
+	if !signer.IsBurnAfterRead(signed) {
+		t.Fatal("expected burn url to be marked burn-after-read")
+	}
+}
+
+func TestSigner_TamperedBurnFlagInvalidatesSignature(t *testing.T) {
+	hmacSigner := signer.New(testKey)
+
+	signed, _ := hmacSigner.SignURLWithOptions(parseURL("https://snips.sh/f/5yiAwU0Ax"), 5*time.Minute, false)
+	params := signed.Query()
+	params.Set(signer.BurnQueryParameter, "1")
+	signed.RawQuery = params.Encode()
+
+	if hmacSigner.VerifyURLAndNotExpired(signed) {
+		t.Fatal("expected tampered burn url to fail verification")
+	}
+}
+
 func TestSigner_VerifyURLAndNotExpired(t *testing.T) {
 	signer := signer.New(testKey)
 

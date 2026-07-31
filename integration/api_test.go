@@ -231,8 +231,28 @@ func (s *APIIntegrationSuite) TestAPIEndToEnd() {
 		s.Require().Equal(updatedContent, body)
 	})
 
+	s.Run("burn after read signed url deletes file", func() {
+		burnRequest := marshalJSON(s, map[string]any{"ttl_seconds": 300, "burn_after_read": true})
+		status, body := c.apiRequest(http.MethodPost, "/files/"+privateFile.ID+"/sign", burnRequest, "application/json", true)
+		requireStatus(s, http.StatusCreated, status, body)
+		var signed struct {
+			URL       string `json:"url"`
+			ExpiresAt string `json:"expires_at"`
+		}
+		decodeJSON(s, body, &signed)
+		s.Require().Contains(signed.URL, "burn=1")
+
+		status, body = c.request(http.MethodGet, signed.URL, nil, "", false)
+		requireStatus(s, http.StatusOK, status, body)
+		s.Require().Equal(privateContent, body)
+
+		status, body = c.apiRequest(http.MethodGet, "/files/"+privateFile.ID, nil, "", true)
+		requireStatus(s, http.StatusNotFound, status, body)
+		status, body = c.request(http.MethodGet, c.baseURL+"/f/"+privateFile.ID, nil, "", false)
+		requireStatus(s, http.StatusNotFound, status, body)
+	})
+
 	s.Run("delete files", func() {
-		c.deleteFile(privateFile.ID)
 		status, body := c.apiRequest(http.MethodGet, "/files/"+privateFile.ID, nil, "", true)
 		requireStatus(s, http.StatusNotFound, status, body)
 

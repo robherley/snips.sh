@@ -25,6 +25,7 @@ snips.sh is an SSH-driven snippet manager. All interactions happen through your 
 | Upload (private) | `echo "content" \| ssh snips.sh -- -private` |
 | Upload (with type hint) | `echo "content" \| ssh snips.sh -- -ext py` |
 | Upload (private + signed URL) | `echo "content" \| ssh snips.sh -- -private -ttl 24h` |
+| Upload (private + burn-after-read) | `echo "content" \| ssh snips.sh -- -private -ttl 1h -burn-after-read` |
 | Upload (named) | `echo "content" \| ssh snips.sh -- -name my-notes` |
 | Download | `ssh f:<id>@snips.sh` |
 | Download (by name) | `ssh n:<name>@snips.sh` |
@@ -72,6 +73,12 @@ You can combine `-private` with `-ttl` to get a signed URL back immediately:
 
 ```
 echo "secret" | ssh snips.sh -private -ttl 24h
+```
+
+Add `-burn-after-read` (alias: `-burn`) to make it a one-shot link — the file is deleted after the first successful content read:
+
+```
+echo "secret" | ssh snips.sh -private -ttl 1h -burn-after-read
 ```
 
 ### Limits
@@ -162,9 +169,10 @@ Private files can be shared via time-limited signed URLs. Use the `sign` command
 ```bash
 ssh f:abc123@snips.sh sign -ttl 1h
 ssh f:abc123@snips.sh sign -ttl 7d
+ssh f:abc123@snips.sh sign -ttl 1h -burn-after-read
 ```
 
-The returned URL can be opened by anyone until it expires. Signing only works on private files.
+The returned URL can be opened by anyone until it expires. Add `-burn-after-read` (or its alias `-burn`) to delete the file after the first successful file content read through that signed URL. Signing only works on private files.
 
 ### Duration format
 
