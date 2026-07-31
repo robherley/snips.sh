@@ -2,7 +2,6 @@ package web
 
 import (
 	_ "embed"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,8 +23,6 @@ import (
 )
 
 const (
-	APIDefaultPageSize         = 50
-	APIMaxPageSize             = 100
 	APIMaxSignTTLSeconds int64 = (1<<63 - 1) / int64(time.Second)
 )
 
@@ -149,62 +146,6 @@ func (a *API) readContent(r *http.Request) ([]byte, error) {
 	return content, nil
 }
 
-// pageSize parses the limit query parameter, reporting failure with a 400.
-func pageSize(w http.ResponseWriter, r *http.Request) (uint64, bool) {
-	raw := r.URL.Query().Get("limit")
-	if raw == "" {
-		return APIDefaultPageSize, true
-	}
-
-	limit, err := strconv.ParseUint(raw, 10, 64)
-	if err != nil || limit < 1 || limit > APIMaxPageSize {
-		http.Error(w, "limit must be an integer between 1 and "+strconv.Itoa(APIMaxPageSize), http.StatusBadRequest)
-		return 0, false
-	}
-
-	return limit, true
-}
-
-type pageCursor struct {
-	Kind   string `json:"k"`
-	Offset uint64 `json:"o"`
-	ID     string `json:"i,omitempty"`
-}
-
-// Cursors are opaque so each backend can use its preferred pagination scheme.
-func encodeCursor(cursor pageCursor) string {
-	raw, err := json.Marshal(cursor)
-	if err != nil {
-		panic(err)
-	}
-	return base64.RawURLEncoding.EncodeToString(raw)
-}
-
-func decodeCursor(w http.ResponseWriter, r *http.Request, kind string) (pageCursor, bool) {
-	cursor := r.URL.Query().Get("cursor")
-	if cursor == "" {
-		return pageCursor{Kind: kind}, true
-	}
-
-	raw, err := base64.RawURLEncoding.DecodeString(cursor)
-	if err != nil {
-		http.Error(w, "invalid cursor", http.StatusBadRequest)
-		return pageCursor{}, false
-	}
-
-	decoded := pageCursor{}
-	if err := json.Unmarshal(raw, &decoded); err != nil || decoded.Kind != kind {
-		http.Error(w, "invalid cursor", http.StatusBadRequest)
-		return pageCursor{}, false
-	}
-	if decoded.ID == "" {
-		http.Error(w, "invalid cursor", http.StatusBadRequest)
-		return pageCursor{}, false
-	}
-
-	return decoded, true
-}
-
 func (a *API) Meta(w http.ResponseWriter, r *http.Request) {
 	metadata := map[string]any{
 		"limits": map[string]any{
@@ -273,7 +214,7 @@ func (a *API) ListFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cursor, ok := decodeCursor(w, r, "files")
+	cursor, ok := decodeCursor(w, r)
 	if !ok {
 		return
 	}
@@ -292,9 +233,13 @@ func (a *API) ListFiles(w http.ResponseWriter, r *http.Request) {
 	if uint64(len(userFiles)) > limit {
 		resp.Files = userFiles[:limit]
 		last := resp.Files[len(resp.Files)-1]
-		resp.NextCursor = encodeCursor(pageCursor{
-			Kind: "files", Offset: cursor.Offset + limit, ID: last.ID,
+		resp.NextCursor, err = encodeCursor(pageCursor{
+			Offset: cursor.Offset + limit, ID: last.ID,
 		})
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	writeJSON(w, http.StatusOK, resp)
@@ -527,7 +472,7 @@ func (a *API) ListRevisions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cursor, ok := decodeCursor(w, r, "revisions")
+	cursor, ok := decodeCursor(w, r)
 	if !ok {
 		return
 	}
@@ -551,9 +496,13 @@ func (a *API) ListRevisions(w http.ResponseWriter, r *http.Request) {
 	if uint64(len(revisions)) > limit {
 		resp.Revisions = revisions[:limit]
 		last := resp.Revisions[len(resp.Revisions)-1]
-		resp.NextCursor = encodeCursor(pageCursor{
-			Kind: "revisions", Offset: cursor.Offset + limit, ID: last.ID,
+		resp.NextCursor, err = encodeCursor(pageCursor{
+			Offset: cursor.Offset + limit, ID: last.ID,
 		})
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	writeJSON(w, http.StatusOK, resp)
