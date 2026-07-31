@@ -24,3 +24,4 @@ jobs:
     - uses: robherley/go-test-action@v1
       with:
         fromJSONFiles: ${{ runner.temp }}/go-test.json
+        omit: untested
