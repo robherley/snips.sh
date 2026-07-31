@@ -34,9 +34,13 @@ build *args: _check-onnx
 dev: _check-onnx
     air
 
-# Run all tests
-test: _check-onnx
-    gotestsum --raw-command -- go test -json -ldflags '-extldflags "{{ extldflags }}"' ./...
+# Run Docker Compose for test services
+test-compose *args:
+    @docker compose --file "{{ root }}/docker-compose.test.yml" --project-name snips-tests "$@"
+
+# Run all tests (optionally write Go test JSON: just test path/to/results.json)
+test jsonfile="": _check-onnx (test-compose "up" "--detach" "--wait")
+    @gotestsum {{ if jsonfile == "" { "" } else { "--jsonfile " + quote(jsonfile) } }} --raw-command -- go test -json -ldflags '-linkmode external -extldflags "{{ extldflags }}"' ./...
 
 # Run all linters
 lint: lint-go lint-web
