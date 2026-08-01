@@ -23,11 +23,6 @@ func WithLimit(limit uint64) PageOption {
 	return func(page *Page) { page.Limit = limit }
 }
 
-// WithOffset skips rows before the returned page.
-func WithOffset(offset uint64) PageOption {
-	return func(page *Page) { page.Offset = offset }
-}
-
 // WithCursor resumes a listing from an opaque API cursor.
 func WithCursor(cursor Cursor) PageOption {
 	return func(page *Page) {
