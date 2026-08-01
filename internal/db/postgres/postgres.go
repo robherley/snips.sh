@@ -11,23 +11,17 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/robherley/snips.sh/internal/db"
-	"github.com/robherley/snips.sh/internal/db/dsn"
 )
 
 //go:embed migrations/*.sql
-var postgresMigrations embed.FS
+var migrations embed.FS
 
 type migrator struct{ *sql.DB }
 
 // New builds a PostgreSQL backend from a postgres:// or postgresql:// URL. The
 // returned sql.DB is a connection pool.
 func New(value string, compress bool) (*db.DB, error) {
-	connection := dsn.Parse(value)
-	if connection.Driver != dsn.Postgres {
-		return nil, dsn.ErrPostgresProtocolRequired
-	}
-
-	database, err := sql.Open("pgx", connection.Value)
+	database, err := sql.Open("pgx", value)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +43,7 @@ func NewWithDB(database *sql.DB, compress bool) *db.DB {
 }
 
 func (s *migrator) Migrate(ctx context.Context) error {
-	migrations, err := fs.Sub(postgresMigrations, "migrations")
+	migrations, err := fs.Sub(migrations, "migrations")
 	if err != nil {
 		return err
 	}

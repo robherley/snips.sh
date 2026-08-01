@@ -12,8 +12,6 @@ import (
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 	"github.com/robherley/snips.sh/internal/db/dsn"
-	"github.com/robherley/snips.sh/internal/db/postgres"
-	"github.com/robherley/snips.sh/internal/db/sqlite"
 	"github.com/robherley/snips.sh/internal/ssh"
 	"github.com/robherley/snips.sh/internal/web"
 )
@@ -44,52 +42,43 @@ func (app *App) Boot() error {
 }
 
 func (app *App) listen() {
-	type listenable interface {
+	services := []interface {
 		ListenAndServe() error
-	}
-
-	services := []listenable{
+	}{
 		app.SSH,
 		app.HTTP,
 	}
 
-	for i := range services {
-		go func(svc listenable) {
+	for _, svc := range services {
+		go func() {
 			if err := svc.ListenAndServe(); err != nil {
 				slog.Warn("service stopped", "err", err)
 			}
-		}(services[i])
+		}()
 	}
 }
 
 func (app *App) shutdown(ctx context.Context) {
-	type shutdownable interface {
+	services := []interface {
 		Shutdown(context.Context) error
-	}
-
-	services := []shutdownable{
+	}{
 		app.SSH,
 		app.HTTP,
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(services))
-
 	if app.OnShutdown != nil {
-		wg.Add(1)
-		go func(a *App) {
-			defer wg.Done()
-			a.OnShutdown(ctx)
-		}(app)
+		wg.Go(func() {
+			app.OnShutdown(ctx)
+		})
 	}
 
-	for i := range services {
-		go func(svc shutdownable) {
-			defer wg.Done()
+	for _, svc := range services {
+		wg.Go(func() {
 			if err := svc.Shutdown(ctx); err != nil {
 				slog.Warn("shutdown error", "err", err)
 			}
-		}(services[i])
+		})
 	}
 
 	wg.Wait()
@@ -100,17 +89,11 @@ func (app *App) shutdown(ctx context.Context) {
 }
 
 func New(cfg *config.Config, assets web.Assets) (*App, error) {
-	connection := dsn.Parse(cfg.DB.URL)
-	var database *db.DB
-	var err error
-	if connection.Driver == dsn.Postgres {
-		database, err = postgres.New(connection.Value, cfg.FileCompression)
-	} else {
-		database, err = sqlite.New(connection.Value, cfg.FileCompression)
-	}
+	connection, err := dsn.Parse(cfg.DB.URL).NewDB(cfg)
 	if err != nil {
 		return nil, err
 	}
+	database := connection
 
 	ssh, err := ssh.New(cfg, database)
 	if err != nil {
