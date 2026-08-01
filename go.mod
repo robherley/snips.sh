@@ -16,17 +16,17 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/klauspost/compress v1.19.0
-	github.com/lmittmann/tint v1.1.3
-	github.com/mattn/go-isatty v0.0.22
-	github.com/mattn/go-sqlite3 v1.14.47
+	github.com/klauspost/compress v1.19.1
+	github.com/lmittmann/tint v1.2.0
+	github.com/mattn/go-isatty v0.0.24
+	github.com/mattn/go-sqlite3 v1.14.48
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/pmezard/go-difflib v1.0.0
-	github.com/pressly/goose/v3 v3.27.2
+	github.com/pressly/goose/v3 v3.27.3
 	github.com/robherley/magika-go v0.1.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tdewolff/minify/v2 v2.24.13
-	github.com/yuin/goldmark v1.8.2
+	github.com/tdewolff/minify/v2 v2.24.14
+	github.com/yuin/goldmark v1.8.5
 	github.com/yuin/goldmark-emoji v1.0.6
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20220924101305-151362477c87
 	golang.org/x/crypto v0.54.0
@@ -70,13 +70,13 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/sahilm/fuzzy v0.1.3 // indirect
-	github.com/sethvargo/go-retry v0.3.0 // indirect
+	github.com/sethvargo/go-retry v0.4.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/tdewolff/parse/v2 v2.8.12 // indirect
+	github.com/tdewolff/parse/v2 v2.8.14 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/exp v0.0.0-20260718201538-764159d718ef // indirect
+	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
