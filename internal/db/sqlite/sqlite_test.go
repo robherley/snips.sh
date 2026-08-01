@@ -887,20 +887,20 @@ func (s *SqliteSuite) TestFindFilesByUser_Pagination() {
 	s.Require().Equal("file-3", page[1].ID)
 
 	// second page continues at the offset
-	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(2))
+	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithCursor(db.Cursor{Offset: 2}))
 	s.Require().NoError(err)
 	s.Require().Len(page, 2)
 	s.Require().Equal("file-2", page[0].ID)
 	s.Require().Equal("file-1", page[1].ID)
 
 	// final partial page
-	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(4))
+	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithCursor(db.Cursor{Offset: 4}))
 	s.Require().NoError(err)
 	s.Require().Len(page, 1)
 	s.Require().Equal("file-0", page[0].ID)
 
 	// past the end
-	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(5))
+	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithCursor(db.Cursor{Offset: 5}))
 	s.Require().NoError(err)
 	s.Require().Empty(page)
 }
@@ -921,7 +921,7 @@ func (s *SqliteSuite) TestFindFilesByUser_PaginationTieBreaksOnID() {
 	s.Require().Equal("ccc", page[0].ID)
 	s.Require().Equal("bbb", page[1].ID)
 
-	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithOffset(2))
+	page, err = database.Files.FindByUser(context.TODO(), userID, db.WithLimit(2), db.WithCursor(db.Cursor{Offset: 2}))
 	s.Require().NoError(err)
 	s.Require().Len(page, 1)
 	s.Require().Equal("aaa", page[0].ID)
@@ -946,13 +946,13 @@ func (s *SqliteSuite) TestFindRevisionsByFileID_Pagination() {
 	s.Require().Equal(int64(5), page[0].Sequence)
 	s.Require().Equal(int64(4), page[1].Sequence)
 
-	page, err = database.Revisions.FindByFileID(context.TODO(), fileID, db.WithLimit(2), db.WithOffset(2))
+	page, err = database.Revisions.FindByFileID(context.TODO(), fileID, db.WithLimit(2), db.WithCursor(db.Cursor{Offset: 2}))
 	s.Require().NoError(err)
 	s.Require().Len(page, 2)
 	s.Require().Equal(int64(3), page[0].Sequence)
 	s.Require().Equal(int64(2), page[1].Sequence)
 
-	page, err = database.Revisions.FindByFileID(context.TODO(), fileID, db.WithLimit(2), db.WithOffset(4))
+	page, err = database.Revisions.FindByFileID(context.TODO(), fileID, db.WithLimit(2), db.WithCursor(db.Cursor{Offset: 4}))
 	s.Require().NoError(err)
 	s.Require().Len(page, 1)
 	s.Require().Equal(int64(1), page[0].Sequence)

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/robherley/snips.sh/internal/config"
-	"github.com/robherley/snips.sh/internal/db/sqlite"
+	"github.com/robherley/snips.sh/internal/db/dsn"
 	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/testutil"
 	"github.com/robherley/snips.sh/internal/web"
@@ -52,11 +52,16 @@ type revisionsPage struct {
 
 type APIIntegrationSuite struct {
 	suite.Suite
+	driver dsn.Driver
 	client *apiClient
 }
 
 func TestAPIIntegrationSuite(t *testing.T) {
-	suite.Run(t, new(APIIntegrationSuite))
+	for _, driver := range []dsn.Driver{dsn.SQLite, dsn.Postgres} {
+		t.Run(string(driver), func(t *testing.T) {
+			suite.Run(t, &APIIntegrationSuite{driver: driver})
+		})
+	}
 }
 
 func (s *APIIntegrationSuite) SetupTest() {
@@ -249,13 +254,7 @@ func newAPIClient(s *APIIntegrationSuite) *apiClient {
 	s.Require().NoError(err)
 	cfg.EnableGuesser = false
 
-	database, err := sqlite.New(s.T().TempDir()+"/snips.db", cfg.FileCompression)
-	s.Require().NoError(err)
-	s.T().Cleanup(func() {
-		s.Assert().NoError(database.Close())
-	})
-
-	s.Require().NoError(database.Migrate(s.T().Context()))
+	database := testutil.NewDatabase(s.T(), s.driver, cfg.FileCompression).DB
 	user, err := database.Users.CreateWithPublicKey(s.T().Context(), &snips.PublicKey{
 		Fingerprint: "SHA256:snips-api-integration-test",
 		Type:        "ssh-ed25519",
