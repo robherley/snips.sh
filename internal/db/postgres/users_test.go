@@ -1,4 +1,4 @@
-package postgres
+package postgres_test
 
 import (
 	"testing"
@@ -25,8 +25,8 @@ func TestUsers(t *testing.T) {
 		_, err = database.Users.CreateWithPublicKey(t.Context(), &duplicateKey)
 		require.Error(t, err)
 		var count int
-		require.NoError(t, database.admin.QueryRowContext(t.Context(),
-			`SELECT count(*) FROM `+database.schema+`.users`,
+		require.NoError(t, database.SQL.QueryRowContext(t.Context(),
+			`SELECT count(*) FROM `+database.Schema+`.users`,
 		).Scan(&count))
 		require.Equal(t, 1, count, "the failed transaction must not leave a user behind")
 	})

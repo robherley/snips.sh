@@ -1,4 +1,4 @@
-package postgres
+package postgres_test
 
 import (
 	"testing"
@@ -27,8 +27,8 @@ func TestFiles(t *testing.T) {
 
 		var internalID int64
 		var displayID string
-		err := database.admin.QueryRowContext(t.Context(),
-			`SELECT id, display_id FROM `+database.schema+`.files WHERE display_id = $1`, file.ID,
+		err := database.SQL.QueryRowContext(t.Context(),
+			`SELECT id, display_id FROM `+database.Schema+`.files WHERE display_id = $1`, file.ID,
 		).Scan(&internalID, &displayID)
 		require.NoError(t, err)
 		require.Positive(t, internalID)
