@@ -411,6 +411,53 @@ func (suite *HTTPServiceSuite) TestFileMarkdownAccept() {
 	})
 }
 
+func (suite *HTTPServiceSuite) TestFilePreviewMetadata() {
+	ts := httptest.NewServer(suite.service.Handler)
+	defer ts.Close()
+
+	tests := []struct {
+		name        string
+		fileID      string
+		fileName    string
+		previewName string
+	}{
+		{name: "named file", fileID: "namedpreview", fileName: "my-notes", previewName: "my-notes"},
+		{name: "unnamed file", fileID: "previewtest", previewName: "previewtest"},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			file := testutil.Fixtures.File(suite.T())
+			file.ID = tt.fileID
+			file.Name = tt.fileName
+			file.Type = "go"
+
+			suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
+			suite.mockDB.Files.EXPECT().FindContent(mock.Anything, file.ID).Return([]byte("package preview"), nil)
+			suite.mockDB.Revisions.EXPECT().CountByFileID(mock.Anything, file.ID).Return(int64(0), nil)
+
+			resp, err := ts.Client().Get(ts.URL + "/f/" + file.ID)
+			suite.Require().NoError(err)
+			defer resp.Body.Close()
+			suite.Require().Equal(http.StatusOK, resp.StatusCode)
+
+			body, err := io.ReadAll(resp.Body)
+			suite.Require().NoError(err)
+			html := string(body)
+			suite.Contains(html, "<title>"+tt.previewName+" - snips.sh</title>")
+			suite.Contains(html, `property="og:title" content="`+tt.previewName+` - snips.sh"`)
+			suite.Contains(html, `name="twitter:title" content="`+tt.previewName+` - snips.sh"`)
+			suite.Contains(html, `property="og:description" content="`+tt.previewName+` · go · 100 B ·`)
+			previewPath := "/f/" + file.ID
+			if file.Name != "" {
+				previewPath += "/n/" + file.Name
+			}
+			suite.Contains(html, `property="og:url" content="http://localhost:8080`+previewPath+`"`)
+			suite.Contains(html, `property="og:image" content="http://localhost:8080`+previewPath+`/og.png"`)
+		})
+	}
+}
+
 func (suite *HTTPServiceSuite) TestPprofEndpoints() {
 	suite.Run("pprof unavailable when debug is off", func() {
 		// Default config has Debug=false, so the route is not registered.
