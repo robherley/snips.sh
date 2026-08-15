@@ -176,6 +176,35 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrOJrpYRgEiuGuoNhyPbeEldjIRkwRG/fjjySPUks/y
 			t.Fatalf("expected 1 key, got %d", len(authorizedKeys))
 		}
 	})
+
+	t.Run("errors when configured env keys are all invalid", func(t *testing.T) {
+		t.Setenv("SNIPS_SSH_AUTHORIZEDKEYS", "this is not an authorized key 🦝")
+
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if _, err := cfg.SSHAuthorizedKeys(); err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+
+	t.Run("errors when configured path yields no valid keys", func(t *testing.T) {
+		authorizedKeysFile := testutil.TempFile(t, "authorized_keys", `
+		this is not an authorized key 🦝
+		`)
+
+		t.Setenv("SNIPS_SSH_AUTHORIZEDKEYSPATH", authorizedKeysFile)
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if _, err := cfg.SSHAuthorizedKeys(); err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
 }
 
 func TestConfig_SSHHostKey(t *testing.T) {

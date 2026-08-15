@@ -116,6 +116,7 @@ func (cfg *Config) sshCommandFor(user string) string {
 func (cfg *Config) SSHAuthorizedKeys() ([]ssh.PublicKey, error) {
 	authorizedKeys := make([]ssh.PublicKey, 0)
 	authorizedKeysContent := []byte(cfg.SSH.AuthorizedKeys)
+	configured := cfg.SSH.AuthorizedKeys != "" || cfg.SSH.AuthorizedKeysPath != ""
 
 	if len(authorizedKeysContent) == 0 {
 		if cfg.SSH.AuthorizedKeysPath == "" {
@@ -141,6 +142,10 @@ func (cfg *Config) SSHAuthorizedKeys() ([]ssh.PublicKey, error) {
 		}
 
 		authorizedKeys = append(authorizedKeys, out)
+	}
+
+	if configured && len(authorizedKeys) == 0 {
+		return nil, fmt.Errorf("authorized keys were configured but no valid keys were found")
 	}
 
 	return authorizedKeys, nil
