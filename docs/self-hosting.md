@@ -54,7 +54,9 @@ SNIPS_HTTP_EXTERNAL            URL               http://localhost:8080  external
 SNIPS_HTML_EXTENDHEADFILE      String                                   path to html file for extra content in <head>
 SNIPS_SSH_INTERNAL             URL               ssh://localhost:2222   internal address to listen for ssh requests
 SNIPS_SSH_EXTERNAL             URL               ssh://localhost:2222   external ssh address displayed in commands
+SNIPS_SSH_HOSTKEY              String                                   PEM-encoded SSH host private key; takes precedence over host key path
 SNIPS_SSH_HOSTKEYPATH          String            data/keys/snips        path to host keys (without extension)
+SNIPS_SSH_AUTHORIZEDKEYS       String                                   authorized keys content; takes precedence over authorized keys path
 SNIPS_SSH_AUTHORIZEDKEYSPATH   String                                   path to authorized keys, if specified will restrict SSH access
 SNIPS_METRICS_STATSD           URL                                      statsd server address (e.g. udp://localhost:8125)
 SNIPS_METRICS_USEDOGSTATSD     True or False     False                  use dogstatsd instead of statsd
@@ -122,7 +124,7 @@ Be sure to securely back up any host keys in the event they might be lost.
 
 By default, any user with a public key can connect to a snips.sh instance via SSH.
 
-If you want to limit access to who can SSH (and upload) snippets, you can use the `SNIPS_SSH_AUTHORIZEDKEYSPATH` environment variable. If specified, this will limit the SSH server to the public keys defined there.
+If you want to limit access to who can SSH (and upload) snippets, set `SNIPS_SSH_AUTHORIZEDKEYS` to the contents of an `authorized_keys` file or use `SNIPS_SSH_AUTHORIZEDKEYSPATH` to load them from a file. The direct value takes precedence when both are set.
 
 The format is exactly the same as `authorized_keys` for `sshd(8)`, e.g.
 

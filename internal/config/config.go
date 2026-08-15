@@ -62,7 +62,9 @@ type Config struct {
 	SSH struct {
 		Internal           url.URL `default:"ssh://localhost:2222" desc:"internal address to listen for ssh requests"`
 		External           url.URL `default:"ssh://localhost:2222" desc:"external ssh address displayed in commands"`
+		HostKey            string  `default:"" desc:"PEM-encoded SSH host private key; takes precedence over host key path"`
 		HostKeyPath        string  `default:"data/keys/snips" desc:"path to host keys (without extension)"`
+		AuthorizedKeys     string  `default:"" desc:"authorized keys content; takes precedence over authorized keys path"`
 		AuthorizedKeysPath string  `default:"" desc:"path to authorized keys, if specified will restrict SSH access"`
 	}
 
@@ -110,32 +112,40 @@ func (cfg *Config) sshCommandFor(user string) string {
 	return sshCommand
 }
 
-// SSHAuthorizedKeys returns the authorized keys if the file is specified in the config.
-// If the file is not specified, it returns an empty slice.
+// SSHAuthorizedKeys returns the configured authorized keys.
 func (cfg *Config) SSHAuthorizedKeys() ([]ssh.PublicKey, error) {
 	authorizedKeys := make([]ssh.PublicKey, 0)
+	authorizedKeysContent := []byte(cfg.SSH.AuthorizedKeys)
+	configured := cfg.SSH.AuthorizedKeys != "" || cfg.SSH.AuthorizedKeysPath != ""
 
-	if cfg.SSH.AuthorizedKeysPath == "" {
-		return authorizedKeys, nil
+	if len(authorizedKeysContent) == 0 {
+		if cfg.SSH.AuthorizedKeysPath == "" {
+			return authorizedKeys, nil
+		}
+
+		var err error
+		authorizedKeysContent, err = os.ReadFile(cfg.SSH.AuthorizedKeysPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read authorized keys file: %w", err)
+		}
 	}
 
-	authorizedKeysFile, err := os.ReadFile(cfg.SSH.AuthorizedKeysPath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read authorized keys file: %w", err)
-	}
-
-	for i, keyBites := range bytes.Split(authorizedKeysFile, []byte("\n")) {
-		if len(bytes.TrimSpace(keyBites)) == 0 {
+	for i, keyBytes := range bytes.Split(authorizedKeysContent, []byte("\n")) {
+		if len(bytes.TrimSpace(keyBytes)) == 0 {
 			continue
 		}
 
-		out, _, _, _, err := ssh.ParseAuthorizedKey(keyBites)
+		out, _, _, _, err := ssh.ParseAuthorizedKey(keyBytes)
 		if err != nil {
 			slog.Warn("unable to parse authorized key", "line", i, "err", err)
 			continue
 		}
 
 		authorizedKeys = append(authorizedKeys, out)
+	}
+
+	if configured && len(authorizedKeys) == 0 {
+		return nil, fmt.Errorf("authorized keys were configured but no valid keys were found")
 	}
 
 	return authorizedKeys, nil
