@@ -21,10 +21,14 @@ func New(cfg *config.Config, db *db.DB) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
+	hostKeyOption := wish.WithHostKeyPEM([]byte(cfg.SSH.HostKey))
+	if cfg.SSH.HostKey == "" {
+		hostKeyOption = wish.WithHostKeyPath(cfg.SSH.HostKeyPath)
+	}
 
 	sshServer, err := wish.NewServer(
 		wish.WithAddress(cfg.SSH.Internal.Host),
-		wish.WithHostKeyPath(cfg.SSH.HostKeyPath),
+		hostKeyOption,
 		wish.WithPublicKeyAuth(func(_ ssh.Context, _ ssh.PublicKey) bool {
 			return true
 		}),
