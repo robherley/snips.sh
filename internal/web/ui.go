@@ -261,6 +261,15 @@ func (ui *UI) File(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	burnAfterRead := isSignedAndNotExpired && signer.IsBurnAfterRead(*r.URL)
+	if burnAfterRead {
+		if err := ui.db.Files.Delete(r.Context(), file.ID); err != nil {
+			log.Error("unable to burn file after read", "err", err, "file_id", file.ID)
+			http.Error(w, "unable to burn file after read", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	if AcceptsMarkdown(r) {
 		w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
 		w.Header().Set("Vary", "Accept")
@@ -280,7 +289,7 @@ func (ui *UI) File(w http.ResponseWriter, r *http.Request) {
 	if isSignedAndNotExpired {
 		q := r.URL.Query()
 		q.Del("sig")
-		q.Add("r", "1")
+		q.Set("r", "1")
 
 		rawPathURL := url.URL{
 			Path:     r.URL.Path,

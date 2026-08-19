@@ -11,11 +11,15 @@ import (
 	"time"
 
 	"github.com/robherley/snips.sh/internal/config"
+	"github.com/robherley/snips.sh/internal/db"
 	dbmock "github.com/robherley/snips.sh/internal/db/mock"
+	"github.com/robherley/snips.sh/internal/db/sqlite"
 	"github.com/robherley/snips.sh/internal/signer"
+	"github.com/robherley/snips.sh/internal/snips"
 	"github.com/robherley/snips.sh/internal/testutil"
 	"github.com/robherley/snips.sh/internal/web"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -61,6 +65,19 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 	invalidSigned, _ := hmacSigner.SignURLWithTTL(url.URL{
 		Path: "/f/" + signedFileID,
 	}, -1*time.Hour)
+	burnSigned, _ := hmacSigner.SignURLWithOptions(url.URL{
+		Path: "/f/burnfile01",
+	}, 1*time.Hour, true)
+	burnRawSigned, _ := hmacSigner.SignURLWithOptions(url.URL{
+		Path:     "/f/burnraw001",
+		RawQuery: "r=1",
+	}, 1*time.Hour, true)
+	burnOGSigned, _ := hmacSigner.SignURLWithOptions(url.URL{
+		Path: "/f/burnog001/og.png",
+	}, 1*time.Hour, true)
+	burnRevSigned, _ := hmacSigner.SignURLWithOptions(url.URL{
+		Path: "/f/burnrev01/rev",
+	}, 1*time.Hour, true)
 
 	cases := []struct {
 		name     string
@@ -230,6 +247,64 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil)
 			},
 		},
+		{
+			name:     "burn after read signed private file",
+			method:   "GET",
+			path:     burnSigned.Path + "?" + burnSigned.RawQuery,
+			expected: 200,
+			setup: func() {
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = "burnfile01"
+				file.Private = true
+
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil).Once()
+				suite.mockDB.Files.EXPECT().FindContent(mock.Anything, file.ID).Return([]byte("hello world"), nil).Once()
+				suite.mockDB.Files.EXPECT().Delete(mock.Anything, file.ID).Return(nil).Once()
+				suite.mockDB.Revisions.EXPECT().CountByFileID(mock.Anything, file.ID).Return(int64(0), nil).Once()
+			},
+		},
+		{
+			name:     "burn after read raw signed private file",
+			method:   "GET",
+			path:     burnRawSigned.Path + "?" + burnRawSigned.RawQuery,
+			expected: 200,
+			setup: func() {
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = "burnraw001"
+				file.Private = true
+
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil).Once()
+				suite.mockDB.Files.EXPECT().FindContent(mock.Anything, file.ID).Return([]byte("hello world"), nil).Once()
+				suite.mockDB.Files.EXPECT().Delete(mock.Anything, file.ID).Return(nil).Once()
+			},
+		},
+		{
+			name:     "burn signed og image does not consume",
+			method:   "GET",
+			path:     "/f/burnog001/og.png?" + burnOGSigned.RawQuery,
+			expected: 200,
+			setup: func() {
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = "burnog001"
+				file.Private = true
+
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil).Once()
+			},
+		},
+		{
+			name:     "burn signed revisions do not consume",
+			method:   "GET",
+			path:     "/f/burnrev01/rev?" + burnRevSigned.RawQuery,
+			expected: 200,
+			setup: func() {
+				file := testutil.Fixtures.File(suite.T())
+				file.ID = "burnrev01"
+				file.Private = true
+
+				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil).Once()
+				suite.mockDB.Revisions.EXPECT().FindByFileID(mock.Anything, file.ID).Return(nil, nil).Once()
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -244,6 +319,58 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 			suite.Require().Equal(tc.expected, resp.StatusCode)
 		})
 	}
+
+	suite.Run("burn after read signed private file only works once", func() {
+		db, fileID := newBurnAfterReadTestDB(suite.T(), suite.config, []byte("hello world"))
+		service, err := web.New(suite.config, db, suite.assets)
+		require.NoError(suite.T(), err)
+
+		server := httptest.NewServer(service.Handler)
+		defer server.Close()
+
+		externalURL, err := url.Parse(server.URL)
+		require.NoError(suite.T(), err)
+		cfg := *suite.config
+		cfg.HTTP.External = *externalURL
+		hmacSigner := signer.New(cfg.HMACKey)
+		burnOnceSigned, _ := hmacSigner.SignURLWithOptions(url.URL{Path: "/f/" + fileID}, time.Hour, true)
+
+		resp, err := server.Client().Get(server.URL + burnOnceSigned.Path + "?" + burnOnceSigned.RawQuery)
+		require.NoError(suite.T(), err)
+		require.Equal(suite.T(), http.StatusOK, resp.StatusCode)
+		resp.Body.Close()
+
+		resp, err = server.Client().Get(server.URL + burnOnceSigned.Path + "?" + burnOnceSigned.RawQuery)
+		require.NoError(suite.T(), err)
+		require.Equal(suite.T(), http.StatusNotFound, resp.StatusCode)
+		resp.Body.Close()
+	})
+}
+
+func newBurnAfterReadTestDB(t *testing.T, cfg *config.Config, content []byte) (*db.DB, string) {
+	t.Helper()
+
+	database, err := sqlite.New(t.TempDir()+"/snips.db", cfg.FileCompression)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, database.Close())
+	})
+	require.NoError(t, database.Migrate(t.Context()))
+
+	user, err := database.Users.CreateWithPublicKey(t.Context(), &snips.PublicKey{
+		Fingerprint: "SHA256:web-burn-after-read-test",
+		Type:        "ssh-ed25519",
+	})
+	require.NoError(t, err)
+
+	file := &snips.File{
+		Private: true,
+		UserID:  user.ID,
+		Type:    "plaintext",
+	}
+	require.NoError(t, database.Files.Create(t.Context(), file, content, 0))
+
+	return database, file.ID
 }
 
 func (suite *HTTPServiceSuite) TestDocMarkdownAccept() {

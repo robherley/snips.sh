@@ -40,12 +40,12 @@ func (f *File) IsMarkdown() bool {
 	return f.Type == FileTypeMarkdown
 }
 
-func (f *File) GetSignedURL(cfg *config.Config, ttl time.Duration) (url.URL, time.Time) {
+func (f *File) GetSignedURL(cfg *config.Config, ttl time.Duration, burnAfterRead bool) (url.URL, time.Time) {
 	pathToSign := url.URL{
 		Path: fmt.Sprintf("/f/%s", f.ID),
 	}
 
-	signedFileURL, expires := signer.New(cfg.HMACKey).SignURLWithTTL(pathToSign, ttl)
+	signedFileURL, expires := signer.New(cfg.HMACKey).SignURLWithOptions(pathToSign, ttl, burnAfterRead)
 	signedFileURL.Scheme = cfg.HTTP.External.Scheme
 	signedFileURL.Host = cfg.HTTP.External.Host
 

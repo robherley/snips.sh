@@ -11,6 +11,7 @@ import (
 
 const (
 	SignatureQueryParameter = "sig"
+	BurnQueryParameter      = "burn"
 )
 
 type Signer struct {
@@ -36,13 +37,25 @@ func (signer *Signer) SignURL(u url.URL) url.URL {
 
 // SignURLWithTTL adds a sha256 hmac signature to a URL with a ttl.
 func (signer *Signer) SignURLWithTTL(u url.URL, ttl time.Duration) (url.URL, time.Time) {
+	return signer.SignURLWithOptions(u, ttl, false)
+}
+
+// SignURLWithOptions adds a sha256 hmac signature to a URL with a ttl and
+// optional burn-after-read flag.
+func (signer *Signer) SignURLWithOptions(u url.URL, ttl time.Duration, burnAfterRead bool) (url.URL, time.Time) {
 	expires := time.Now().Add(ttl).UTC()
 
+	params := u.Query()
+	params.Set("exp", strconv.FormatInt(expires.Unix(), 10))
+	if burnAfterRead {
+		params.Set(BurnQueryParameter, "1")
+	} else {
+		params.Del(BurnQueryParameter)
+	}
+
 	pathToSign := url.URL{
-		Path: u.Path,
-		RawQuery: url.Values{
-			"exp": []string{strconv.FormatInt(expires.Unix(), 10)},
-		}.Encode(),
+		Path:     u.Path,
+		RawQuery: params.Encode(),
 	}
 
 	return signer.SignURL(pathToSign), expires
@@ -91,6 +104,10 @@ func (signer *Signer) VerifyURLAndNotExpired(u url.URL) bool {
 	}
 
 	return expiresUnix > time.Now().Unix()
+}
+
+func IsBurnAfterRead(u url.URL) bool {
+	return u.Query().Get(BurnQueryParameter) == "1"
 }
 
 func (signer *Signer) computeMac(data string) []byte {

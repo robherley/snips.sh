@@ -359,7 +359,7 @@ func (h *SessionHandler) SignFile(sesh *UserSession, file *snips.File) {
 		return
 	}
 
-	signedFileURL, expires := file.GetSignedURL(h.Config, flags.TTL)
+	signedFileURL, expires := file.GetSignedURL(h.Config, flags.TTL, flags.Burn)
 	log.Info("private file signed", "file_id", file.ID, "expires_at", expires)
 
 	metrics.IncrCounter([]string{"file", "sign"}, 1)
@@ -612,7 +612,7 @@ func (h *SessionHandler) Upload(sesh *UserSession) {
 	h.renderFileResult(sesh, &file, "File Uploaded 📤")
 
 	if file.Private && flags.TTL.Seconds() > 0 {
-		signedURL, expires := file.GetSignedURL(h.Config, flags.TTL)
+		signedURL, expires := file.GetSignedURL(h.Config, flags.TTL, flags.Burn)
 		log.Info("private file signed", "file_id", file.ID, "expires_at", expires)
 
 		url := lipgloss.NewStyle().

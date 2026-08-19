@@ -555,7 +555,8 @@ func (a *API) SignFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		TTLSeconds int64 `json:"ttl_seconds"`
+		TTLSeconds    int64 `json:"ttl_seconds"`
+		BurnAfterRead bool  `json:"burn_after_read"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -570,7 +571,7 @@ func (a *API) SignFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	signedURL, expires := file.GetSignedURL(a.cfg, time.Duration(body.TTLSeconds)*time.Second)
+	signedURL, expires := file.GetSignedURL(a.cfg, time.Duration(body.TTLSeconds)*time.Second, body.BurnAfterRead)
 
 	metrics.IncrCounter([]string{"file", "sign"}, 1)
 	logger.From(r.Context()).Info("private file signed", "file_id", file.ID, "expires_at", expires)

@@ -19,6 +19,7 @@ type UploadFlags struct {
 	*flag.FlagSet
 
 	Private   bool
+	Burn      bool
 	Extension string
 	TTL       time.Duration
 	Name      string
@@ -29,6 +30,8 @@ func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
 	uf.SetOutput(out)
 
 	uf.BoolVar(&uf.Private, "private", false, "only accessible via creator or signed urls (optional)")
+	uf.BoolVar(&uf.Burn, "burn-after-read", false, "delete the file after the first successful signed read")
+	uf.BoolVar(&uf.Burn, "burn", false, "alias for -burn-after-read")
 	uf.StringVar(&uf.Extension, "ext", "", "set the file extension (optional)")
 	addDurationFlag(uf.FlagSet, &uf.TTL, "ttl", 0, "lifetime of the signed url (optional)")
 	uf.StringVar(&uf.Name, "name", "", "human-readable name for the file, must be unique per user (optional)")
@@ -38,6 +41,12 @@ func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
 	}
 
 	if uf.TTL.Seconds() > 0 && !uf.Private {
+		return fmt.Errorf("%w: -private", ErrFlagRequired)
+	}
+	if uf.Burn && uf.TTL.Seconds() == 0 {
+		return fmt.Errorf("%w: -ttl", ErrFlagRequired)
+	}
+	if uf.Burn && !uf.Private {
 		return fmt.Errorf("%w: -private", ErrFlagRequired)
 	}
 
@@ -90,7 +99,8 @@ func (rf *RenameFlags) Parse(out io.Writer, args []string) error {
 type SignFlags struct {
 	*flag.FlagSet
 
-	TTL time.Duration
+	TTL  time.Duration
+	Burn bool
 }
 
 func (sf *SignFlags) Parse(out io.Writer, args []string) error {
@@ -98,6 +108,8 @@ func (sf *SignFlags) Parse(out io.Writer, args []string) error {
 	sf.SetOutput(out)
 
 	addDurationFlag(sf.FlagSet, &sf.TTL, "ttl", 0, "lifetime of the signed url")
+	sf.BoolVar(&sf.Burn, "burn-after-read", false, "delete the file after the first successful signed read")
+	sf.BoolVar(&sf.Burn, "burn", false, "alias for -burn-after-read")
 
 	if err := sf.FlagSet.Parse(args); err != nil {
 		return err
