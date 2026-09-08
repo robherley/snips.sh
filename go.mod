@@ -6,10 +6,10 @@ require (
 	charm.land/bubbles/v2 v2.2.1
 	charm.land/bubbletea/v2 v2.0.9
 	charm.land/lipgloss/v2 v2.0.6
+	charm.land/ssh v0.4.2
 	charm.land/wish/v2 v2.0.3
 	github.com/alecthomas/chroma/v2 v2.27.0
 	github.com/armon/go-metrics v0.4.1
-	github.com/charmbracelet/ssh v0.0.0-20250826160808-ebfa259c7309
 	github.com/charmbracelet/x/ansi v0.11.8
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fogleman/gg v1.3.0
@@ -36,7 +36,6 @@ require (
 
 require (
 	charm.land/log/v2 v2.0.0 // indirect
-	charm.land/ssh v0.4.2 // indirect
 	github.com/DataDog/datadog-go v3.2.0+incompatible // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
