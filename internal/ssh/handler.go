@@ -11,10 +11,10 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/ssh"
 	"charm.land/wish/v2"
 	wishtea "charm.land/wish/v2/bubbletea"
 	"github.com/armon/go-metrics"
-	"github.com/charmbracelet/ssh"
 	"github.com/dustin/go-humanize"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"

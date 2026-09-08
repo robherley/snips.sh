@@ -13,7 +13,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/charmbracelet/ssh"
+	"charm.land/ssh"
 	"github.com/kelseyhightower/envconfig"
 )
 

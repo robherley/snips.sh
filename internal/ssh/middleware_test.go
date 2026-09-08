@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	cssh "charm.land/ssh"
 	"charm.land/wish/v2/testsession"
-	cssh "github.com/charmbracelet/ssh"
 	dbmock "github.com/robherley/snips.sh/internal/db/mock"
 	"github.com/robherley/snips.sh/internal/id"
 	"github.com/robherley/snips.sh/internal/logger"

@@ -1,8 +1,8 @@
 package ssh
 
 import (
+	"charm.land/ssh"
 	"charm.land/wish/v2"
-	"github.com/charmbracelet/ssh"
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/db"
 )
