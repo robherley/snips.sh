@@ -30,8 +30,7 @@ func (uf *UploadFlags) Parse(out io.Writer, args []string) error {
 	uf.SetOutput(out)
 
 	uf.BoolVar(&uf.Private, "private", false, "only accessible via creator or signed urls (optional)")
-	uf.BoolVar(&uf.Burn, "burn-after-read", false, "delete the file after the first successful signed read")
-	uf.BoolVar(&uf.Burn, "burn", false, "alias for -burn-after-read")
+	uf.BoolVar(&uf.Burn, "burn", false, "delete the file after the first successful signed read")
 	uf.StringVar(&uf.Extension, "ext", "", "set the file extension (optional)")
 	addDurationFlag(uf.FlagSet, &uf.TTL, "ttl", 0, "lifetime of the signed url (optional)")
 	uf.StringVar(&uf.Name, "name", "", "human-readable name for the file, must be unique per user (optional)")
@@ -108,8 +107,7 @@ func (sf *SignFlags) Parse(out io.Writer, args []string) error {
 	sf.SetOutput(out)
 
 	addDurationFlag(sf.FlagSet, &sf.TTL, "ttl", 0, "lifetime of the signed url")
-	sf.BoolVar(&sf.Burn, "burn-after-read", false, "delete the file after the first successful signed read")
-	sf.BoolVar(&sf.Burn, "burn", false, "alias for -burn-after-read")
+	sf.BoolVar(&sf.Burn, "burn", false, "delete the file after the first successful signed read")
 
 	if err := sf.FlagSet.Parse(args); err != nil {
 		return err

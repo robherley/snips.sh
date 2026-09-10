@@ -71,15 +71,6 @@ func TestUploadFlags(t *testing.T) {
 			},
 		},
 		{
-			name: "private ttl and burn-after-read alias",
-			args: []string{"-private", "-ttl", "1h", "-burn-after-read"},
-			want: ssh.UploadFlags{
-				Private: true,
-				Burn:    true,
-				TTL:     time.Hour,
-			},
-		},
-		{
 			name: "burn without ttl",
 			args: []string{"-private", "-burn"},
 			err:  ssh.ErrFlagRequired,
@@ -187,14 +178,6 @@ func TestSignFlags(t *testing.T) {
 		{
 			name: "ttl and burn",
 			args: []string{"-ttl", "1h", "-burn"},
-			want: ssh.SignFlags{
-				TTL:  time.Hour,
-				Burn: true,
-			},
-		},
-		{
-			name: "ttl and burn-after-read alias",
-			args: []string{"-ttl", "1h", "-burn-after-read"},
 			want: ssh.SignFlags{
 				TTL:  time.Hour,
 				Burn: true,

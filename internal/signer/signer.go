@@ -41,7 +41,7 @@ func (signer *Signer) SignURLWithTTL(u url.URL, ttl time.Duration) (url.URL, tim
 }
 
 // SignURLWithOptions adds a sha256 hmac signature to a URL with a ttl and
-// optional burn-after-read flag.
+// optional burn flag.
 func (signer *Signer) SignURLWithOptions(u url.URL, ttl time.Duration, burnAfterRead bool) (url.URL, time.Time) {
 	expires := time.Now().Add(ttl).UTC()
 
@@ -106,7 +106,7 @@ func (signer *Signer) VerifyURLAndNotExpired(u url.URL) bool {
 	return expiresUnix > time.Now().Unix()
 }
 
-func IsBurnAfterRead(u url.URL) bool {
+func IsBurn(u url.URL) bool {
 	return u.Query().Get(BurnQueryParameter) == "1"
 }
 

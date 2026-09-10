@@ -147,7 +147,7 @@ func TestSigner_VerifyURL(t *testing.T) {
 	}
 }
 
-func TestSigner_SignURLWithBurnAfterRead(t *testing.T) {
+func TestSigner_SignURLWithBurn(t *testing.T) {
 	hmacSigner := signer.New(testKey)
 
 	signed, _ := hmacSigner.SignURLWithOptions(parseURL("https://snips.sh/f/5yiAwU0Ax"), 5*time.Minute, true)
@@ -157,8 +157,8 @@ func TestSigner_SignURLWithBurnAfterRead(t *testing.T) {
 	if !hmacSigner.VerifyURLAndNotExpired(signed) {
 		t.Fatal("expected signed burn url to verify")
 	}
-	if !signer.IsBurnAfterRead(signed) {
-		t.Fatal("expected burn url to be marked burn-after-read")
+	if !signer.IsBurn(signed) {
+		t.Fatal("expected burn url to be marked burn")
 	}
 }
 
