@@ -208,6 +208,30 @@ func TestFiles(t *testing.T) {
 		require.NoError(t, database.Files.Delete(t.Context(), "missing"))
 	})
 
+	t.Run("DeleteWithContent", func(t *testing.T) {
+		database := newTestDB(t)
+		user := database.createTestUser(t)
+		file := database.createTestFile(t, user.ID, "DeleteWithContent", "burn content")
+		revision := testutil.Fixtures.Revision(t)
+		revision.FileID = file.ID
+		require.NoError(t, database.Revisions.Create(t.Context(), &revision, []byte("diff"), 0))
+
+		content, err := database.Files.DeleteWithContent(t.Context(), file.ID)
+		require.NoError(t, err)
+		require.Equal(t, []byte("burn content"), content)
+		missingFile, err := database.Files.Find(t.Context(), file.ID)
+		require.NoError(t, err)
+		require.Nil(t, missingFile)
+		count, err := database.Revisions.CountByFileID(t.Context(), file.ID)
+		require.NoError(t, err)
+		require.Zero(t, count)
+
+		// second call returns nil (already deleted)
+		content, err = database.Files.DeleteWithContent(t.Context(), file.ID)
+		require.NoError(t, err)
+		require.Nil(t, content)
+	})
+
 	t.Run("DeleteByUser", func(t *testing.T) {
 		database := newTestDB(t)
 		user := database.createTestUser(t)
