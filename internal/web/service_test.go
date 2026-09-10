@@ -258,8 +258,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.Private = true
 
 				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil).Once()
-				suite.mockDB.Files.EXPECT().FindContent(mock.Anything, file.ID).Return([]byte("hello world"), nil).Once()
-				suite.mockDB.Files.EXPECT().Delete(mock.Anything, file.ID).Return(nil).Once()
+				suite.mockDB.Files.EXPECT().DeleteWithContent(mock.Anything, file.ID).Return([]byte("hello world"), nil).Once()
 				suite.mockDB.Revisions.EXPECT().CountByFileID(mock.Anything, file.ID).Return(int64(0), nil).Once()
 			},
 		},
@@ -274,8 +273,7 @@ func (suite *HTTPServiceSuite) TestHTTPServer() {
 				file.Private = true
 
 				suite.mockDB.Files.EXPECT().Find(mock.Anything, file.ID).Return(&file, nil).Once()
-				suite.mockDB.Files.EXPECT().FindContent(mock.Anything, file.ID).Return([]byte("hello world"), nil).Once()
-				suite.mockDB.Files.EXPECT().Delete(mock.Anything, file.ID).Return(nil).Once()
+				suite.mockDB.Files.EXPECT().DeleteWithContent(mock.Anything, file.ID).Return([]byte("hello world"), nil).Once()
 			},
 		},
 		{

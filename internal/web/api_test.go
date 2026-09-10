@@ -455,13 +455,13 @@ func (suite *APISuite) TestSignFile() {
 	suite.NotEmpty(signed["expires_at"])
 }
 
-func (suite *APISuite) TestSignFile_BurnAfterRead() {
+func (suite *APISuite) TestSignFile_Burn() {
 	private := suite.file("file1", true)
 
 	suite.expectAuth()
 	suite.mockDB.Files.EXPECT().Find(mock.Anything, "file1").Return(private, nil).Once()
 
-	res := suite.request("POST", "/api/v1/files/file1/sign", strings.NewReader(`{"ttl_seconds":3600,"burn_after_read":true}`), true)
+	res := suite.request("POST", "/api/v1/files/file1/sign", strings.NewReader(`{"ttl_seconds":3600,"burn":true}`), true)
 	suite.Equal(http.StatusCreated, res.StatusCode)
 
 	signed := map[string]any{}

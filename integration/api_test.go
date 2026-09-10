@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -232,7 +234,7 @@ func (s *APIIntegrationSuite) TestAPIEndToEnd() {
 	})
 
 	s.Run("burn after read signed url deletes file", func() {
-		burnRequest := marshalJSON(s, map[string]any{"ttl_seconds": 300, "burn_after_read": true})
+		burnRequest := marshalJSON(s, map[string]any{"ttl_seconds": 300, "burn": true})
 		status, body := c.apiRequest(http.MethodPost, "/files/"+privateFile.ID+"/sign", burnRequest, "application/json", true)
 		requireStatus(s, http.StatusCreated, status, body)
 		var signed struct {
@@ -250,6 +252,44 @@ func (s *APIIntegrationSuite) TestAPIEndToEnd() {
 		requireStatus(s, http.StatusNotFound, status, body)
 		status, body = c.request(http.MethodGet, c.baseURL+"/f/"+privateFile.ID, nil, "", false)
 		requireStatus(s, http.StatusNotFound, status, body)
+	})
+
+	s.Run("burn after read concurrent requests only serve once", func() {
+		burnFile := c.createFile("burn-concurrent", true, "txt", []byte("concurrent burn content"))
+		burnRequest := marshalJSON(s, map[string]any{"ttl_seconds": 300, "burn": true})
+		status, body := c.apiRequest(http.MethodPost, "/files/"+burnFile.ID+"/sign", burnRequest, "application/json", true)
+		requireStatus(s, http.StatusCreated, status, body)
+		var signed struct {
+			URL string `json:"url"`
+		}
+		decodeJSON(s, body, &signed)
+
+		const concurrency = 10
+		var (
+			wg       sync.WaitGroup
+			ok200    atomic.Int64
+			notFound atomic.Int64
+			start    = make(chan struct{})
+		)
+		for range concurrency {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				<-start
+				status, _ := c.request(http.MethodGet, signed.URL, nil, "", false)
+				switch status {
+				case http.StatusOK:
+					ok200.Add(1)
+				case http.StatusNotFound:
+					notFound.Add(1)
+				}
+			}()
+		}
+		close(start)
+		wg.Wait()
+
+		s.Require().Equal(int64(1), ok200.Load(), "exactly one request should succeed")
+		s.Require().Equal(int64(concurrency-1), notFound.Load(), "all other requests should get 404")
 	})
 
 	s.Run("delete files", func() {

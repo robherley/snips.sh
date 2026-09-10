@@ -371,7 +371,7 @@ paths:
     post:
       operationId: signFile
       summary: Create a signed URL
-      description: Creates a time-limited signed URL for a **private** file. Owner only. When `burn` is true, the first successful file content read deletes the file and its revisions.
+      description: Creates a time-limited signed URL for a **private** file. Owner only. Set `burn` to true for burn-after-read behaviour — the file and its revisions are deleted after the first successful content read.
       requestBody:
         required: true
         content:
@@ -389,7 +389,7 @@ paths:
                 burn:
                   type: boolean
                   default: false
-                  description: Delete the file after the first successful file content read through this signed URL.
+                  description: Enable burn-after-read — the file is deleted after the first successful content read through this signed URL.
       responses:
         "201":
           description: Signed URL created
