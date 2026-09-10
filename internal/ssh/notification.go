@@ -5,8 +5,8 @@ import (
 	"image/color"
 
 	"charm.land/lipgloss/v2"
+	"charm.land/ssh"
 	"charm.land/wish/v2"
-	"github.com/charmbracelet/ssh"
 	"github.com/robherley/snips.sh/internal/tui/styles"
 )
 

@@ -20,8 +20,7 @@
 {{ end }} {{ end }} {{ define "body-class" }}landing{{ end }} {{ define "content" }}
 <section class="hero">
     <div class="hero-pitch">
-        <p class="eyebrow muted">zero install · anonymous · open source</p>
-        <h2 class="hero-title">pipe anything,<br />get a link.</h2>
+        <h2 class="hero-title">all you need is ssh.</h2>
         <p class="hero-sub">
             SSH-powered pastebin with a human-friendly TUI and web UI. There's nothing to install, it works on any machine with a SSH client.
         </p>
@@ -42,6 +41,19 @@
                 <i data-lucide="check"></i>
             </button>
         </div>
+        <div class="hero-links">
+            <a
+                class="hero-link"
+                href="https://github.com/robherley/snips.sh"
+            >
+                <i data-lucide="git-branch"></i>
+                Source Code
+            </a>
+            <a class="hero-link" href="/docs/self-hosting.md">
+                Self-hosting
+                <i data-lucide="arrow-right"></i>
+            </a>
+        </div>
     </div>
     <div class="hero-demo">
         <div
@@ -55,16 +67,15 @@
                 <span class="terminal-dot"></span>
                 <span class="terminal-dot"></span>
                 <span class="terminal-dot"></span>
-                <span class="terminal-bar-title muted">{{ .SSHHost }}</span>
             </div>
+            <div
+                class="terminal-tabs"
+                id="terminal-tabs"
+                role="group"
+                aria-label="usage examples"
+            ></div>
             <pre class="terminal-screen" id="terminal-screen"></pre>
         </div>
-        <div
-            class="terminal-tabs"
-            id="terminal-tabs"
-            role="group"
-            aria-label="usage examples"
-        ></div>
     </div>
 </section>
 

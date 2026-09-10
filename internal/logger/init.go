@@ -20,7 +20,7 @@ func Initialize(lvls ...slog.Level) {
 	var handler slog.Handler
 
 	if isatty.IsTerminal(os.Stderr.Fd()) {
-		handler = tint.NewHandler(os.Stderr, &tint.Options{
+		handler = tint.NewTextHandler(os.Stderr, &tint.Options{
 			Level:      lvl,
 			TimeFormat: time.TimeOnly,
 		})

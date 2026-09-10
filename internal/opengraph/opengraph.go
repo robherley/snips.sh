@@ -96,6 +96,7 @@ func abbreviate(s string, max int) string {
 // FileInfo contains the metadata displayed on an OG image.
 type FileInfo struct {
 	ID        string
+	Name      string
 	Type      string
 	Size      uint64
 	UpdatedAt time.Time
@@ -172,8 +173,12 @@ func (r *Renderer) WriteImage(w io.Writer, info *FileInfo) error {
 		color color.NRGBA
 	}
 
+	identifierKey, identifier := "id", info.ID
+	if info.Name != "" {
+		identifierKey, identifier = "name", info.Name
+	}
 	props := []struct{ key, value string }{
-		{"id", abbreviate(info.ID, 26)},
+		{identifierKey, abbreviate(identifier, 26)},
 		{"type", strings.ToLower(info.Type)},
 		{"size", humanize.Bytes(info.Size)},
 	}

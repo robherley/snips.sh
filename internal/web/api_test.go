@@ -182,7 +182,7 @@ func (suite *APISuite) TestListFiles_Paginated() {
 	suite.Equal("file3", page.Files[0]["id"])
 	suite.NotEmpty(page.NextCursor)
 
-	// following the cursor resumes at the encoded offset
+	// following the opaque cursor resumes after the last returned file
 	suite.expectAuth()
 	suite.mockDB.Files.EXPECT().FindByUser(mock.Anything, suite.userID, mock.Anything, mock.Anything).Return(files[2:], nil).Once()
 

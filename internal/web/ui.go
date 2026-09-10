@@ -224,6 +224,13 @@ func filePath(r *http.Request, file *snips.File) string {
 	return fmt.Sprintf("/f/%s", file.ID)
 }
 
+func preferredFilePath(file *snips.File) string {
+	if file.Name != "" {
+		return fmt.Sprintf("/f/%s/n/%s", file.ID, file.Name)
+	}
+	return fmt.Sprintf("/f/%s", file.ID)
+}
+
 func (ui *UI) File(w http.ResponseWriter, r *http.Request) {
 	log := logger.From(r.Context())
 
@@ -333,12 +340,18 @@ func (ui *UI) File(w http.ResponseWriter, r *http.Request) {
 	}
 
 	path := filePath(r, file)
-	ogImageURL := fmt.Sprintf("%s://%s%s/og.png", ui.cfg.HTTP.External.Scheme, ui.cfg.HTTP.External.Host, path)
-	ogDescription := fmt.Sprintf("%s · %s · %s · %s", file.ID, strings.ToLower(file.Type), humanize.Bytes(file.Size), humanize.Time(file.UpdatedAt))
+	previewURL := fmt.Sprintf("%s://%s%s", ui.cfg.HTTP.External.Scheme, ui.cfg.HTTP.External.Host, preferredFilePath(file))
+	ogImageURL := previewURL + "/og.png"
+	previewName := file.ID
+	if file.Name != "" {
+		previewName = file.Name
+	}
+	ogDescription := fmt.Sprintf("%s · %s · %s · %s", previewName, strings.ToLower(file.Type), humanize.Bytes(file.Size), humanize.Time(file.UpdatedAt))
 
 	vars := map[string]interface{}{
 		"FileID":        file.ID,
 		"FileName":      file.Name,
+		"PreviewName":   previewName,
 		"FilePath":      path,
 		"FileSize":      humanize.Bytes(file.Size),
 		"CreatedAt":     humanize.Time(file.CreatedAt),
@@ -351,6 +364,7 @@ func (ui *UI) File(w http.ResponseWriter, r *http.Request) {
 		"Private":       file.Private,
 		"CommitSHA":     config.BuildCommit(),
 		"OGImageURL":    ogImageURL,
+		"OGURL":         previewURL,
 		"OGDescription": ogDescription,
 		"RevisionCount": revisionCount,
 	}
@@ -419,6 +433,7 @@ func (ui *UI) OGImage(w http.ResponseWriter, r *http.Request) {
 	var img bytes.Buffer
 	err = ui.og.WriteImage(&img, &opengraph.FileInfo{
 		ID:        file.ID,
+		Name:      file.Name,
 		Type:      file.Type,
 		Size:      file.Size,
 		UpdatedAt: file.UpdatedAt,

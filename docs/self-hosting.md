@@ -48,13 +48,15 @@ SNIPS_LIMITS_FILESIZE          Unsigned Integer  1048576                maximum 
 SNIPS_LIMITS_FILESPERUSER      Unsigned Integer  100                    maximum number of files per user
 SNIPS_LIMITS_SESSIONDURATION   Duration          15m                    maximum ssh session duration
 SNIPS_LIMITS_REVISIONSPERFILE  Unsigned Integer  64                     maximum number of revisions per file
-SNIPS_DB_FILEPATH              String            data/snips.db          path to database file
+SNIPS_DB_URL                   String            data/snips.db          database URL or DSN
 SNIPS_HTTP_INTERNAL            URL               http://localhost:8080  internal address to listen for http requests
 SNIPS_HTTP_EXTERNAL            URL               http://localhost:8080  external http address displayed in commands
 SNIPS_HTML_EXTENDHEADFILE      String                                   path to html file for extra content in <head>
 SNIPS_SSH_INTERNAL             URL               ssh://localhost:2222   internal address to listen for ssh requests
 SNIPS_SSH_EXTERNAL             URL               ssh://localhost:2222   external ssh address displayed in commands
+SNIPS_SSH_HOSTKEY              String                                   PEM-encoded SSH host private key; takes precedence over host key path
 SNIPS_SSH_HOSTKEYPATH          String            data/keys/snips        path to host keys (without extension)
+SNIPS_SSH_AUTHORIZEDKEYS       String                                   authorized keys content; takes precedence over authorized keys path
 SNIPS_SSH_AUTHORIZEDKEYSPATH   String                                   path to authorized keys, if specified will restrict SSH access
 SNIPS_METRICS_STATSD           URL                                      statsd server address (e.g. udp://localhost:8125)
 SNIPS_METRICS_USEDOGSTATSD     True or False     False                  use dogstatsd instead of statsd
@@ -84,7 +86,10 @@ SNIPS_SSH_EXTERNAL=ssh://snips.example.com:22
 
 ### Database
 
-The file specified at `SNIPS_DB_FILEPATH` is the SQLite database that holds all user data. For more information managing the database, see [`database.md`](/docs/database.md).
+The backend is inferred from `SNIPS_DB_URL`. A path or SQLite DSN selects SQLite;
+a `postgres://` or `postgresql://` URL selects PostgreSQL. `SNIPS_DB_FILEPATH` is
+a deprecated fallback that logs a warning and is used only when `SNIPS_DB_URL`
+is unset. For more information, see [`database.md`](/docs/database.md).
 
 Setting `SNIPS_FILECOMPRESSION` to `false` will disable compression when storing file content to disk. If this option was disabled at any point (or files were created before this option existed), it will not retroactively compress existing files.
 
@@ -119,7 +124,7 @@ Be sure to securely back up any host keys in the event they might be lost.
 
 By default, any user with a public key can connect to a snips.sh instance via SSH.
 
-If you want to limit access to who can SSH (and upload) snippets, you can use the `SNIPS_SSH_AUTHORIZEDKEYSPATH` environment variable. If specified, this will limit the SSH server to the public keys defined there.
+If you want to limit access to who can SSH (and upload) snippets, set `SNIPS_SSH_AUTHORIZEDKEYS` to the contents of an `authorized_keys` file or use `SNIPS_SSH_AUTHORIZEDKEYSPATH` to load them from a file. The direct value takes precedence when both are set.
 
 The format is exactly the same as `authorized_keys` for `sshd(8)`, e.g.
 

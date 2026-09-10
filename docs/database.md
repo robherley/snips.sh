@@ -1,22 +1,40 @@
 # Database
 
-Currently, the only supported backend is SQLite. If you'd like to change that, feel free [to contribute](https://github.com/robherley/snips.sh/pulls) :tada:
+snips.sh supports SQLite and PostgreSQL. The backend is inferred from
+`SNIPS_DB_URL`. SQLite is the default and accepts a path or SQLite DSN:
 
-I chose SQLite since it's simplest starting point for a database, it keeps the data close to the application and overall it's an extremely powerful tool. But don't take my word for it, check out this amazing article from [Ben Johnson at Fly.io](https://fly.io/blog/all-in-on-sqlite-litestream/).
+```bash
+SNIPS_DB_URL=data/snips.db
+```
+
+To use PostgreSQL, provide a PostgreSQL URL:
+
+```bash
+SNIPS_DB_URL=postgres://user:password@localhost:5432/snips?sslmode=disable
+```
+
+`SNIPS_DB_FILEPATH` is deprecated. It remains a compatibility fallback when
+`SNIPS_DB_URL` is unset, but emits a warning and is no longer shown in usage.
+
+The application uses a connection pool and automatically applies the migrations
+for the selected backend at startup.
 
 ## Schema and Migrations
 
-Database migrations are managed using [goose](https://github.com/pressly/goose). Migration files are located in [`internal/db/migrations/`](https://github.com/robherley/snips.sh/tree/main/internal/db/migrations) and are embedded with the binary at build time. Migrations are automatically applied when the application starts.
+Database migrations are managed using [goose](https://github.com/pressly/goose).
+Backend-specific migration files live under `internal/db/sqlite/migrations` and
+`internal/db/postgres/migrations` and are embedded in the binary.
 
 ### Creating a New Migration
 
 Use `just migrate` to create a new migration file:
 
 ```bash
-just migrate -s -dir internal/db/migrations create add_user_nickname sql
+just migrate -s -dir internal/db/sqlite/migrations create add_user_nickname sql
 ```
 
-This creates a new file like `internal/db/migrations/00002_add_user_nickname.sql` with the goose annotations. Edit it to add your up and down SQL:
+Create an equivalent migration in each backend directory and use syntax supported
+by that database.
 
 ```sql
 -- +goose Up
@@ -36,16 +54,19 @@ To run migrations manually via CLI:
 
 ```bash
 # Apply all pending migrations
-just migrate -dir internal/db/migrations sqlite3 <db-path> up
+just migrate -dir internal/db/sqlite/migrations sqlite3 <db-path> up
 
 # Roll back the last migration
-just migrate -dir internal/db/migrations sqlite3 <db-path> down
+just migrate -dir internal/db/sqlite/migrations sqlite3 <db-path> down
 
 # Check current migration status
-just migrate -dir internal/db/migrations sqlite3 <db-path> status
+just migrate -dir internal/db/sqlite/migrations sqlite3 <db-path> status
 
 # Migrate to a specific version
-just migrate -dir internal/db/migrations sqlite3 <db-path> up-to 2
+just migrate -dir internal/db/sqlite/migrations sqlite3 <db-path> up-to 2
+
+# PostgreSQL uses its URL in place of <db-path>
+just migrate -dir internal/db/postgres/migrations postgres <postgres-url> status
 ```
 
 For a full list of goose commands, run:

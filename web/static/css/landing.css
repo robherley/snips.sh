@@ -19,18 +19,24 @@
   height: 3rem;
 }
 
-.hero-pitch .eyebrow {
-  font-family: var(--font-mono);
-  letter-spacing: 0.08em;
-  margin: 0 0 1rem;
-}
-
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
   gap: 3rem;
   align-items: start;
   padding: 3rem 0 2rem;
+}
+
+.hero-pitch::before {
+  content: "";
+  display: block;
+  height: 1rem;
+  margin-bottom: 1.5rem;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-border) 0 2px,
+    transparent 2px 8px
+  );
 }
 
 .hero-title {
@@ -108,6 +114,33 @@
   display: none;
 }
 
+.hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.hero-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  border: var(--border);
+  background-color: var(--color-surface-1);
+  color: var(--color-gray);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.hero-link:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  text-decoration: none;
+}
+
 .terminal {
   border: var(--border);
   background-color: var(--color-surface-1);
@@ -129,12 +162,6 @@
   border: 1px solid var(--color-border);
 }
 
-.terminal-bar-title {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  margin-left: auto;
-}
-
 .terminal-screen {
   font-family: var(--font-mono);
   font-size: 0.85rem;
@@ -153,7 +180,7 @@
 
 .terminal-screen .t-ok {
   color: var(--color-green);
-  font-weight: 600;
+  font-weight: normal;
 }
 
 .terminal-screen .t-bar {
@@ -208,22 +235,24 @@
 
 .terminal-tabs {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  flex-wrap: wrap;
+  border-bottom: var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .terminal-tab {
+  flex: 0 0 auto;
   font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--color-gray);
   background: none;
-  border: var(--border);
-  padding: 0.35rem 0.8rem;
+  border: 0;
+  border-right: var(--border);
+  padding: 0.5rem 0.85rem;
   cursor: pointer;
   transition:
     color 0.15s ease,
-    border-color 0.15s ease;
+    background-color 0.15s ease;
 }
 
 .terminal-tab:hover {
@@ -232,7 +261,7 @@
 
 .terminal-tab[aria-pressed="true"] {
   color: var(--color-primary);
-  border-color: var(--color-primary);
+  background-color: var(--color-surface-2);
 }
 
 .landing-section {
@@ -265,9 +294,13 @@
   align-items: center;
   gap: 0.5rem;
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-weight: normal;
   font-size: 0.95rem;
   margin: 0 0 0.5rem;
+  color: var(--color-white);
+}
+
+.feature h4 svg.lucide {
   color: var(--color-primary);
 }
 

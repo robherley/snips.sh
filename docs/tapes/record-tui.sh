@@ -19,7 +19,7 @@ DB="$DEMO_DIR/snips.db"
 SERVER_PID=""
 trap '[[ -n "$SERVER_PID" ]] && kill "$SERVER_PID" 2>/dev/null; rm -rf "$DEMO_DIR"' EXIT
 
-SNIPS_DB_FILEPATH="$DB" \
+SNIPS_DB_URL="$DB" \
 SNIPS_SSH_INTERNAL="ssh://127.0.0.1:2224" \
 SNIPS_HTTP_INTERNAL="http://127.0.0.1:8084" \
 SNIPS_SSH_EXTERNAL="ssh://snips.sh:22" \

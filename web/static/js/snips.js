@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  ArrowRight,
   Brain,
   Check,
   Clock,
@@ -8,6 +9,7 @@ import {
   FileCode,
   FileText,
   Folder,
+  GitBranch,
   GitCommitHorizontal,
   Globe,
   HardDrive,
@@ -144,6 +146,7 @@ const initIcons = () => {
   createIcons({
     icons: {
       ArrowLeft,
+      ArrowRight,
       Brain,
       Check,
       Clock,
@@ -151,6 +154,7 @@ const initIcons = () => {
       FileCode,
       FileText,
       Folder,
+      GitBranch,
       GitCommitHorizontal,
       Globe,
       HardDrive,

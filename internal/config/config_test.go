@@ -1,57 +1,17 @@
 package config_test
 
 import (
-	"context"
 	"log/slog"
-	"strings"
-	"sync"
+	"os"
 	"testing"
 
 	"github.com/robherley/snips.sh/internal/config"
 	"github.com/robherley/snips.sh/internal/testutil"
 )
 
-// captureHandler records slog records for assertion in tests.
-type captureHandler struct {
-	mu      sync.Mutex
-	records []slog.Record
-}
-
-func (h *captureHandler) Enabled(_ context.Context, _ slog.Level) bool { return true }
-
-func (h *captureHandler) Handle(_ context.Context, r slog.Record) error {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	h.records = append(h.records, r)
-	return nil
-}
-
-func (h *captureHandler) WithAttrs(_ []slog.Attr) slog.Handler { return h }
-func (h *captureHandler) WithGroup(_ string) slog.Handler      { return h }
-
-func (h *captureHandler) hasWarn(substr string) bool {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	for _, r := range h.records {
-		if r.Level == slog.LevelWarn && strings.Contains(r.Message, substr) {
-			return true
-		}
-	}
-	return false
-}
-
-func withCaptureLogger(t *testing.T) *captureHandler {
-	t.Helper()
-	h := &captureHandler{}
-	orig := slog.Default()
-	slog.SetDefault(slog.New(h))
-	t.Cleanup(func() { slog.SetDefault(orig) })
-	return h
-}
-
 func TestLoad_EphemeralHMACKeyWarning(t *testing.T) {
 	t.Run("warns and generates ephemeral key when unset", func(t *testing.T) {
-		h := withCaptureLogger(t)
+		recorder := testutil.SetLogRecorder(t)
 
 		cfg, err := config.Load()
 		if err != nil {
@@ -62,21 +22,50 @@ func TestLoad_EphemeralHMACKeyWarning(t *testing.T) {
 			t.Error("expected generated HMAC key, got empty string")
 		}
 
-		if !h.hasWarn("SNIPS_HMACKEY") {
-			t.Error("expected a warning about the unset HMAC key, got none")
-		}
+		recorder.AssertLog(t, slog.LevelWarn, "SNIPS_HMACKEY")
 	})
 
 	t.Run("no warning when custom key is set", func(t *testing.T) {
 		t.Setenv("SNIPS_HMACKEY", "a-custom-secret-key-that-is-not-the-default")
-		h := withCaptureLogger(t)
+		recorder := testutil.SetLogRecorder(t)
 
 		if _, err := config.Load(); err != nil {
 			t.Fatal(err)
 		}
 
-		if h.hasWarn("SNIPS_HMACKEY") {
-			t.Error("unexpected warning about HMAC key when a custom key is set")
+		recorder.RefuteLog(t, slog.LevelWarn, "SNIPS_HMACKEY")
+	})
+}
+
+func TestConfig_DatabaseURL(t *testing.T) {
+	t.Run("legacy filepath warns and is used as fallback", func(t *testing.T) {
+		t.Setenv("SNIPS_DB_URL", "temporarily-set-so-it-can-be-unset")
+		if err := os.Unsetenv("SNIPS_DB_URL"); err != nil {
+			t.Fatal(err)
+		}
+		t.Setenv("SNIPS_DB_FILEPATH", "legacy.db")
+		recorder := testutil.SetLogRecorder(t)
+
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.DB.URL != "legacy.db" {
+			t.Fatalf("DB.URL = %q, want legacy.db", cfg.DB.URL)
+		}
+		recorder.AssertLog(t, slog.LevelWarn, "SNIPS_DB_FILEPATH is deprecated")
+	})
+
+	t.Run("url takes precedence over legacy filepath", func(t *testing.T) {
+		t.Setenv("SNIPS_DB_URL", "current.db")
+		t.Setenv("SNIPS_DB_FILEPATH", "legacy.db")
+
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.DB.URL != "current.db" {
+			t.Fatalf("DB.URL = %q, want current.db", cfg.DB.URL)
 		}
 	})
 }
@@ -153,4 +142,79 @@ func TestConfig_SSHAuthorizedKeys(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("keys from environment", func(t *testing.T) {
+		t.Setenv("SNIPS_SSH_AUTHORIZEDKEYS", `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEnqsMuqOhEVw3HyWMp2fqqn6l1IZtJHD1UWkOXszUcl
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrOJrpYRgEiuGuoNhyPbeEldjIRkwRG/fjjySPUks/y`)
+
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		authorizedKeys, err := cfg.SSHAuthorizedKeys()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(authorizedKeys) != 2 {
+			t.Fatalf("expected 2 keys, got %d", len(authorizedKeys))
+		}
+	})
+
+	t.Run("environment keys take precedence over path", func(t *testing.T) {
+		t.Setenv("SNIPS_SSH_AUTHORIZEDKEYS", "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEnqsMuqOhEVw3HyWMp2fqqn6l1IZtJHD1UWkOXszUcl")
+		t.Setenv("SNIPS_SSH_AUTHORIZEDKEYSPATH", "does-not-exist")
+
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		authorizedKeys, err := cfg.SSHAuthorizedKeys()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(authorizedKeys) != 1 {
+			t.Fatalf("expected 1 key, got %d", len(authorizedKeys))
+		}
+	})
+
+	t.Run("errors when configured env keys are all invalid", func(t *testing.T) {
+		t.Setenv("SNIPS_SSH_AUTHORIZEDKEYS", "this is not an authorized key 🦝")
+
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if _, err := cfg.SSHAuthorizedKeys(); err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+
+	t.Run("errors when configured path yields no valid keys", func(t *testing.T) {
+		authorizedKeysFile := testutil.TempFile(t, "authorized_keys", `
+		this is not an authorized key 🦝
+		`)
+
+		t.Setenv("SNIPS_SSH_AUTHORIZEDKEYSPATH", authorizedKeysFile)
+		cfg, err := config.Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if _, err := cfg.SSHAuthorizedKeys(); err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+}
+
+func TestConfig_SSHHostKey(t *testing.T) {
+	t.Setenv("SNIPS_SSH_HOSTKEY", "private-key-content")
+
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.SSH.HostKey != "private-key-content" {
+		t.Fatalf("SSH.HostKey = %q, want private-key-content", cfg.SSH.HostKey)
+	}
 }
