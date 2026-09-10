@@ -62,6 +62,25 @@ func TestUploadFlags(t *testing.T) {
 			},
 		},
 		{
+			name: "private ttl and burn",
+			args: []string{"-private", "-ttl", "1h", "-burn"},
+			want: ssh.UploadFlags{
+				Private: true,
+				Burn:    true,
+				TTL:     time.Hour,
+			},
+		},
+		{
+			name: "burn without ttl",
+			args: []string{"-private", "-burn"},
+			err:  ssh.ErrFlagRequired,
+		},
+		{
+			name: "burn without private",
+			args: []string{"-ttl", "1h", "-burn"},
+			err:  ssh.ErrFlagRequired,
+		},
+		{
 			name: "ttl only",
 			args: []string{"-ttl", "30s"},
 			want: ssh.UploadFlags{
@@ -90,6 +109,8 @@ func TestUploadFlags(t *testing.T) {
 			} else {
 				assert.Equal(t, tc.want.Extension, got.Extension)
 				assert.Equal(t, tc.want.Private, got.Private)
+				assert.Equal(t, tc.want.Burn, got.Burn)
+				assert.Equal(t, tc.want.TTL, got.TTL)
 				assert.Equal(t, tc.want.Name, got.Name)
 			}
 		})
@@ -154,6 +175,19 @@ func TestSignFlags(t *testing.T) {
 				TTL: 1*7*24*time.Hour + 2*24*time.Hour + 3*time.Minute + 4*time.Second,
 			},
 		},
+		{
+			name: "ttl and burn",
+			args: []string{"-ttl", "1h", "-burn"},
+			want: ssh.SignFlags{
+				TTL:  time.Hour,
+				Burn: true,
+			},
+		},
+		{
+			name: "burn without ttl",
+			args: []string{"-burn"},
+			err:  ssh.ErrFlagRequired,
+		},
 	}
 
 	for _, tc := range testcases {
@@ -165,6 +199,7 @@ func TestSignFlags(t *testing.T) {
 				assert.ErrorIs(t, err, tc.err)
 			} else {
 				assert.Equal(t, tc.want.TTL, got.TTL)
+				assert.Equal(t, tc.want.Burn, got.Burn)
 			}
 		})
 	}

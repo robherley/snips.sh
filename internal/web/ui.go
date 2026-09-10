@@ -254,11 +254,27 @@ func (ui *UI) File(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := ui.db.Files.FindContent(r.Context(), file.ID)
-	if err != nil {
-		log.Error("unable to get file content", "err", err)
-		http.Error(w, "unable to get file content", http.StatusInternalServerError)
-		return
+	burnAfterRead := isSignedAndNotExpired && signer.IsBurn(*r.URL)
+
+	var content []byte
+	if burnAfterRead {
+		content, err = ui.db.Files.DeleteWithContent(r.Context(), file.ID)
+		if err != nil {
+			log.Error("unable to burn file after read", "err", err, "file_id", file.ID)
+			http.Error(w, "unable to burn file after read", http.StatusInternalServerError)
+			return
+		}
+		if content == nil {
+			http.NotFound(w, r)
+			return
+		}
+	} else {
+		content, err = ui.db.Files.FindContent(r.Context(), file.ID)
+		if err != nil {
+			log.Error("unable to get file content", "err", err)
+			http.Error(w, "unable to get file content", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	if AcceptsMarkdown(r) {
@@ -280,7 +296,8 @@ func (ui *UI) File(w http.ResponseWriter, r *http.Request) {
 	if isSignedAndNotExpired {
 		q := r.URL.Query()
 		q.Del("sig")
-		q.Add("r", "1")
+		q.Del(signer.BurnQueryParameter)
+		q.Set("r", "1")
 
 		rawPathURL := url.URL{
 			Path:     r.URL.Path,

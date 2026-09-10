@@ -72,30 +72,21 @@
 
 .markdown code {
   background-color: var(--color-surface-2);
+  margin: unset;
+  padding: 0.2em 0.4em;
+  font-size: 85%;
 }
 
 .markdown pre {
   background-color: var(--color-surface-1);
-}
-
-.markdown pre code {
-  background: unset;
-}
-
-.markdown pre {
   margin: 0.5rem 0;
   padding: 1rem;
   overflow-x: auto;
 }
 
 .markdown pre code {
+  background: unset;
   padding: unset;
-}
-
-.markdown code {
-  margin: unset;
-  padding: 0.2em 0.4em;
-  font-size: 85%;
 }
 
 .markdown hr {

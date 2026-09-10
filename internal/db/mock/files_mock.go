@@ -231,6 +231,68 @@ func (_c *MockFiles_Delete_Call) RunAndReturn(run func(ctx context.Context, id s
 	return _c
 }
 
+// DeleteWithContent provides a mock function for the type MockFiles
+func (_mock *MockFiles) DeleteWithContent(ctx context.Context, id string) ([]byte, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteWithContent")
+	}
+
+	var r0 []byte
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]byte, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []byte); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFiles_DeleteWithContent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteWithContent'
+type MockFiles_DeleteWithContent_Call struct {
+	*mock.Call
+}
+
+func (_e *MockFiles_Expecter) DeleteWithContent(ctx any, id any) *MockFiles_DeleteWithContent_Call {
+	return &MockFiles_DeleteWithContent_Call{Call: _e.mock.On("DeleteWithContent", ctx, id)}
+}
+
+func (_c *MockFiles_DeleteWithContent_Call) Run(run func(ctx context.Context, id string)) *MockFiles_DeleteWithContent_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(arg0, arg1)
+	})
+	return _c
+}
+
+func (_c *MockFiles_DeleteWithContent_Call) Return(content []byte, err error) *MockFiles_DeleteWithContent_Call {
+	_c.Call.Return(content, err)
+	return _c
+}
+
+func (_c *MockFiles_DeleteWithContent_Call) RunAndReturn(run func(ctx context.Context, id string) ([]byte, error)) *MockFiles_DeleteWithContent_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteByUser provides a mock function for the type MockFiles
 func (_mock *MockFiles) DeleteByUser(ctx context.Context, userID string) (int64, error) {
 	ret := _mock.Called(ctx, userID)
