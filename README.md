@@ -72,7 +72,7 @@ ssh snips.sh
     </td>
   </tr>
   <tr align="center">
-    <td>Something secret to share? Create a temporary, time-bound URL for restricted access.</td>
+    <td>Something secret to share? Create a temporary URL for restricted access, with optional burn-after-read deletion.</td>
   </tr>
   <tr align="center">
     <td>

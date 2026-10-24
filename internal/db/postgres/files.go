@@ -218,6 +218,33 @@ func (s *files) Delete(ctx context.Context, fileID string) error {
 	return tx.Commit()
 }
 
+func (s *files) DeleteWithContent(ctx context.Context, fileID string) ([]byte, error) {
+	tx, err := s.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if _, err := tx.ExecContext(ctx, `DELETE FROM revisions WHERE file_id = $1`, fileID); err != nil {
+		return nil, err
+	}
+
+	var storedContent []byte
+	err = tx.QueryRowContext(ctx, `DELETE FROM files WHERE display_id = $1 RETURNING content`, fileID).Scan(&storedContent)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return snips.DecodeContent(storedContent)
+}
+
 func (s *files) DeleteByUser(ctx context.Context, userID string) (int64, error) {
 	tx, err := s.BeginTx(ctx, nil)
 	if err != nil {

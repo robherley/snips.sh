@@ -38,6 +38,9 @@ type Files interface {
 	UpdateContent(ctx context.Context, file *snips.File, content []byte) error
 	// Delete deletes a file by its ID.
 	Delete(ctx context.Context, id string) error
+	// DeleteWithContent atomically deletes a file and returns its decompressed content.
+	// Returns (nil, nil) if the file does not exist (e.g. already consumed by a concurrent burn-after-read request).
+	DeleteWithContent(ctx context.Context, id string) ([]byte, error)
 	// DeleteByUser deletes all of a user's files and their revisions, returning the number of files deleted.
 	DeleteByUser(ctx context.Context, userID string) (int64, error)
 	// FindByUser returns a user's files, newest first. It does not include file content.
